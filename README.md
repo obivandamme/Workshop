@@ -8,11 +8,12 @@ OSE Workshop is the original work of ObiVanDamme
 You can find the official repo of this mod on [Github](http://github.com/ObiVanDamme/Workshop).
 
 ### Mod Description
-
+The Ose Workshop mods adds adds a Workshop Part to the game, that allows the creation of KAS-Grababble-Parts during missions. 
 
 ### Required Mods
 (OSE Workshop will not work without these mods)
 * [KAS](http://forum.kerbalspaceprogram.com/threads/53134)
+* [Community Resource Pack](http://forum.kerbalspaceprogram.com/threads/91998), which is included in the download.
 
 ### License
 

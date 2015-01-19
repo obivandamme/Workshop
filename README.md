@@ -1,4 +1,4 @@
-OSE Workshop for Kerbal Attachment System (KAS)
+OSE Workshop
 ===
 
 This is the repository for the OSE Workshop mod for [Kerbal Space Program](http://kerbalspaceprogram.com)

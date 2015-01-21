@@ -12,8 +12,11 @@
         private int _selectedPartIndex;
         private AvailablePart _selectedPart;
         private readonly List<AvailablePart> _availableParts = new List<AvailablePart>();
-            
-        [KSPField(guiName = "Selected Part: ", guiActive = true)]
+
+        [KSPField(guiName = "Available Parts", guiActive = true, guiActiveEditor = true)]
+        public int AvailablePartsCount;
+
+        [KSPField(guiName = "Selected Part", guiActive = true)]
         public string SelectedPartTitle = "N/A";
 
         [KSPEvent(guiActive = true, guiName = "Next")]
@@ -81,14 +84,22 @@
 
         public override void OnStart(StartState state)
         {
-            foreach (var availablePart in PartLoader.LoadedPartsList)
-            {
-                if (availablePart.partPrefab.Modules.OfType<KASModuleGrab>().Any())
-                {
-                    _availableParts.Add(availablePart);
-                }
-            }
             base.OnStart(state);
+            try
+            {
+                foreach (var availablePart in PartLoader.LoadedPartsList)
+                {
+                    if (availablePart.partPrefab.Modules != null && availablePart.partPrefab.Modules.OfType<KASModuleGrab>().Any())
+                    {
+                        _availableParts.Add(availablePart);
+                    }
+                }
+                AvailablePartsCount = _availableParts.Count;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[OSE] - OseModuleWorkshop - " + ex.Message);
+            }
         }
     }
 }

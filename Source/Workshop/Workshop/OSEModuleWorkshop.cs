@@ -1,6 +1,7 @@
 ﻿namespace Workshop
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     using UnityEngine;
@@ -9,8 +10,9 @@
     public class OseModuleWorkshop : PartModule
     {
         private int _selectedPartIndex;
-        private string _selectedPartName = "N/A";
-
+        private AvailablePart _selectedPart;
+        private readonly List<AvailablePart> _availableParts = new List<AvailablePart>();
+            
         [KSPField(guiName = "Selected Part: ", guiActive = true)]
         public string SelectedPartTitle = "N/A";
 
@@ -25,8 +27,8 @@
             {
                 _selectedPartIndex += 1;
             }
-            _selectedPartName = PartLoader.LoadedPartsList[_selectedPartIndex].name;
-            SelectedPartTitle = PartLoader.LoadedPartsList[_selectedPartIndex].title;
+            _selectedPart = _availableParts[_selectedPartIndex];
+            SelectedPartTitle = _availableParts[_selectedPartIndex].title;
         }
 
         [KSPEvent(guiActive = true, guiName = "Previous")]
@@ -40,24 +42,18 @@
             {
                 _selectedPartIndex -= 1;
             }
-            _selectedPartName = PartLoader.LoadedPartsList[_selectedPartIndex].name;
-            SelectedPartTitle = PartLoader.LoadedPartsList[_selectedPartIndex].title;
+            _selectedPart = _availableParts[_selectedPartIndex];
+            SelectedPartTitle = _availableParts[_selectedPartIndex].title;
         }
 
         [KSPEvent(guiActive = true, guiName = "Build Item")]
-        public void ContextMenuOnCreateStrut()
+        public void ContextMenuOnBuildItem()
         {
             try
             {
-                if (_selectedPartName == "N/A")
+                if (_selectedPart == null)
                 {
                     throw new Exception("No part selected");
-                }
-
-                var avPart = PartLoader.getPartInfoByName(_selectedPartName);
-                if (avPart == null)
-                {
-                    throw new Exception("No Available Part found");
                 }
 
                 var container = part.Modules.OfType<KASModuleContainer>().First();
@@ -67,7 +63,7 @@
 
                 }
 
-                var item = KASModuleContainer.PartContent.Get(container.contents, avPart.name);
+                var item = KASModuleContainer.PartContent.Get(container.contents, _selectedPart.name);
                 if (item == null)
                 {
                     throw new Exception("PartContent.Get did not return part");
@@ -81,6 +77,18 @@
             {
                 Debug.LogError("[OSE] - OseModuleWorkshop - " + ex.Message);
             }
+        }
+
+        public override void OnStart(StartState state)
+        {
+            foreach (var availablePart in PartLoader.LoadedPartsList)
+            {
+                if (availablePart.partPrefab.Modules.OfType<KASModuleGrab>().Any())
+                {
+                    _availableParts.Add(availablePart);
+                }
+            }
+            base.OnStart(state);
         }
     }
 }

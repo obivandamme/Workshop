@@ -34,6 +34,9 @@
       <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="KAS">
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\KAS\Plugins\KAS.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

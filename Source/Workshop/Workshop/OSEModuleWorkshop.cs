@@ -1,81 +1,86 @@
 ﻿namespace Workshop
 {
     using System;
-    using System.Collections.Generic;
+    using System.Linq;
 
     using UnityEngine;
+    using KAS;
 
     public class OseModuleWorkshop : PartModule
     {
-        private const double FLOAT_TOLERANCE = 0.000000001d;
-        private const double MAX_DELTA_TIME = 86400d;
+        private int _selectedPartIndex;
+        private string _selectedPartName = "N/A";
 
-        private bool isProducing;
+        [KSPField(guiName = "Selected Part: ", guiActive = true)]
+        public string SelectedPartTitle = "N/A";
 
-        private double lastUpdateTime;
+        [KSPEvent(guiActive = true, guiName = "Next")]
+        public void ContextMenuNextPart()
+        {
+            if (_selectedPartIndex == PartLoader.LoadedPartsList.Count - 1)
+            {
+                _selectedPartIndex = 0;
+            }
+            else
+            {
+                _selectedPartIndex += 1;
+            }
+            _selectedPartName = PartLoader.LoadedPartsList[_selectedPartIndex].name;
+            SelectedPartTitle = PartLoader.LoadedPartsList[_selectedPartIndex].title;
+        }
 
-        [KSPField(guiActiveEditor = true, guiName = "Production", guiUnits = "Spar Parts/s", isPersistant = true)]
-        private float productionPerSecond = 0.01f;
+        [KSPEvent(guiActive = true, guiName = "Previous")]
+        public void ContextMenuPreviousPart()
+        {
+            if (_selectedPartIndex == 0)
+            {
+                _selectedPartIndex = PartLoader.LoadedPartsList.Count - 1;
+            }
+            else
+            {
+                _selectedPartIndex -= 1;
+            }
+            _selectedPartName = PartLoader.LoadedPartsList[_selectedPartIndex].name;
+            SelectedPartTitle = PartLoader.LoadedPartsList[_selectedPartIndex].title;
+        }
 
-        public override void OnUpdate()
+        [KSPEvent(guiActive = true, guiName = "Build Item")]
+        public void ContextMenuOnCreateStrut()
         {
             try
             {
-                if (isProducing)
+                if (_selectedPartName == "N/A")
                 {
-                    var res = PartResourceLibrary.Instance.GetDefinition("SpareParts");
-                    var resList = new List<PartResource>();
-                    part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-                    var stuffLeft = GetProduction();
-
-                    // stores resources first come first served
-                    foreach (var partResource in resList)
-                    {
-                        var spaceAvailable = partResource.maxAmount - partResource.amount;
-                        if (spaceAvailable >= stuffLeft)
-                        {
-                            partResource.amount += stuffLeft;
-                            stuffLeft = 0;
-                        }
-                        else
-                        {
-                            partResource.amount += spaceAvailable;
-                            stuffLeft -= spaceAvailable;
-                        }
-                    }
+                    throw new Exception("No part selected");
                 }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("[OSE] - Error in OseModuleWorkshop_OnFixedUpdate - " + e.Message);
-            }
-            base.OnUpdate();
-        }
 
-        [KSPEvent(guiActive = true, guiName = "Start Production")]
-        public void ContextMenuToggleProduction()
-        {
-            isProducing = !isProducing;
-            lastUpdateTime = 0;
-            Events["ContextMenuToggleProduction"].guiName = (isProducing ? "Stop Production" : "Start Production");
-        }
+                var avPart = PartLoader.getPartInfoByName(_selectedPartName);
+                if (avPart == null)
+                {
+                    throw new Exception("No Available Part found");
+                }
 
-        private double GetProduction()
-        {
-            if (Time.timeSinceLevelLoad < 1.0f || !FlightGlobals.ready)
-            {
-                return 0;
-            }
-            if (Math.Abs(lastUpdateTime) < FLOAT_TOLERANCE)
-            {
-                // Just started producing
-                lastUpdateTime = Planetarium.GetUniversalTime();
-                return 0;
-            }
+                var container = part.Modules.OfType<KASModuleContainer>().First();
+                if (container == null)
+                {
+                    throw new Exception("No KAS Container found");
 
-            var deltaTime = Math.Min(Planetarium.GetUniversalTime() - lastUpdateTime, MAX_DELTA_TIME);
-            lastUpdateTime += deltaTime;
-            return deltaTime * productionPerSecond;
+                }
+
+                var item = KASModuleContainer.PartContent.Get(container.contents, avPart.name);
+                if (item == null)
+                {
+                    throw new Exception("PartContent.Get did not return part");
+                }
+
+                item.pristine_count += 1;
+                container.part.mass += item.totalMass;
+                container.totalSize += item.totalSize;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[OSE] - OseModuleWorkshop - " + ex.Message);
+            }
         }
     }
 }

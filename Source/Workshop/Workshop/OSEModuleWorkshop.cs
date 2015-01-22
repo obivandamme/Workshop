@@ -11,7 +11,6 @@
     {
         private double _sparePartsUsed;
         private double _sparePartsNeeded;
-        private int _selectedPartIndex;
         private AvailablePart _builtPart;
         private AvailablePart _selectedPart;
         private readonly List<AvailablePart> _availableParts = new List<AvailablePart>();
@@ -38,18 +37,9 @@
         {
             try
             {
-                if (_selectedPartIndex == PartLoader.LoadedPartsList.Count - 1)
-                {
-                    _selectedPartIndex = 0;
-                }
-                else
-                {
-                    _selectedPartIndex += 1;
-                }
-                _selectedPart = _availableParts[_selectedPartIndex];
-                _sparePartsNeeded = GetSparePartsNeeded(_selectedPart);
-                SelectedPartTitle = _availableParts[_selectedPartIndex].title;
-                Debug.Log("[OSE] - Ose_ModuleWorkshop_ContextMenuNextPart - Parts Needed: " + _sparePartsNeeded);
+                _selectedPart = _selectedPart == null ? _availableParts.First() : _availableParts.NextOf(_selectedPart);
+                _sparePartsNeeded = _selectedPart.GetSparePartsNeeded();
+                SelectedPartTitle = _selectedPart.title;
             }
             catch (Exception ex)
             {
@@ -62,17 +52,9 @@
         {
             try
             {
-                if (_selectedPartIndex == 0)
-                {
-                    _selectedPartIndex = PartLoader.LoadedPartsList.Count - 1;
-                }
-                else
-                {
-                    _selectedPartIndex -= 1;
-                }
-                _selectedPart = _availableParts[_selectedPartIndex];
-                _sparePartsNeeded = GetSparePartsNeeded(_selectedPart);
-                SelectedPartTitle = _availableParts[_selectedPartIndex].title;
+                _selectedPart = _selectedPart == null ? _availableParts.First() : _availableParts.PreviousOf(_selectedPart);
+                _sparePartsNeeded = _selectedPart.GetSparePartsNeeded();
+                SelectedPartTitle = _selectedPart.title;
             }
             catch (Exception ex)
             {
@@ -174,13 +156,6 @@
             Events["ContextMenuOnBuildItem"].guiActive = false;
             Events["ContextMenuOnNextItem"].guiActive = false;
             Events["ContextMenuOnPreviousItem"].guiActive = false;
-        }
-
-        private double GetSparePartsNeeded(AvailablePart availablePart)
-        {
-            var resource = PartResourceLibrary.Instance.GetDefinition("SpareParts");
-            var density = resource.density;
-            return availablePart.partPrefab.mass / density;
         }
 
         private void AddToContainer(AvailablePart availablePart)

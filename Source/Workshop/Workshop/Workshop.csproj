@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AvailablePartsExtensions.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="OseClock.cs" />
     <Compile Include="OseModuleWorkshop.cs" />

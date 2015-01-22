@@ -12,7 +12,7 @@ The Ose Workshop mods adds adds a Workshop Part to the game, that allows the cre
 
 ### Required Mods
 (OSE Workshop will not work without these mods)
-* [KAS](http://forum.kerbalspaceprogram.com/threads/53134)
+* [KAS](http://forum.kerbalspaceprogram.com/threads/92514)
 * [Community Resource Pack](http://forum.kerbalspaceprogram.com/threads/91998), which is included in the download.
 
 ### License

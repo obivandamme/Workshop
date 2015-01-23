@@ -37,15 +37,16 @@
     </Reference>
     <Reference Include="KAS">
       <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\KAS\Plugins\KAS.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Regolith">
       <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\Regolith\Regolith.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">

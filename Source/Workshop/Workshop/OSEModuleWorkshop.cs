@@ -23,6 +23,9 @@
         [KSPField]
         public double SparePartsPerSecond = 0.1;
 
+        [KSPField]
+        public int MinimumCrew = 2;
+
         [KSPField(guiName = "Status", guiActive = true)]
         public string Status = "Online";
 
@@ -114,7 +117,11 @@
                     {
                         var partsNeeded = deltaTime * SparePartsPerSecond;
                         var ecNeeded = deltaTime * ElectricChargePerSecond;
-                        if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
+                        if (part.protoModuleCrew.Count < MinimumCrew)
+                        {
+                            Status = "Not enough Crew to operate";
+                        }
+                        else if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
                         {
                             Status = "Not enough Rocket Parts";
                         }
@@ -124,8 +131,9 @@
                         }
                         else
                         {
+                            Status = "Producing...";
                             _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                            _sparePartsUsed += _broker.RequestResource(part, "Rocket Parts", partsNeeded);
+                            _sparePartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
                         }
                         Progress = _sparePartsUsed / _sparePartsNeeded * 100;
                     }

@@ -33,6 +33,5 @@ OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-Shar
 
 ### Credits and Thanks!
 
-* The Assets for the Toolbox Type A/B containers are the original work of KospY and are distributed under their own license.
 * The included plugins Regolith & Community Resource Pack (by RoverDude) are distributed under their own license.
 * KAS is the original work of KospY! - Thank you for creating this awesome mod.

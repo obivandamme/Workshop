@@ -38,7 +38,7 @@
             try
             {
                 _selectedPart = _selectedPart == null ? _availableParts.First() : _availableParts.NextOf(_selectedPart);
-                _sparePartsNeeded = _selectedPart.GetSparePartsNeeded();
+                _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
                 SelectedPartTitle = _selectedPart.title;
             }
             catch (Exception ex)
@@ -52,8 +52,8 @@
         {
             try
             {
-                _selectedPart = _selectedPart == null ? _availableParts.First() : _availableParts.PreviousOf(_selectedPart);
-                _sparePartsNeeded = _selectedPart.GetSparePartsNeeded();
+                _selectedPart = _selectedPart == null ? _availableParts.Last() : _availableParts.PreviousOf(_selectedPart);
+                _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
                 SelectedPartTitle = _selectedPart.title;
             }
             catch (Exception ex)
@@ -86,7 +86,7 @@
             {
                 foreach (var availablePart in PartLoader.LoadedPartsList)
                 {
-                    if (availablePart.partPrefab.Modules != null && availablePart.partPrefab.Modules.OfType<KASModuleGrab>().Any())
+                    if (availablePart.HasStorableKasModule())
                     {
                         _availableParts.Add(availablePart);
                     }
@@ -114,9 +114,9 @@
                     {
                         var partsNeeded = deltaTime * SparePartsPerSecond;
                         var ecNeeded = deltaTime * ElectricChargePerSecond;
-                        if (_broker.AmountAvailable(part, "SpareParts") < partsNeeded)
+                        if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
                         {
-                            Status = "Not enough Spare Parts";
+                            Status = "Not enough Rocket Parts";
                         }
                         else if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
                         {
@@ -125,7 +125,7 @@
                         else
                         {
                             _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                            _sparePartsUsed += _broker.RequestResource(part, "SpareParts", partsNeeded);
+                            _sparePartsUsed += _broker.RequestResource(part, "Rocket Parts", partsNeeded);
                         }
                         Progress = _sparePartsUsed / _sparePartsNeeded * 100;
                     }
@@ -144,7 +144,7 @@
             _sparePartsUsed = 0;
             Progress = 0;
             Status = "Online";
-            Events["ContextMenuOnBuildItem"].guiActive = true; 
+            Events["ContextMenuOnBuildItem"].guiActive = true;
             Events["ContextMenuOnNextItem"].guiActive = true;
             Events["ContextMenuOnPreviousItem"].guiActive = true;
         }
@@ -160,22 +160,31 @@
 
         private void AddToContainer(AvailablePart availablePart)
         {
-            var container = part.Modules.OfType<KASModuleContainer>().First();
-            if (container == null)
+            var kasModuleContainers = vessel.FindPartModulesImplementing<KASModuleContainer>();
+            if (kasModuleContainers == null)
             {
                 throw new Exception("No KAS Container found");
 
             }
 
-            var item = KASModuleContainer.PartContent.Get(container.contents, availablePart.name);
-            if (item == null)
-            {
-                throw new Exception("PartContent.Get did not return part");
-            }
+            var kasModuleGrab = availablePart.partPrefab.Modules.OfType<KASModuleGrab>().First();
 
-            item.pristine_count += 1;
-            container.part.mass += item.totalMass;
-            container.totalSize += item.totalSize;
+            foreach (var container in kasModuleContainers)
+            {
+                if (container.totalSize + kasModuleGrab.storedSize < container.maxSize)
+                {
+                    var item = KASModuleContainer.PartContent.Get(container.contents, availablePart.name);
+                    if (item == null)
+                    {
+                        throw new Exception("PartContent.Get did not return part");
+                    }
+
+                    item.pristine_count += 1;
+                    container.part.mass += item.totalMass;
+                    container.totalSize += item.totalSize;
+                    break;
+                }
+            }
         }
     }
 }

@@ -29,7 +29,7 @@ OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-Shar
 * You may remix your own derivatives (new models, alternative textures, etc.) and release them under your own name.
 * You may not use the material for any commercial purposes.
 * You must use the same license as the original work.
-* You must credit the following people when publishing your derivatives in the download and forum posts: ObiVanDamme (OSE Workshop).
+* You must credit the following people when publishing your derivatives in the download and forum posts: ObiVanDamme (OSE Workshop), KospY (Kerbal Attachment System).
 
 ### Credits and Thanks!
 

@@ -18,7 +18,7 @@ The Ose Workshop mods adds a Workshop Part to the game, that allows the creation
 
 ### Installation Instructions
 * Download and Install [KAS](http://forum.kerbalspaceprogram.com/threads/92514)
-* Download the file from TODO: provide download
+* Download the file from [GitHub](https://github.com/obivandamme/Workshop/releases)
 * Unzip the file and copy the content of the GameData folder to the GameData folder in your KSP Installation
 
 ### License

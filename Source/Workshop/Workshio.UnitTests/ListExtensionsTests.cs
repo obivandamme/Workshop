@@ -1,19 +1,17 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Workshio.UnitTests
 {
     using System.Collections.Generic;
-    using System.Management.Instrumentation;
 
     using Workshop;
 
     [TestClass]
     public class ListExtensionsTests
     {
-        private AvailablePart _first;
+        private readonly AvailablePart _first = new AvailablePart();
 
-        private AvailablePart _second;
+        private readonly AvailablePart _second = new AvailablePart();
 
         private List<AvailablePart> _list;
         

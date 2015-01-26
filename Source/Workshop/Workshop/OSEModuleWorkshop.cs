@@ -13,7 +13,6 @@
         private double _sparePartsNeeded;
         private AvailablePart _builtPart;
         private AvailablePart _selectedPart;
-        private readonly ResourceBroker _broker = new ResourceBroker();
         private readonly OseClock _clock = new OseClock();
 
         [KSPField]
@@ -28,8 +27,9 @@
         [KSPField(guiName = "Status", guiActive = true)]
         public string Status = "Online";
 
-        [KSPField(guiName = "Progress", guiActive = true, guiUnits = "%", guiFormat = "F")]
-        public double Progress = 0;
+        [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Progress", guiUnits = "%", guiFormat = "F1")]
+        [UI_ProgressBar(minValue = 0, maxValue = 100F)]
+        public float Progress = 0;
 
         [KSPField(guiName = "Selected Part", guiActive = true)]
         public string SelectedPartTitle = "N/A";
@@ -92,8 +92,10 @@
                 {
                     if (Progress >= 100)
                     {
-                        AddToContainer(_builtPart);
-                        Reset();
+                        if (AddToContainer(_builtPart))
+                        {
+                            Reset();
+                        }
                     }
                     else
                     {
@@ -103,21 +105,21 @@
                         {
                             Status = "Not enough Crew to operate";
                         }
-                        else if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
+                        else if (AmountAvailable("RocketParts") < partsNeeded)
                         {
                             Status = "Not enough Rocket Parts";
                         }
-                        else if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
+                        else if (AmountAvailable("ElectricCharge") < ecNeeded)
                         {
                             Status = "Not enough Electric Charge";
                         }
                         else
                         {
                             Status = "Producing...";
-                            _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                            _sparePartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
+                            RequestResource("ElectricCharge", ecNeeded);
+                            _sparePartsUsed += RequestResource("RocketParts", partsNeeded);
                         }
-                        Progress = _sparePartsUsed / _sparePartsNeeded * 100;
+                        Progress = (float)(_sparePartsUsed / _sparePartsNeeded * 100);
                     }
                 }
             }
@@ -134,6 +136,8 @@
             _sparePartsUsed = 0;
             Progress = 0;
             Status = "Online";
+
+            Fields["Progress"].guiActive = false;
             Events["ContextMenuOnBuildItem"].guiActive = true;
             Events["ContextMenuOnNextItem"].guiActive = true;
             Events["ContextMenuOnPreviousItem"].guiActive = true;
@@ -142,19 +146,20 @@
         private void StartProduction(AvailablePart availablePart)
         {
             _builtPart = availablePart;
-            Status = "Producing";
+
+            Fields["Progress"].guiActive = true;
             Events["ContextMenuOnBuildItem"].guiActive = false;
             Events["ContextMenuOnNextItem"].guiActive = false;
             Events["ContextMenuOnPreviousItem"].guiActive = false;
         }
 
-        private void AddToContainer(AvailablePart availablePart)
+        private bool AddToContainer(AvailablePart availablePart)
         {
             var kasModuleContainers = vessel.FindPartModulesImplementing<KASModuleContainer>();
-            if (kasModuleContainers == null)
+
+            if (kasModuleContainers == null || kasModuleContainers.Count == 0)
             {
                 throw new Exception("No KAS Container found");
-
             }
 
             var kasModuleGrab = availablePart.partPrefab.Modules.OfType<KASModuleGrab>().First();
@@ -164,22 +169,53 @@
                 if (container.totalSize + kasModuleGrab.storedSize < container.maxSize)
                 {
                     var item = KASModuleContainer.PartContent.Get(container.contents, availablePart.name);
-                    if (item == null)
-                    {
-                        throw new Exception("PartContent.Get did not return part");
-                    }
-
                     item.pristine_count += 1;
                     container.part.mass += item.totalMass;
                     container.totalSize += item.totalSize;
-                    break;
+                    return true;
                 }
             }
+            return false;
         }
 
         private static IEnumerable<AvailablePart> GetStorableParts()
         {
             return PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule());
+        }
+
+        private double AmountAvailable(string resName)
+        {
+            var res = PartResourceLibrary.Instance.GetDefinition(resName);
+            var resList = new List<PartResource>();
+            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
+            return resList.Sum(r => r.amount);
+        }
+
+        private double RequestResource(string resName, double resAmount)
+        {
+            var res = PartResourceLibrary.Instance.GetDefinition(resName);
+            var resList = new List<PartResource>();
+            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
+            var demandLeft = resAmount;
+            var amountTaken = 0d;
+
+            foreach (var r in resList)
+            {
+                if (r.amount >= demandLeft)
+                {
+                    amountTaken += demandLeft;
+                    r.amount -= demandLeft;
+                    demandLeft = 0;
+                }
+                else
+                {
+                    amountTaken += r.amount;
+                    demandLeft -= r.amount;
+                    r.amount = 0;
+                }
+            }
+
+            return amountTaken;
         }
     }
 }

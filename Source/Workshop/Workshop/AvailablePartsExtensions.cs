@@ -6,7 +6,7 @@
 
     public static class AvailablePartsExtensions
     {
-        public static double GetRocketPartsNeeded(this AvailablePart part)
+        public static float GetRocketPartsNeeded(this AvailablePart part)
         {
             var resource = PartResourceLibrary.Instance.GetDefinition("RocketParts");
             var density = resource.density;

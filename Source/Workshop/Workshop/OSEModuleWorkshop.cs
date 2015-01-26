@@ -14,6 +14,7 @@
         private AvailablePart _builtPart;
         private AvailablePart _selectedPart;
         private readonly OseClock _clock = new OseClock();
+        private readonly ResourceBroker _broker = new ResourceBroker();
 
         [KSPField]
         public double ElectricChargePerSecond = 25;
@@ -109,19 +110,19 @@
                         {
                             Status = "Not enough Crew to operate";
                         }
-                        else if (AmountAvailable("RocketParts") < partsNeeded)
+                        else if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
                         {
                             Status = "Not enough Rocket Parts";
                         }
-                        else if (AmountAvailable("ElectricCharge") < ecNeeded)
+                        else if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
                         {
                             Status = "Not enough Electric Charge";
                         }
                         else
                         {
                             Status = "Producing...";
-                            RequestResource("ElectricCharge", ecNeeded);
-                            _sparePartsUsed += RequestResource("RocketParts", partsNeeded);
+                            _broker.RequestResource(part, "ElectricCharge", ecNeeded);
+                            _sparePartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
                         }
                         Progress = (float)(_sparePartsUsed / _sparePartsNeeded * 100);
                     }
@@ -185,41 +186,6 @@
         private static IEnumerable<AvailablePart> GetStorableParts()
         {
             return PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule());
-        }
-
-        private double AmountAvailable(string resName)
-        {
-            var res = PartResourceLibrary.Instance.GetDefinition(resName);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            return resList.Sum(r => r.amount);
-        }
-
-        private double RequestResource(string resName, double resAmount)
-        {
-            var res = PartResourceLibrary.Instance.GetDefinition(resName);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            var demandLeft = resAmount;
-            var amountTaken = 0d;
-
-            foreach (var r in resList)
-            {
-                if (r.amount >= demandLeft)
-                {
-                    amountTaken += demandLeft;
-                    r.amount -= demandLeft;
-                    demandLeft = 0;
-                }
-                else
-                {
-                    amountTaken += r.amount;
-                    demandLeft -= r.amount;
-                    r.amount = 0;
-                }
-            }
-
-            return amountTaken;
         }
     }
 }

@@ -39,6 +39,9 @@
       <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\KAS\Plugins\KAS.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Regolith">
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\Regolith\Regolith.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

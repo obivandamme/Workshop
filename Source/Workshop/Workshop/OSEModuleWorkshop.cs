@@ -96,6 +96,10 @@
                         {
                             Reset();
                         }
+                        else
+                        {
+                            Status = "Not enough free space";
+                        }
                     }
                     else
                     {

@@ -21,7 +21,7 @@
         public double ElectricChargePerSecond = 25;
 
         [KSPField]
-        public double SparePartsPerSecond = 0.1;
+        public double RocketPartsPerSecond = 0.1;
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -115,7 +115,7 @@
                     }
                     else
                     {
-                        var partsNeeded = deltaTime * SparePartsPerSecond;
+                        var partsNeeded = deltaTime * RocketPartsPerSecond;
                         var ecNeeded = deltaTime * ElectricChargePerSecond;
                         if (part.protoModuleCrew.Count < MinimumCrew)
                         {

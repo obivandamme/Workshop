@@ -13,7 +13,6 @@
         private double _sparePartsNeeded;
         private AvailablePart _builtPart;
         private AvailablePart _selectedPart;
-        private readonly List<AvailablePart> _availableParts = new List<AvailablePart>();
         private readonly ResourceBroker _broker = new ResourceBroker();
         private readonly OseClock _clock = new OseClock();
 
@@ -40,7 +39,8 @@
         {
             try
             {
-                _selectedPart = _selectedPart == null ? _availableParts.First() : _availableParts.NextOf(_selectedPart);
+                var availableParts = GetStorableParts().ToList();
+                _selectedPart = _selectedPart == null ? availableParts.First() : availableParts.NextOf(_selectedPart);
                 _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
                 SelectedPartTitle = _selectedPart.title;
             }
@@ -55,7 +55,8 @@
         {
             try
             {
-                _selectedPart = _selectedPart == null ? _availableParts.Last() : _availableParts.PreviousOf(_selectedPart);
+                var availableParts = GetStorableParts().ToList();
+                _selectedPart = _selectedPart == null ? availableParts.Last() : availableParts.PreviousOf(_selectedPart);
                 _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
                 SelectedPartTitle = _selectedPart.title;
             }
@@ -79,25 +80,6 @@
             catch (Exception ex)
             {
                 Debug.LogError("[OSE] - OseModuleWorkshop_ContextMenuBuildItem - " + ex.Message);
-            }
-        }
-
-        public override void OnStart(StartState state)
-        {
-            base.OnStart(state);
-            try
-            {
-                foreach (var availablePart in PartLoader.LoadedPartsList)
-                {
-                    if (availablePart.HasStorableKasModule())
-                    {
-                        _availableParts.Add(availablePart);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[OSE] - OseModuleWorkshop_OnStart - " + ex.Message);
             }
         }
 
@@ -193,6 +175,11 @@
                     break;
                 }
             }
+        }
+
+        private static IEnumerable<AvailablePart> GetStorableParts()
+        {
+            return PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule());
         }
     }
 }

@@ -28,7 +28,7 @@
         [KSPField(guiName = "Status", guiActive = true)]
         public string Status = "Online";
 
-        [KSPField(guiName = "Progress", guiActive = true, guiUnits = "%")]
+        [KSPField(guiName = "Progress", guiActive = true, guiUnits = "%", guiFormat = "F")]
         public double Progress = 0;
 
         [KSPField(guiName = "Selected Part", guiActive = true)]

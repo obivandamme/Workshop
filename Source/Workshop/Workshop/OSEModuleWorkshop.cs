@@ -10,12 +10,14 @@
 
     public class OseModuleWorkshop : PartModule
     {
-        private double _sparePartsUsed;
-        private double _sparePartsNeeded;
-        private AvailablePart _builtPart;
-        private AvailablePart _selectedPart;
-        private readonly OseClock _clock = new OseClock();
-        private readonly ResourceBroker _broker = new ResourceBroker();
+        public AvailablePart BuiltPart;
+
+        private double _rocketPartsUsed;
+        private double _rocketPartsNeeded;
+
+        private readonly OseClock _clock;
+        private readonly ResourceBroker _broker;
+        private readonly OseWorkshopWindow _window;
 
         [KSPField]
         public double ElectricChargePerSecond = 25;
@@ -36,53 +38,22 @@
         [KSPField(guiName = "Selected Part", guiActive = true)]
         public string SelectedPartTitle = "N/A";
 
-        [KSPEvent(guiActive = true, guiName = "Next")]
-        public void ContextMenuOnNextItem()
+        [KSPEvent(guiActive = true, guiName = "Select item")]
+        public void ContextMenuOnSelectItem()
         {
-            try
-            {
-                var availableParts = GetStorableParts().ToList();
-                _selectedPart = _selectedPart == null ? availableParts.First() : availableParts.NextOf(_selectedPart);
-                _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
-                SelectedPartTitle = _selectedPart.title;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[OSE] - OseModuleWorkshop_ContextMenuNextPart - " + ex.Message);
-            }
+            _window.Visible = true;
         }
 
-        [KSPEvent(guiActive = true, guiName = "Previous")]
-        public void ContextMenuOnPreviousItem()
+        public OseModuleWorkshop()
         {
-            try
-            {
-                var availableParts = GetStorableParts().ToList();
-                _selectedPart = _selectedPart == null ? availableParts.Last() : availableParts.PreviousOf(_selectedPart);
-                _sparePartsNeeded = _selectedPart.GetRocketPartsNeeded();
-                SelectedPartTitle = _selectedPart.title;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[OSE] - OseModuleWorkshop_ContextMenuPreviousPart - " + ex.Message);
-            }
+            _clock = new OseClock();
+            _broker = new ResourceBroker();
+            _window = new OseWorkshopWindow(this);
         }
 
-        [KSPEvent(guiActive = true, guiName = "Build Item")]
-        public void ContextMenuOnBuildItem()
+        public override void OnLoad(ConfigNode node)
         {
-            try
-            {
-                if (_selectedPart == null)
-                {
-                    throw new Exception("No part selected");
-                }
-                StartProduction(_selectedPart);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError("[OSE] - OseModuleWorkshop_ContextMenuBuildItem - " + ex.Message);
-            }
+            Reset();
         }
 
         public override void OnUpdate()
@@ -90,11 +61,11 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (_builtPart != null)
+                if (BuiltPart != null)
                 {
                     if (Progress >= 100)
                     {
-                        if (AddToContainer(_builtPart))
+                        if (AddToContainer(BuiltPart))
                         {
                             Reset();
                         }
@@ -123,9 +94,9 @@
                         {
                             Status = "Producing...";
                             _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                            _sparePartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
+                            _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
                         }
-                        Progress = (float)(_sparePartsUsed / _sparePartsNeeded * 100);
+                        Progress = (float)(_rocketPartsUsed / _rocketPartsNeeded * 100);
                     }
                 }
             }
@@ -138,25 +109,10 @@
 
         private void Reset()
         {
-            _builtPart = null;
-            _sparePartsUsed = 0;
+            BuiltPart = null;
+            _rocketPartsUsed = 0;
             Progress = 0;
             Status = "Online";
-
-            Fields["Progress"].guiActive = false;
-            Events["ContextMenuOnBuildItem"].guiActive = true;
-            Events["ContextMenuOnNextItem"].guiActive = true;
-            Events["ContextMenuOnPreviousItem"].guiActive = true;
-        }
-
-        private void StartProduction(AvailablePart availablePart)
-        {
-            _builtPart = availablePart;
-
-            Fields["Progress"].guiActive = true;
-            Events["ContextMenuOnBuildItem"].guiActive = false;
-            Events["ContextMenuOnNextItem"].guiActive = false;
-            Events["ContextMenuOnPreviousItem"].guiActive = false;
         }
 
         private bool AddToContainer(AvailablePart availablePart)
@@ -184,7 +140,14 @@
             return false;
         }
 
-        private static IEnumerable<AvailablePart> GetStorableParts()
+        public void OnPartSelected(AvailablePart availablePart)
+        {
+            SelectedPartTitle = availablePart.title;
+            _rocketPartsNeeded = availablePart.GetRocketPartsNeeded();
+            BuiltPart = availablePart;
+        }
+
+        public IEnumerable<AvailablePart> GetStorableParts()
         {
             return PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule());
         }

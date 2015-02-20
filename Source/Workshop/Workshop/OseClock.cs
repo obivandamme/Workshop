@@ -6,10 +6,6 @@ namespace Workshop
 
     public class OseClock
     {
-        public const double FLOAT_TOLERANCE = 0.000000001d;
-
-        public const double MAX_DELTA_TIME = 86400;
-
         private double _lastUpdateTime;
 
         public double GetDeltaTime()
@@ -21,14 +17,14 @@ namespace Workshop
                     return 0;
                 }
 
-                if (Math.Abs(_lastUpdateTime) < FLOAT_TOLERANCE)
+                if (Math.Abs(_lastUpdateTime) < 0.000000001d)
                 {
                     // Just started running
                     _lastUpdateTime = Planetarium.GetUniversalTime();
                     return 0;
                 }
 
-                var deltaTime = Math.Min(Planetarium.GetUniversalTime() - _lastUpdateTime, MAX_DELTA_TIME);
+                var deltaTime = Math.Min(Planetarium.GetUniversalTime() - _lastUpdateTime, 86400);
                 _lastUpdateTime += deltaTime;
                 return deltaTime;
             }

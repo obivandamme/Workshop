@@ -4,8 +4,9 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    using UnityEngine;
     using KAS;
+
+    using UnityEngine;
 
     public class OseModuleWorkshop : PartModule
     {

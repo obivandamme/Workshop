@@ -1,7 +1,6 @@
 ﻿namespace Workshop
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
 
     using KAS;
@@ -18,6 +17,7 @@
         private readonly OseClock _clock;
         private readonly ResourceBroker _broker;
         private readonly OseWorkshopWindow _window;
+        private readonly OseWorkshopQueue _queue;
 
         [KSPField]
         public double ElectricChargePerSecond = 25;
@@ -35,9 +35,6 @@
         [UI_ProgressBar(minValue = 0, maxValue = 100F)]
         public float Progress = 0;
 
-        [KSPField(guiName = "Selected Part", guiActive = true)]
-        public string SelectedPartTitle = "N/A";
-
         [KSPEvent(guiActive = true, guiName = "Select item")]
         public void ContextMenuOnSelectItem()
         {
@@ -48,7 +45,8 @@
         {
             _clock = new OseClock();
             _broker = new ResourceBroker();
-            _window = new OseWorkshopWindow(this);
+            _queue = new OseWorkshopQueue();
+            _window = new OseWorkshopWindow(_queue);
         }
 
         public override void OnLoad(ConfigNode node)
@@ -92,11 +90,19 @@
                         }
                         else
                         {
-                            Status = "Producing...";
+                            Status = "Building " + BuiltPart.title;
                             _broker.RequestResource(part, "ElectricCharge", ecNeeded);
                             _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
                         }
                         Progress = (float)(_rocketPartsUsed / _rocketPartsNeeded * 100);
+                    }
+                }
+                else
+                {
+                    var nextQueuedPart = _queue.Pop();
+                    if (nextQueuedPart != null)
+                    {
+                        OnPartSelected(nextQueuedPart);
                     }
                 }
             }
@@ -105,6 +111,12 @@
                 Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate - " + ex.Message);
             }
             base.OnUpdate();
+        }
+
+        public override void OnInactive()
+        {
+            _window.Visible = false;
+            base.OnInactive();
         }
 
         private void Reset()
@@ -142,14 +154,8 @@
 
         public void OnPartSelected(AvailablePart availablePart)
         {
-            SelectedPartTitle = availablePart.title;
             _rocketPartsNeeded = availablePart.GetRocketPartsNeeded();
             BuiltPart = availablePart;
-        }
-
-        public IEnumerable<AvailablePart> GetStorableParts()
-        {
-            return PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule());
         }
     }
 }

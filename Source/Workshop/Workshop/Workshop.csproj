@@ -61,6 +61,7 @@
     <Compile Include="OseClock.cs" />
     <Compile Include="OseGuiStyles.cs" />
     <Compile Include="OseModuleWorkshop.cs" />
+    <Compile Include="OseWorkshopQueue.cs" />
     <Compile Include="OseWorkshopWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

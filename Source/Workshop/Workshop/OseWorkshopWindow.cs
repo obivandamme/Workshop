@@ -6,11 +6,13 @@ namespace Workshop
 
     public class OseWorkshopWindow
     {
-        private readonly OseModuleWorkshop _workshop;
-
-        private Rect _windowPos;
+        private readonly OseWorkshopQueue _queue;
 
         private readonly int _windowId;
+
+        private Rect _windowPos;
+        private Vector2 _scrollPosItems = Vector2.zero;
+        private Vector2 _scrollPosQueue = Vector2.zero;
 
         private bool _visible;
 
@@ -41,18 +43,20 @@ namespace Workshop
             }
         }
 
-        private Vector2 _scrollPos = Vector2.zero;
-
-        public OseWorkshopWindow(OseModuleWorkshop workshop)
+        public OseWorkshopWindow(OseWorkshopQueue queue)
         {
-            _workshop = workshop;
+            _queue = queue;
             _windowPos = new Rect(Screen.width / 3, 35, 10, 10);
             _windowId = new System.Random().Next(65536);
         }
 
         private void DrawWindow()
         {
-            if (Visible && CanDraw())
+            GUI.skin = HighLogic.Skin;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+
+            if (Visible)
             {
                 _windowPos = GUILayout.Window(
                     _windowId,
@@ -69,34 +73,51 @@ namespace Workshop
         private void DrawWindowContents(int windowId)
         {
             GUILayout.Space(15);
-            GUILayout.Label("- Available items -", OseGuiStyles.Heading());
-            _scrollPos = GUILayout.BeginScrollView(_scrollPos, OseGuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(400f));
 
-            foreach (var availablePart in _workshop.GetStorableParts().ToList())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(new GUIContent(" " + availablePart.title, "Name"), OseGuiStyles.Center(), GUILayout.Width(320f));
-                GUILayout.Label(new GUIContent(" " + availablePart.partPrefab.mass, "Mass"), OseGuiStyles.Center(), GUILayout.Width(80f));
-                if (GUILayout.Button(new GUIContent("Build", "Select part for production"), OseGuiStyles.Button(), GUILayout.Width(50f)))
-                {
-                    _workshop.OnPartSelected(availablePart);
-                }
-                GUILayout.EndHorizontal();
-            }
-
-            GUILayout.EndScrollView();
+            DrawAvailableItems();
+            DrawQueuedItems();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
             {
-                this.Visible = false;
+                Visible = false;
             }
 
             GUI.DragWindow();
         }
 
-        private bool CanDraw()
+        private void DrawAvailableItems()
         {
-            return _workshop.vessel == FlightGlobals.ActiveVessel;
+            GUILayout.Label("- Available items -", OseGuiStyles.Heading());
+            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, OseGuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
+            foreach (var availablePart in PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule()).ToList())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" " + availablePart.title, OseGuiStyles.Center(), GUILayout.Width(320f));
+                GUILayout.Label(" " + availablePart.partPrefab.mass, OseGuiStyles.Center(), GUILayout.Width(80f));
+                if (GUILayout.Button("Queue", OseGuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    _queue.Add(availablePart);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawQueuedItems()
+        {
+            GUILayout.Label("- Queued items -", OseGuiStyles.Heading());
+            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, OseGuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(150f));
+            foreach (var availablePart in _queue)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" " + availablePart.title, OseGuiStyles.Center(), GUILayout.Width(400f));
+                if (GUILayout.Button("Remove", OseGuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    _queue.Remove(availablePart);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
         }
     }
 }

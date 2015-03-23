@@ -3,7 +3,7 @@
     using System;
     using System.Linq;
 
-    using KAS;
+    using KIS;
 
     using UnityEngine;
 
@@ -129,23 +129,18 @@
 
         private bool AddToContainer(AvailablePart availablePart)
         {
-            var kasModuleContainers = vessel.FindPartModulesImplementing<KASModuleContainer>();
+            var kasModuleContainers = vessel.FindPartModulesImplementing<ModuleKISInventory>();
 
             if (kasModuleContainers == null || kasModuleContainers.Count == 0)
             {
                 throw new Exception("No KAS Container found");
             }
 
-            var kasModuleGrab = availablePart.partPrefab.Modules.OfType<KASModuleGrab>().First();
-
             foreach (var container in kasModuleContainers)
             {
-                if (container.totalSize + kasModuleGrab.storedSize < container.maxSize)
+                if (container.totalVolume + KIS_Shared.GetPartVolume(availablePart.partPrefab) < container.maxVolume)
                 {
-                    var item = KASModuleContainer.PartContent.Get(container.contents, availablePart.name);
-                    item.pristine_count += 1;
-                    container.part.mass += item.totalMass;
-                    container.totalSize += item.totalSize;
+                    container.AddItem(availablePart, availablePart.internalConfig);
                     return true;
                 }
             }

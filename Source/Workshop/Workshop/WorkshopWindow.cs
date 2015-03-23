@@ -4,9 +4,9 @@ namespace Workshop
 {
     using UnityEngine;
 
-    public class OseWorkshopWindow
+    public class WorkshopWindow
     {
-        private readonly OseWorkshopQueue _queue;
+        private readonly WorkshopQueue _queue;
 
         private readonly int _windowId;
 
@@ -43,7 +43,7 @@ namespace Workshop
             }
         }
 
-        public OseWorkshopWindow(OseWorkshopQueue queue)
+        public WorkshopWindow(WorkshopQueue queue)
         {
             _queue = queue;
             _windowPos = new Rect(Screen.width / 3, 35, 10, 10);
@@ -87,14 +87,14 @@ namespace Workshop
 
         private void DrawAvailableItems()
         {
-            GUILayout.Label("- Available items -", OseGuiStyles.Heading());
-            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, OseGuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
+            GUILayout.Label("- Available items -", GuiStyles.Heading());
+            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
             foreach (var availablePart in PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule()).ToList())
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(" " + availablePart.title, OseGuiStyles.Center(), GUILayout.Width(320f));
-                GUILayout.Label(" " + availablePart.partPrefab.mass, OseGuiStyles.Center(), GUILayout.Width(80f));
-                if (GUILayout.Button("Queue", OseGuiStyles.Button(), GUILayout.Width(80f)))
+                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(320f));
+                GUILayout.Label(" " + availablePart.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(80f));
+                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(80f)))
                 {
                     _queue.Add(availablePart);
                 }
@@ -105,13 +105,13 @@ namespace Workshop
 
         private void DrawQueuedItems()
         {
-            GUILayout.Label("- Queued items -", OseGuiStyles.Heading());
-            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, OseGuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(150f));
+            GUILayout.Label("- Queued items -", GuiStyles.Heading());
+            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(150f));
             foreach (var availablePart in _queue)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(" " + availablePart.title, OseGuiStyles.Center(), GUILayout.Width(400f));
-                if (GUILayout.Button("Remove", OseGuiStyles.Button(), GUILayout.Width(80f)))
+                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(400f));
+                if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(80f)))
                 {
                     _queue.Remove(availablePart);
                 }

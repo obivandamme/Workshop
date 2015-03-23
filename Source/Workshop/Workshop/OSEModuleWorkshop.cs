@@ -1,7 +1,6 @@
 ﻿namespace Workshop
 {
     using System;
-    using System.Linq;
 
     using KIS;
 
@@ -14,10 +13,10 @@
         private double _rocketPartsUsed;
         private double _rocketPartsNeeded;
 
-        private readonly OseClock _clock;
+        private readonly Clock _clock;
         private readonly ResourceBroker _broker;
-        private readonly OseWorkshopWindow _window;
-        private readonly OseWorkshopQueue _queue;
+        private readonly WorkshopWindow _window;
+        private readonly WorkshopQueue _queue;
 
         [KSPField]
         public double ElectricChargePerSecond = 25;
@@ -43,10 +42,10 @@
 
         public OseModuleWorkshop()
         {
-            _clock = new OseClock();
+            _clock = new Clock();
             _broker = new ResourceBroker();
-            _queue = new OseWorkshopQueue();
-            _window = new OseWorkshopWindow(_queue);
+            _queue = new WorkshopQueue();
+            _window = new WorkshopWindow(_queue);
         }
 
         public override void OnLoad(ConfigNode node)

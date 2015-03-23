@@ -2,7 +2,7 @@
 {
     using UnityEngine;
 
-    public class OseGuiStyles
+    public class GuiStyles
     {
         public static GUIStyle Button()
         {

@@ -4,7 +4,7 @@ namespace Workshop
 {
     using UnityEngine;
 
-    public class OseClock
+    public class Clock
     {
         private double _lastUpdateTime;
 

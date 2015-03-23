@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Workshop
 {
-    public class OseWorkshopQueue : List<AvailablePart>
+    public class WorkshopQueue : List<AvailablePart>
     {
         public AvailablePart Pop()
         {

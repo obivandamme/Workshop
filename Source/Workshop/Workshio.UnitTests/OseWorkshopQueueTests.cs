@@ -10,7 +10,7 @@ namespace Workshio.UnitTests
         [TestMethod]
         public void Pop_TwoElements_ReturnsTheElementFirstAdded()
         {
-            var queue = new OseWorkshopQueue();
+            var queue = new WorkshopQueue();
             queue.Add(new AvailablePart { cost = 1000 });
             queue.Add(new AvailablePart { cost = 1 });
 

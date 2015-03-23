@@ -15,7 +15,7 @@
 
         public static bool HasStorableKasModule(this AvailablePart part)
         {
-            return part.partPrefab.Modules != null && part.partPrefab.Modules.OfType<ModuleKISItem>().Any();
+            return part.partPrefab.Modules != null && part.partPrefab.Modules.OfType<OseModuleRecipe>().Any();
         }
     }
 }

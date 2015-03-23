@@ -89,7 +89,7 @@ namespace Workshop
         {
             GUILayout.Label("- Available items -", GuiStyles.Heading());
             _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
-            foreach (var availablePart in PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasStorableKasModule()).ToList())
+            foreach (var availablePart in PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasRecipeModule()).ToList())
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(320f));

@@ -128,7 +128,7 @@
 
         private bool AddToContainer(AvailablePart availablePart)
         {
-            var kasModuleContainers = vessel.FindPartModulesImplementing<ModuleKISInventory>();
+            var kasModuleContainers = part.FindModulesImplementing<ModuleKISInventory>();
 
             if (kasModuleContainers == null || kasModuleContainers.Count == 0)
             {

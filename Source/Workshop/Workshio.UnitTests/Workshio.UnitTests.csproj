@@ -37,17 +37,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\KSP 0.90 Workshop\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="KAS">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\KAS\Plugins\KAS.dll</HintPath>
-    </Reference>
-    <Reference Include="Regolith">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\Regolith\Regolith.dll</HintPath>
+    <Reference Include="KIS">
+      <HintPath>..\..\..\..\KSP 0.90 Workshop\GameData\KIS\Plugins\KIS.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\KSP 0.90 Workshop\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Choose>

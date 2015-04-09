@@ -128,16 +128,16 @@
 
         private bool AddToContainer(AvailablePart availablePart)
         {
-            var kasModuleContainers = part.FindModulesImplementing<ModuleKISInventory>();
+            var kisModuleContainers = part.FindModulesImplementing<ModuleKISInventory>();
 
-            if (kasModuleContainers == null || kasModuleContainers.Count == 0)
+            if (kisModuleContainers == null || kisModuleContainers.Count == 0)
             {
-                throw new Exception("No KAS Container found");
+                throw new Exception("No KIS Container found");
             }
 
-            foreach (var container in kasModuleContainers)
+            foreach (var container in kisModuleContainers)
             {
-                if (container.totalVolume + KIS_Shared.GetPartVolume(availablePart.partPrefab) < container.maxVolume)
+                if (container.GetContentVolume() + KIS_Shared.GetPartVolume(availablePart.partPrefab) < container.maxVolume)
                 {
                     container.AddItem(availablePart, availablePart.internalConfig);
                     return true;

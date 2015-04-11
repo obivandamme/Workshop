@@ -139,7 +139,7 @@
             {
                 if (container.GetContentVolume() + KIS_Shared.GetPartVolume(availablePart.partPrefab) < container.maxVolume)
                 {
-                    container.AddItem(availablePart, availablePart.internalConfig);
+                    container.AddItem(availablePart.partPrefab);
                     return true;
                 }
             }

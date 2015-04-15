@@ -19,10 +19,10 @@
         private readonly WorkshopQueue _queue;
 
         [KSPField]
-        public double ElectricChargePerSecond = 25;
+        public float ElectricChargePerSecond = 25;
 
         [KSPField]
-        public double RocketPartsPerSecond = 0.1;
+        public float RocketPartsPerSecond = 0.1f;
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -34,8 +34,8 @@
         [UI_ProgressBar(minValue = 0, maxValue = 100F)]
         public float Progress = 0;
 
-        [KSPEvent(guiActive = true, guiName = "Select item")]
-        public void ContextMenuOnSelectItem()
+        [KSPEvent(guiActive = true, guiName = "Open Workbench")]
+        public void ContextMenuOnOpenWorkbench()
         {
             _window.Visible = true;
         }
@@ -62,47 +62,16 @@
                 {
                     if (Progress >= 100)
                     {
-                        if (AddToContainer(BuiltPart))
-                        {
-                            Reset();
-                        }
-                        else
-                        {
-                            Status = "Not enough free space";
-                        }
+                        FinishManufacturing();
                     }
                     else
                     {
-                        var partsNeeded = deltaTime * RocketPartsPerSecond;
-                        var ecNeeded = deltaTime * ElectricChargePerSecond;
-                        if (part.protoModuleCrew.Count < MinimumCrew)
-                        {
-                            Status = "Not enough Crew to operate";
-                        }
-                        else if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
-                        {
-                            Status = "Not enough Rocket Parts";
-                        }
-                        else if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
-                        {
-                            Status = "Not enough Electric Charge";
-                        }
-                        else
-                        {
-                            Status = "Building " + BuiltPart.title;
-                            _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                            _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
-                        }
-                        Progress = (float)(_rocketPartsUsed / _rocketPartsNeeded * 100);
+                        ExecuteManufacturing(deltaTime);
                     }
                 }
                 else
                 {
-                    var nextQueuedPart = _queue.Pop();
-                    if (nextQueuedPart != null)
-                    {
-                        OnPartSelected(nextQueuedPart);
-                    }
+                    StartManufacturing();
                 }
             }
             catch (Exception ex)
@@ -112,10 +81,68 @@
             base.OnUpdate();
         }
 
+        private void StartManufacturing()
+        {
+            var nextQueuedPart = _queue.Pop();
+            if (nextQueuedPart != null)
+            {
+                _rocketPartsNeeded = nextQueuedPart.GetRocketPartsNeeded();
+                BuiltPart = nextQueuedPart;
+            }
+        }
+
+        private void ExecuteManufacturing(double deltaTime)
+        {
+            var partsNeeded = deltaTime * RocketPartsPerSecond;
+            var ecNeeded = deltaTime * ElectricChargePerSecond;
+            var preRequisitesMessage = CheckPrerequisites(partsNeeded, ecNeeded);
+
+            if (preRequisitesMessage != "Ok")
+            {
+                Status = preRequisitesMessage;
+            }
+            else
+            {
+                Status = "Building " + BuiltPart.title;
+                _broker.RequestResource(part, "ElectricCharge", ecNeeded);
+                _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
+            }
+            Progress = (float)(_rocketPartsUsed / _rocketPartsNeeded * 100);
+        }
+
+        private void FinishManufacturing()
+        {
+            if (AddToContainer(BuiltPart))
+            {
+                Reset();
+            }
+            else
+            {
+                Status = "Not enough free space";
+            }
+        }
+
         public override void OnInactive()
         {
             _window.Visible = false;
             base.OnInactive();
+        }
+
+        private string CheckPrerequisites(double partsNeeded, double ecNeeded)
+        {
+            if (part.protoModuleCrew.Count < MinimumCrew)
+            {
+                return "Not enough Crew to operate";
+            }
+            if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
+            {
+                return "Not enough Rocket Parts";
+            }
+            if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
+            {
+                return "Not enough Electric Charge";
+            }
+            return "Ok";
         }
 
         private void Reset()
@@ -144,12 +171,6 @@
                 }
             }
             return false;
-        }
-
-        public void OnPartSelected(AvailablePart availablePart)
-        {
-            _rocketPartsNeeded = availablePart.GetRocketPartsNeeded();
-            BuiltPart = availablePart;
         }
     }
 }

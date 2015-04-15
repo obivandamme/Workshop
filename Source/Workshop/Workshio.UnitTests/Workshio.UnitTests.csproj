@@ -37,14 +37,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\KSP 0.90 Workshop\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="KIS">
-      <HintPath>..\..\..\..\KSP 0.90 Workshop\GameData\KIS\Plugins\KIS.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\OSE Workshop\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\KSP 0.90 Workshop\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\OSE Workshop\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Choose>

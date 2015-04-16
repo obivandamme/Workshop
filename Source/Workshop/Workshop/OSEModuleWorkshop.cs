@@ -8,8 +8,7 @@
 
     public class OseModuleWorkshop : PartModule
     {
-        public AvailablePart BuiltPart;
-
+        private AvailablePart _builtPart;
         private double _rocketPartsUsed;
         private double _rocketPartsNeeded;
 
@@ -50,7 +49,44 @@
 
         public override void OnLoad(ConfigNode node)
         {
-            Reset();
+            foreach (ConfigNode cn in node.nodes)
+            {
+                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("RocketPartsNeeded") && cn.HasValue("RocketPartsUsed"))
+                {
+                    var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
+                    if (availablePart != null)
+                    {
+                        _builtPart = availablePart;
+                        _rocketPartsNeeded = double.Parse(cn.GetValue("RocketPartsNeeded"));
+                        _rocketPartsUsed = double.Parse(cn.GetValue("RocketPartsUsed"));
+                    }
+                }
+                if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
+                {
+                    var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
+                    _queue.Add(availablePart);
+                }
+            }
+            base.OnLoad(node);
+        }
+
+        public override void OnSave(ConfigNode node)
+        {
+            if (_builtPart != null)
+            {
+                var builtPartNode = node.AddNode("BUILTPART");
+                builtPartNode.AddValue("Name", _builtPart.name);
+                builtPartNode.AddValue("RocketPartsNeeded", _rocketPartsNeeded);
+                builtPartNode.AddValue("RocketPartsUsed", _rocketPartsUsed);
+            }
+
+            foreach (var queuedPart in _queue)
+            {
+                var queuedPartNode = node.AddNode("QUEUEDPART");
+                queuedPartNode.AddValue("Name", queuedPart.name);
+            }
+
+            base.OnSave(node);
         }
 
         public override void OnUpdate()
@@ -58,7 +94,7 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (BuiltPart != null)
+                if (_builtPart != null)
                 {
                     if (Progress >= 100)
                     {
@@ -87,7 +123,7 @@
             if (nextQueuedPart != null)
             {
                 _rocketPartsNeeded = nextQueuedPart.GetRocketPartsNeeded();
-                BuiltPart = nextQueuedPart;
+                _builtPart = nextQueuedPart;
             }
         }
 
@@ -103,7 +139,7 @@
             }
             else
             {
-                Status = "Building " + BuiltPart.title;
+                Status = "Building " + _builtPart.title;
                 _broker.RequestResource(part, "ElectricCharge", ecNeeded);
                 _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
             }
@@ -112,9 +148,13 @@
 
         private void FinishManufacturing()
         {
-            if (AddToContainer(BuiltPart))
+            if (AddToContainer(_builtPart))
             {
-                Reset();
+                _builtPart = null;
+                _rocketPartsUsed = 0;
+                _rocketPartsNeeded = 0;
+                Progress = 0;
+                Status = "Online";
             }
             else
             {
@@ -143,14 +183,6 @@
                 return "Not enough Electric Charge";
             }
             return "Ok";
-        }
-
-        private void Reset()
-        {
-            BuiltPart = null;
-            _rocketPartsUsed = 0;
-            Progress = 0;
-            Status = "Online";
         }
 
         private bool AddToContainer(AvailablePart availablePart)

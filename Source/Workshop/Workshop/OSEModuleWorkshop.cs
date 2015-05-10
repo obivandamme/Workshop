@@ -1,6 +1,7 @@
 ﻿namespace Workshop
 {
     using System;
+    using System.Collections.Generic;
 
     using KIS;
 
@@ -16,15 +17,14 @@
         private readonly ResourceBroker _broker;
         private readonly WorkshopWindow _window;
         private readonly WorkshopQueue _queue;
+        private readonly List<Demand> _upkeep;
+        private readonly List<Demand> _input;
 
         [KSPField]
-        public float ElectricChargePerSecond = 25;
+        public string Input = "";
 
         [KSPField]
-        public float ResourcesPerSecond = 0.1f;
-
-        [KSPField]
-        public string ResourcesName = "RocketParts";
+        public string Upkeep = "";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -48,9 +48,19 @@
             _broker = new ResourceBroker();
             _queue = new WorkshopQueue();
             _window = new WorkshopWindow(_queue);
+            _upkeep = new List<Demand>();
+            _input = new List<Demand>();
         }
 
-        public override void OnLoad(ConfigNode node)
+                public override void OnLoad(ConfigNode node)
+        {
+            LoadModuleState(node);
+            LoadUpkeep();
+            LoadInput();
+            base.OnLoad(node);
+        }
+
+        private void LoadModuleState(ConfigNode node)
         {
             foreach (ConfigNode cn in node.nodes)
             {
@@ -70,7 +80,32 @@
                     _queue.Add(availablePart);
                 }
             }
-            base.OnLoad(node);
+        }
+
+        private void LoadUpkeep()
+        {
+            var resources = Upkeep.Split(',');
+            for (int i = 0; i < resources.Length; i+=2)
+            {
+                _upkeep.Add(new Demand
+                {
+                    ResourceName = resources[i],
+                    Ratio = float.Parse(resources[i + 1])
+                });
+            }
+        }
+
+        private void LoadInput()
+        {
+            var resources = Input.Split(',');
+            for (int i = 0; i < resources.Length; i+=2)
+            {
+                _input.Add(new Demand
+                {
+                    ResourceName = resources[i],
+                    Ratio = float.Parse(resources[i + 1])
+                });
+            }
         }
 
         public override void OnSave(ConfigNode node)
@@ -125,16 +160,14 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _resourcesNeeded = nextQueuedPart.GetRocketPartsNeeded();
+                _resourcesNeeded = nextQueuedPart.GetResourcesNeeded(_input);
                 _builtPart = nextQueuedPart;
             }
         }
 
         private void ExecuteManufacturing(double deltaTime)
         {
-            var resourcesNeeded = deltaTime * ResourcesPerSecond;
-            var ecNeeded = deltaTime * ElectricChargePerSecond;
-            var preRequisitesMessage = CheckPrerequisites(resourcesNeeded, ecNeeded);
+            var preRequisitesMessage = CheckPrerequisites(deltaTime);
 
             if (preRequisitesMessage != "Ok")
             {
@@ -143,8 +176,14 @@
             else
             {
                 Status = "Building " + _builtPart.title;
-                _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                _resourcesUsed += _broker.RequestResource(part, ResourcesName, resourcesNeeded);
+                foreach (var res in _upkeep)
+                {
+                    _broker.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
+                }
+                foreach (var res in _input)
+                {
+                    _resourcesUsed += _broker.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
+                }
             }
             Progress = (float)(_resourcesUsed / _resourcesNeeded * 100);
         }
@@ -171,19 +210,25 @@
             base.OnInactive();
         }
 
-        private string CheckPrerequisites(double partsNeeded, double ecNeeded)
+        private string CheckPrerequisites(double deltaTime)
         {
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 return "Not enough Crew to operate";
             }
-            if (_broker.AmountAvailable(part, ResourcesName) < partsNeeded)
+            foreach (var res in _upkeep)
             {
-                return "Not enough Resources";
+                if(_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
+                {
+                    return "Not enough " + res.ResourceName;
+                }
             }
-            if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
+            foreach (var res in _input)
             {
-                return "Not enough Electric Charge";
+                if (_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
+                {
+                    return "Not enough " + res.ResourceName;
+                }
             }
             return "Ok";
         }

@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AvailablePartsExtensions.cs" />
+    <Compile Include="Demand.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="GuiStyles.cs" />

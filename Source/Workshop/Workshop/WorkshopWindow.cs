@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using KIS;
 
 namespace Workshop
 {
@@ -13,6 +14,7 @@ namespace Workshop
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
+        private Vector2 _scrollPosInventories = Vector2.zero;
 
         private bool _visible;
 
@@ -76,6 +78,7 @@ namespace Workshop
 
             DrawAvailableItems();
             DrawQueuedItems();
+            DrawAvailableInventories();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
             {
@@ -114,6 +117,27 @@ namespace Workshop
                 if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(80f)))
                 {
                     _queue.Remove(availablePart);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawAvailableInventories()
+        {
+            GUILayout.Label("- Available Inventories -", GuiStyles.Heading());
+            _scrollPosInventories = GUILayout.BeginScrollView(_scrollPosInventories, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(100f));
+            foreach (var inventory in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" " + inventory.maxVolume, GuiStyles.Center(), GUILayout.Width(400f));
+                if (GUILayout.Button("Highlight", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    inventory.part.SetHighlight(true,false);
+                }
+                if (GUILayout.Button("Unhighlight", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    inventory.part.SetHighlight(false, false);
                 }
                 GUILayout.EndHorizontal();
             }

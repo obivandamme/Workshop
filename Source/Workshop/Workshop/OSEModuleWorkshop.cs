@@ -9,8 +9,8 @@
     public class OseModuleWorkshop : PartModule
     {
         private AvailablePart _builtPart;
-        private double _rocketPartsUsed;
-        private double _rocketPartsNeeded;
+        private double _resourcesUsed;
+        private double _resourcesNeeded;
 
         private readonly Clock _clock;
         private readonly ResourceBroker _broker;
@@ -21,7 +21,10 @@
         public float ElectricChargePerSecond = 25;
 
         [KSPField]
-        public float RocketPartsPerSecond = 0.1f;
+        public float ResourcesPerSecond = 0.1f;
+
+        [KSPField]
+        public string ResourcesName = "RocketParts";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -51,14 +54,14 @@
         {
             foreach (ConfigNode cn in node.nodes)
             {
-                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("RocketPartsNeeded") && cn.HasValue("RocketPartsUsed"))
+                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("ResourcesNeeded") && cn.HasValue("ResourcesUsed"))
                 {
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
                         _builtPart = availablePart;
-                        _rocketPartsNeeded = double.Parse(cn.GetValue("RocketPartsNeeded"));
-                        _rocketPartsUsed = double.Parse(cn.GetValue("RocketPartsUsed"));
+                        _resourcesNeeded = double.Parse(cn.GetValue("ResourcesNeeded"));
+                        _resourcesUsed = double.Parse(cn.GetValue("ResourcesUsed"));
                     }
                 }
                 if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
@@ -76,8 +79,8 @@
             {
                 var builtPartNode = node.AddNode("BUILTPART");
                 builtPartNode.AddValue("Name", _builtPart.name);
-                builtPartNode.AddValue("RocketPartsNeeded", _rocketPartsNeeded);
-                builtPartNode.AddValue("RocketPartsUsed", _rocketPartsUsed);
+                builtPartNode.AddValue("ResourcesNeeded", _resourcesNeeded);
+                builtPartNode.AddValue("ResourcesUsed", _resourcesUsed);
             }
 
             foreach (var queuedPart in _queue)
@@ -122,16 +125,16 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _rocketPartsNeeded = nextQueuedPart.GetRocketPartsNeeded();
+                _resourcesNeeded = nextQueuedPart.GetRocketPartsNeeded();
                 _builtPart = nextQueuedPart;
             }
         }
 
         private void ExecuteManufacturing(double deltaTime)
         {
-            var partsNeeded = deltaTime * RocketPartsPerSecond;
+            var resourcesNeeded = deltaTime * ResourcesPerSecond;
             var ecNeeded = deltaTime * ElectricChargePerSecond;
-            var preRequisitesMessage = CheckPrerequisites(partsNeeded, ecNeeded);
+            var preRequisitesMessage = CheckPrerequisites(resourcesNeeded, ecNeeded);
 
             if (preRequisitesMessage != "Ok")
             {
@@ -141,9 +144,9 @@
             {
                 Status = "Building " + _builtPart.title;
                 _broker.RequestResource(part, "ElectricCharge", ecNeeded);
-                _rocketPartsUsed += _broker.RequestResource(part, "RocketParts", partsNeeded);
+                _resourcesUsed += _broker.RequestResource(part, ResourcesName, resourcesNeeded);
             }
-            Progress = (float)(_rocketPartsUsed / _rocketPartsNeeded * 100);
+            Progress = (float)(_resourcesUsed / _resourcesNeeded * 100);
         }
 
         private void FinishManufacturing()
@@ -151,8 +154,8 @@
             if (AddToContainer(_builtPart))
             {
                 _builtPart = null;
-                _rocketPartsUsed = 0;
-                _rocketPartsNeeded = 0;
+                _resourcesUsed = 0;
+                _resourcesNeeded = 0;
                 Progress = 0;
                 Status = "Online";
             }
@@ -174,9 +177,9 @@
             {
                 return "Not enough Crew to operate";
             }
-            if (_broker.AmountAvailable(part, "RocketParts") < partsNeeded)
+            if (_broker.AmountAvailable(part, ResourcesName) < partsNeeded)
             {
-                return "Not enough Rocket Parts";
+                return "Not enough Resources";
             }
             if (_broker.AmountAvailable(part, "ElectricCharge") < ecNeeded)
             {
@@ -187,7 +190,7 @@
 
         private bool AddToContainer(AvailablePart availablePart)
         {
-            var kisModuleContainers = part.FindModulesImplementing<ModuleKISInventory>();
+            var kisModuleContainers = vessel.FindPartModulesImplementing<ModuleKISInventory>();
 
             if (kisModuleContainers == null || kisModuleContainers.Count == 0)
             {

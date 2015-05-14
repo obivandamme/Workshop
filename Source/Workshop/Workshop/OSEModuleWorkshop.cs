@@ -1,6 +1,7 @@
 ﻿namespace Workshop
 {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
 
     using KIS;
@@ -10,18 +11,16 @@
     public class OseModuleWorkshop : PartModule
     {
         private AvailablePart _builtPart;
-        private double _resourcesUsed;
-        private double _resourcesNeeded;
+        private double _massProcessed;
 
         private readonly Clock _clock;
         private readonly ResourceBroker _broker;
         private readonly WorkshopWindow _window;
         private readonly WorkshopQueue _queue;
         private readonly List<Demand> _upkeep;
-        private readonly List<Demand> _input;
 
         [KSPField]
-        public string Input = "";
+        public float ProductivityFactor = 0.1f;
 
         [KSPField]
         public string Upkeep = "";
@@ -49,14 +48,12 @@
             _queue = new WorkshopQueue();
             _window = new WorkshopWindow(_queue);
             _upkeep = new List<Demand>();
-            _input = new List<Demand>();
         }
 
-                public override void OnLoad(ConfigNode node)
+        public override void OnLoad(ConfigNode node)
         {
             LoadModuleState(node);
             LoadUpkeep();
-            LoadInput();
             base.OnLoad(node);
         }
 
@@ -64,14 +61,13 @@
         {
             foreach (ConfigNode cn in node.nodes)
             {
-                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("ResourcesNeeded") && cn.HasValue("ResourcesUsed"))
+                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("MassProcessed"))
                 {
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
                         _builtPart = availablePart;
-                        _resourcesNeeded = double.Parse(cn.GetValue("ResourcesNeeded"));
-                        _resourcesUsed = double.Parse(cn.GetValue("ResourcesUsed"));
+                        _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
                 if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
@@ -85,22 +81,9 @@
         private void LoadUpkeep()
         {
             var resources = Upkeep.Split(',');
-            for (int i = 0; i < resources.Length; i+=2)
+            for (int i = 0; i < resources.Length; i += 2)
             {
                 _upkeep.Add(new Demand
-                {
-                    ResourceName = resources[i],
-                    Ratio = float.Parse(resources[i + 1])
-                });
-            }
-        }
-
-        private void LoadInput()
-        {
-            var resources = Input.Split(',');
-            for (int i = 0; i < resources.Length; i+=2)
-            {
-                _input.Add(new Demand
                 {
                     ResourceName = resources[i],
                     Ratio = float.Parse(resources[i + 1])
@@ -114,8 +97,7 @@
             {
                 var builtPartNode = node.AddNode("BUILTPART");
                 builtPartNode.AddValue("Name", _builtPart.name);
-                builtPartNode.AddValue("ResourcesNeeded", _resourcesNeeded);
-                builtPartNode.AddValue("ResourcesUsed", _resourcesUsed);
+                builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
             foreach (var queuedPart in _queue)
@@ -132,16 +114,13 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
+                if (Progress >= 100)
+                {
+                    FinishManufacturing();
+                }
                 if (_builtPart != null)
                 {
-                    if (Progress >= 100)
-                    {
-                        FinishManufacturing();
-                    }
-                    else
-                    {
-                        ExecuteManufacturing(deltaTime);
-                    }
+                    ExecuteManufacturing(deltaTime);
                 }
                 else
                 {
@@ -160,7 +139,6 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _resourcesNeeded = nextQueuedPart.GetResourcesNeeded(_input);
                 _builtPart = nextQueuedPart;
             }
         }
@@ -176,16 +154,23 @@
             else
             {
                 Status = "Building " + _builtPart.title;
+
                 foreach (var res in _upkeep)
                 {
                     _broker.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
                 }
-                foreach (var res in _input)
+
+                //Consume Recipe Input
+                var demand = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().Demand;
+                var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+                foreach (var res in demand)
                 {
-                    _resourcesUsed += _broker.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
+                    var resourcesUsed = _broker.RequestResource(part, res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
+                    _massProcessed += resourcesUsed * res.Density;
                 }
             }
-            Progress = (float)(_resourcesUsed / _resourcesNeeded * 100);
+
+            Progress = (float)(_massProcessed / _builtPart.partPrefab.mass * 100);
         }
 
         private void FinishManufacturing()
@@ -193,8 +178,7 @@
             if (AddToContainer(_builtPart))
             {
                 _builtPart = null;
-                _resourcesUsed = 0;
-                _resourcesNeeded = 0;
+                _massProcessed = 0;
                 Progress = 0;
                 Status = "Online";
             }
@@ -216,20 +200,25 @@
             {
                 return "Not enough Crew to operate";
             }
+
             foreach (var res in _upkeep)
-            {
-                if(_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
-                {
-                    return "Not enough " + res.ResourceName;
-                }
-            }
-            foreach (var res in _input)
             {
                 if (_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
                 {
                     return "Not enough " + res.ResourceName;
                 }
             }
+
+            var demand = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().Demand;
+            var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+            foreach (var res in demand)
+            {
+                if (_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
+                {
+                    return "Not enough " + res.ResourceName;
+                }
+            }
+
             return "Ok";
         }
 

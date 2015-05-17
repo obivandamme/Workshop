@@ -10,14 +10,21 @@
 
     public class OseModuleWorkshop : PartModule
     {
+        private List<WorkshopItem> _items;
         private AvailablePart _builtPart;
         private double _massProcessed;
 
         private readonly Clock _clock;
-        private readonly ResourceBroker _broker;
-        private readonly WorkshopWindow _window;
         private readonly WorkshopQueue _queue;
         private readonly List<Demand> _upkeep;
+
+        // GUI Properties
+        private int _windowId;
+        private Rect _windowPos;
+        private Vector2 _scrollPosItems = Vector2.zero;
+        private Vector2 _scrollPosQueue = Vector2.zero;
+        private Vector2 _scrollPosInventories = Vector2.zero;
+        private bool _showGui = false;
 
         [KSPField]
         public float ProductivityFactor = 0.1f;
@@ -38,15 +45,28 @@
         [KSPEvent(guiActive = true, guiName = "Open Workbench")]
         public void ContextMenuOnOpenWorkbench()
         {
-            _window.Visible = true;
+            if (_showGui)
+            {
+                foreach (var item in _items)
+                {
+                    item.DisableIcon();
+                }
+                _showGui = false;
+            }
+            else
+            {
+                foreach (var item in _items)
+                {
+                    item.EnableIcon();
+                }
+                _showGui = true;
+            }
         }
 
         public OseModuleWorkshop()
         {
             _clock = new Clock();
-            _broker = new ResourceBroker();
             _queue = new WorkshopQueue();
-            _window = new WorkshopWindow(_queue);
             _upkeep = new List<Demand>();
         }
 
@@ -54,6 +74,7 @@
         {
             LoadModuleState(node);
             LoadUpkeep();
+            LoadAvailableParts();
             base.OnLoad(node);
         }
 
@@ -89,6 +110,11 @@
                     Ratio = float.Parse(resources[i + 1])
                 });
             }
+        }
+
+        private void LoadAvailableParts()
+        {
+            _items = PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasRecipeModule()).Select(p => new WorkshopItem(p)).ToList();
         }
 
         public override void OnSave(ConfigNode node)
@@ -157,7 +183,7 @@
 
                 foreach (var res in _upkeep)
                 {
-                    _broker.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
+                    this.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
                 }
 
                 //Consume Recipe Input
@@ -165,12 +191,47 @@
                 var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
                 foreach (var res in demand)
                 {
-                    var resourcesUsed = _broker.RequestResource(part, res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
+                    var resourcesUsed = this.RequestResource(part, res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
                     _massProcessed += resourcesUsed * res.Density;
                 }
             }
 
             Progress = (float)(_massProcessed / _builtPart.partPrefab.mass * 100);
+        }
+
+        public double AmountAvailable(Part part, string resource)
+        {
+            var res = PartResourceLibrary.Instance.GetDefinition(resource);
+            var resList = new List<PartResource>();
+            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
+            return resList.Sum(r => r.amount);
+        }
+
+        public double RequestResource(Part part, string resource, double amount)
+        {
+            var res = PartResourceLibrary.Instance.GetDefinition(resource);
+            var resList = new List<PartResource>();
+            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
+            var demandLeft = amount;
+            var amountTaken = 0d;
+
+            foreach (var r in resList)
+            {
+                if (r.amount >= demandLeft)
+                {
+                    amountTaken += demandLeft;
+                    r.amount -= demandLeft;
+                    demandLeft = 0;
+                }
+                else
+                {
+                    amountTaken += r.amount;
+                    demandLeft -= r.amount;
+                    r.amount = 0;
+                }
+            }
+
+            return amountTaken;
         }
 
         private void FinishManufacturing()
@@ -190,7 +251,10 @@
 
         public override void OnInactive()
         {
-            _window.Visible = false;
+            if (_showGui)
+            {
+                ContextMenuOnOpenWorkbench();
+            }
             base.OnInactive();
         }
 
@@ -203,7 +267,7 @@
 
             foreach (var res in _upkeep)
             {
-                if (_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
+                if (this.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
                 {
                     return "Not enough " + res.ResourceName;
                 }
@@ -213,7 +277,7 @@
             var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
             foreach (var res in demand)
             {
-                if (_broker.AmountAvailable(part, res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
+                if (this.AmountAvailable(part, res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
                 {
                     return "Not enough " + res.ResourceName;
                 }
@@ -240,6 +304,106 @@
                 }
             }
             return false;
+        }
+
+        void OnGUI()
+        {
+            if (_showGui)
+            {
+                DrawWindow();
+            }
+        }
+
+        private void DrawWindow()
+        {
+            GUI.skin = HighLogic.Skin;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+
+            _windowPos = GUILayout.Window(
+                   _windowId,
+                   _windowPos,
+                   DrawWindowContents,
+                   "Workshop Build Menu",
+                   GUILayout.ExpandWidth(true),
+                   GUILayout.ExpandHeight(true),
+                   GUILayout.MinWidth(64),
+                   GUILayout.MinHeight(64));
+        }
+
+        private void DrawWindowContents(int windowId)
+        {
+            GUILayout.Space(15);
+
+            DrawAvailableItems();
+            DrawQueuedItems();
+            DrawAvailableInventories();
+
+            if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
+            {
+                ContextMenuOnOpenWorkbench();
+            }
+
+            GUI.DragWindow();
+        }
+
+        private void DrawAvailableItems()
+        {
+            GUILayout.Label("- Available items -", GuiStyles.Heading());
+            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
+            foreach (var item in _items)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
+                Rect textureRect = GUILayoutUtility.GetLastRect();
+                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
+                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(295f));
+                GUILayout.Label(" " + item.Part.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(80f));
+                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    _queue.Add(item.Part);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawQueuedItems()
+        {
+            GUILayout.Label("- Queued items -", GuiStyles.Heading());
+            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(150f));
+            foreach (var availablePart in _queue)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(400f));
+                if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    _queue.Remove(availablePart);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawAvailableInventories()
+        {
+            GUILayout.Label("- Available Inventories -", GuiStyles.Heading());
+            _scrollPosInventories = GUILayout.BeginScrollView(_scrollPosInventories, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(100f));
+            foreach (var inventory in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>())
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(" " + inventory.maxVolume, GuiStyles.Center(), GUILayout.Width(400f));
+                if (GUILayout.Button("Highlight", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    inventory.part.SetHighlight(true, false);
+                }
+                if (GUILayout.Button("Unhighlight", GuiStyles.Button(), GUILayout.Width(80f)))
+                {
+                    inventory.part.SetHighlight(false, false);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
         }
     }
 }

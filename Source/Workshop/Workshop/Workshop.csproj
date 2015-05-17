@@ -59,10 +59,9 @@
     <Compile Include="OseAddonEditorFilter.cs" />
     <Compile Include="OseModuleRecipe.cs" />
     <Compile Include="OseModuleWorkshop.cs" />
+    <Compile Include="WorkshopItem.cs" />
     <Compile Include="WorkshopQueue.cs" />
-    <Compile Include="WorkshopWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResourceBroker.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

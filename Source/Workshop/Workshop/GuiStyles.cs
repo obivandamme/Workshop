@@ -18,7 +18,8 @@
         public static GUIStyle Databox()
         {
             var databox = new GUIStyle(GUI.skin.box);
-            databox.margin.top = databox.margin.bottom = -5;
+            databox.padding.top = databox.padding.bottom = 5;
+            databox.margin.top = databox.margin.bottom = 5;
             databox.border.top = databox.border.bottom = 5;
             databox.wordWrap = false;
             databox.alignment = TextAnchor.MiddleCenter;

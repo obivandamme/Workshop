@@ -368,10 +368,13 @@
         private void DrawWindowContents(int windowId)
         {
             GUILayout.Space(15);
-
             DrawFilter();
+            GUILayout.Space(15);
+
+            GUILayout.BeginHorizontal();
             DrawAvailableItems();
             DrawQueuedItems();
+            GUILayout.EndHorizontal();
             DrawAvailableInventories();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
@@ -400,33 +403,34 @@
 
         private void DrawAvailableItems()
         {
-            GUILayout.Label("- Available items -", GuiStyles.Heading());
-            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
+            GUILayout.BeginVertical();
+            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
             foreach (var item in _filteredItems)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
+                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
                 var textureRect = GUILayoutUtility.GetLastRect();
                 GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
-                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(295f));
-                GUILayout.Label(" " + item.Part.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(80f));
-                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(80f)))
+                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(200f));
+                GUILayout.Label(" " + item.Part.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(50f));
+                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(50f)))
                 {
                     _queue.Add(item.Part);
                 }
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
         }
 
         private void DrawQueuedItems()
         {
-            GUILayout.Label("- Queued items -", GuiStyles.Heading());
-            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(150f));
+            GUILayout.BeginVertical();
+            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
             foreach (var availablePart in _queue)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(400f));
+                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(270f));
                 if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(80f)))
                 {
                     _queue.Remove(availablePart);
@@ -434,6 +438,7 @@
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
+            GUILayout.EndVertical();
         }
 
         private void DrawAvailableInventories()

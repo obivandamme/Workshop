@@ -6,6 +6,8 @@
 
     using KIS;
 
+    using KSP.IO;
+
     using UnityEngine;
 
     public class OseModuleWorkshop : PartModule
@@ -41,6 +43,18 @@
         [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Progress", guiUnits = "%", guiFormat = "F1")]
         [UI_ProgressBar(minValue = 0, maxValue = 100F)]
         public float Progress = 0;
+
+        [KSPEvent(guiActive = true, guiName = "Print Textures")]
+        public void PrintTextures()
+        {
+            foreach (var textureInfo in GameDatabase.Instance.databaseTexture)
+            {
+                if (textureInfo.name.StartsWith("Squad/PartList"))
+                {
+                    print(textureInfo.name);
+                }
+            }
+        }
 
         [KSPEvent(guiActive = true, guiName = "Open Workbench")]
         public void ContextMenuOnOpenWorkbench()
@@ -337,6 +351,7 @@
         {
             GUILayout.Space(15);
 
+            DrawFilter();
             DrawAvailableItems();
             DrawQueuedItems();
             DrawAvailableInventories();
@@ -347,6 +362,18 @@
             }
 
             GUI.DragWindow();
+        }
+
+        private void DrawFilter()
+        {
+            GUILayout.BeginHorizontal();
+            for (var i = 0; i < 5; i++)
+            {
+                GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
+                var textureRect = GUILayoutUtility.GetLastRect();
+                GUI.DrawTexture(textureRect, this.GetTexture("R&D_node_icon_advmetalworks"), ScaleMode.ScaleToFit);
+            }
+            GUILayout.EndHorizontal();
         }
 
         private void DrawAvailableItems()
@@ -406,6 +433,11 @@
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
+        }
+
+        private Texture2D GetTexture(string iconName)
+        {
+            return GameDatabase.Instance.databaseTexture.Single(t => t.name == "Squad/PartList/SimpleIcons/" + iconName).texture;
         }
     }
 }

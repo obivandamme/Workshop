@@ -1,6 +1,5 @@
 ﻿namespace Workshop
 {
-    using System;
     using System.Linq;
     using System.Collections.Generic;
 
@@ -20,9 +19,9 @@
             base.OnLoad(node);
         }
 
-        private IEnumerable<Demand> PrepareRecipe(string[] inputs)
+        private static IEnumerable<Demand> PrepareRecipe(IList<string> inputs)
         {
-            for (int i = 0; i < inputs.Length; i += 2)
+            for (var i = 0; i < inputs.Count; i += 2)
             {
                 yield return new Demand
                 {

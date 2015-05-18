@@ -19,12 +19,12 @@
         private readonly List<Demand> _upkeep;
 
         // GUI Properties
-        private int _windowId;
+        private readonly int _windowId;
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
         private Vector2 _scrollPosInventories = Vector2.zero;
-        private bool _showGui = false;
+        private bool _showGui;
 
         [KSPField]
         public float ProductivityFactor = 0.1f;
@@ -65,6 +65,7 @@
 
         public OseModuleWorkshop()
         {
+            _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
             _upkeep = new List<Demand>();
@@ -102,7 +103,7 @@
         private void LoadUpkeep()
         {
             var resources = Upkeep.Split(',');
-            for (int i = 0; i < resources.Length; i += 2)
+            for (var i = 0; i < resources.Length; i += 2)
             {
                 _upkeep.Add(new Demand
                 {
@@ -180,10 +181,9 @@
             else
             {
                 Status = "Building " + _builtPart.title;
-
                 foreach (var res in _upkeep)
                 {
-                    this.RequestResource(part, res.ResourceName, res.Ratio * deltaTime);
+                    RequestResource(res.ResourceName, res.Ratio * deltaTime);
                 }
 
                 //Consume Recipe Input
@@ -191,7 +191,7 @@
                 var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
                 foreach (var res in demand)
                 {
-                    var resourcesUsed = this.RequestResource(part, res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
+                    var resourcesUsed = RequestResource(res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
                     _massProcessed += resourcesUsed * res.Density;
                 }
             }
@@ -199,7 +199,7 @@
             Progress = (float)(_massProcessed / _builtPart.partPrefab.mass * 100);
         }
 
-        public double AmountAvailable(Part part, string resource)
+        public double AmountAvailable(string resource)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -207,7 +207,7 @@
             return resList.Sum(r => r.amount);
         }
 
-        public double RequestResource(Part part, string resource, double amount)
+        public double RequestResource(string resource, double amount)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -260,14 +260,14 @@
 
         private string CheckPrerequisites(double deltaTime)
         {
-            if (part.protoModuleCrew.Count < MinimumCrew)
+            if (this.part.protoModuleCrew.Count < MinimumCrew)
             {
                 return "Not enough Crew to operate";
             }
 
             foreach (var res in _upkeep)
             {
-                if (this.AmountAvailable(part, res.ResourceName) < (res.Ratio * deltaTime))
+                if (this.AmountAvailable(res.ResourceName) < (res.Ratio * deltaTime))
                 {
                     return "Not enough " + res.ResourceName;
                 }
@@ -277,7 +277,7 @@
             var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
             foreach (var res in demand)
             {
-                if (this.AmountAvailable(part, res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
+                if (this.AmountAvailable(res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
                 {
                     return "Not enough " + res.ResourceName;
                 }
@@ -306,6 +306,8 @@
             return false;
         }
 
+        // ReSharper disable once UnusedMember.Local => Unity3D
+        // ReSharper disable once InconsistentNaming => Unity3D
         void OnGUI()
         {
             if (_showGui)
@@ -355,7 +357,7 @@
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
-                Rect textureRect = GUILayoutUtility.GetLastRect();
+                var textureRect = GUILayoutUtility.GetLastRect();
                 GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
                 GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(295f));
                 GUILayout.Label(" " + item.Part.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(80f));

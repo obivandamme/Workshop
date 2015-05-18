@@ -6,13 +6,12 @@
 
     using KIS;
 
-    using KSP.IO;
-
     using UnityEngine;
 
     public class OseModuleWorkshop : PartModule
     {
-        private List<WorkshopItem> _items;
+        private WorkshopItem[] _items;
+        private WorkshopItem[] _filteredItems;
         private AvailablePart _builtPart;
         private double _massProcessed;
 
@@ -22,6 +21,7 @@
 
         // GUI Properties
         private readonly int _windowId;
+        private List<FilterBase> _filters = new List<FilterBase>();
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
@@ -90,7 +90,24 @@
             LoadModuleState(node);
             LoadUpkeep();
             LoadAvailableParts();
+            LoadFilters(node);
             base.OnLoad(node);
+        }
+
+        private void LoadFilters(ConfigNode node)
+        {
+            _filters = new List<FilterBase>
+                       {
+                           new FilterBase("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry"),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_commandmodules", PartCategories.Pods),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced", PartCategories.FuelTank),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_propulsionSystems", PartCategories.Engine),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol", PartCategories.Control),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", PartCategories.Structural),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", PartCategories.Aero),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", PartCategories.Utility),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", PartCategories.Science)
+                       };
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -129,7 +146,8 @@
 
         private void LoadAvailableParts()
         {
-            _items = PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasRecipeModule()).Select(p => new WorkshopItem(p)).ToList();
+            _items = PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasRecipeModule()).Select(p => new WorkshopItem(p)).ToArray();
+            _filteredItems = _items;
         }
 
         public override void OnSave(ConfigNode node)
@@ -367,11 +385,15 @@
         private void DrawFilter()
         {
             GUILayout.BeginHorizontal();
-            for (var i = 0; i < 5; i++)
+            foreach (var filter in _filters)
             {
-                GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
+                GUILayout.Box("", GUILayout.Width(32), GUILayout.Height(32));
                 var textureRect = GUILayoutUtility.GetLastRect();
-                GUI.DrawTexture(textureRect, this.GetTexture("R&D_node_icon_advmetalworks"), ScaleMode.ScaleToFit);
+                var texture = GameDatabase.Instance.databaseTexture.Single(t => t.name == filter.TexturePath).texture;
+                if (GUI.Button(textureRect, texture))
+                {
+                    _filteredItems = filter.Filter(_items);
+                };
             }
             GUILayout.EndHorizontal();
         }
@@ -380,7 +402,7 @@
         {
             GUILayout.Label("- Available items -", GuiStyles.Heading());
             _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(250f));
-            foreach (var item in _items)
+            foreach (var item in _filteredItems)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Box("", GUILayout.Width(25), GUILayout.Height(25));
@@ -433,11 +455,6 @@
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
-        }
-
-        private Texture2D GetTexture(string iconName)
-        {
-            return GameDatabase.Instance.databaseTexture.Single(t => t.name == "Squad/PartList/SimpleIcons/" + iconName).texture;
         }
     }
 }

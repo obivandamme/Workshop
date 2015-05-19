@@ -73,11 +73,17 @@
             _upkeep = new List<Demand>();
         }
 
+        public override void OnStart(StartState state)
+        {
+            LoadAvailableParts();
+            GameEvents.onVesselChange.Add(this.OnVesselChange);
+            base.OnStart(state);
+        }
+
         public override void OnLoad(ConfigNode node)
         {
             LoadModuleState(node);
             LoadUpkeep();
-            LoadAvailableParts();
             LoadFilters();
             base.OnLoad(node);
         }
@@ -137,7 +143,10 @@
 
         private void LoadAvailableParts()
         {
-            _items = PartLoader.LoadedPartsList.Where(availablePart => availablePart.HasRecipeModule()).Select(p => new WorkshopItem(p)).ToArray();
+            var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+            _items = PartLoader.LoadedPartsList
+                .Where(availablePart => availablePart.HasRecipeModule() && KIS_Shared.GetPartVolume(availablePart.partPrefab) <= maxVolume)
+                .Select(p => new WorkshopItem(p)).ToArray();
             _filteredItems = _items;
         }
 
@@ -168,7 +177,7 @@
                 {
                     FinishManufacturing();
                 }
-                if (_builtPart != null)
+                else if (_builtPart != null)
                 {
                     ExecuteManufacturing(deltaTime);
                 }
@@ -283,6 +292,14 @@
             base.OnInactive();
         }
 
+        void OnVesselChange(Vessel v)
+        {
+            if (_showGui)
+            {
+                this.ContextMenuOnOpenWorkbench();
+            }
+        }
+
         private string CheckPrerequisites(double deltaTime)
         {
             if (this.part.protoModuleCrew.Count < MinimumCrew)
@@ -324,7 +341,11 @@
             {
                 if (container.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) < container.maxVolume)
                 {
-                    container.AddItem(item.Part.partPrefab);
+                    var kisItem = container.AddItem(item.Part.partPrefab);
+                    foreach (var resourceInfo in kisItem.GetResources())
+                    {
+                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                    }
                     return true;
                 }
             }
@@ -443,7 +464,7 @@
             GUILayout.Box("", GUILayout.Width(750), GUILayout.Height(50));
             var boxRect = GUILayoutUtility.GetLastRect();
 
-            if (Progress > 0)
+            if (Progress >= 1)
             {    
                 var color = GUI.color;
                 GUI.color = new Color(0, 1, 0, 0.8f);

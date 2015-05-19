@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="AvailablePartsExtensions.cs" />
     <Compile Include="Demand.cs" />
+    <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
     <Compile Include="ListExtensions.cs" />

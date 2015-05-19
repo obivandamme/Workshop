@@ -11,6 +11,7 @@
             button.hover.textColor = button.active.textColor = Color.yellow;
             button.onNormal.textColor = button.onFocused.textColor = button.onHover.textColor = button.onActive.textColor = Color.green;
             button.padding = new RectOffset(4, 4, 4, 4);
+            button.margin = new RectOffset(5, 5, 5, 5);
             button.alignment = TextAnchor.MiddleCenter;
             return button;
         }
@@ -31,6 +32,7 @@
             var center = new GUIStyle(GUI.skin.label);
             center.wordWrap = false;
             center.alignment = TextAnchor.MiddleCenter;
+            center.margin.bottom = 0;
             return center;
         }
 
@@ -42,6 +44,15 @@
             heading.normal.textColor = Color.cyan;
             heading.alignment = TextAnchor.MiddleCenter;
             return heading;
+        }
+
+        public static GUIStyle ProgressBar()
+        {
+            var progressBar = new GUIStyle(GUI.skin.box);
+            progressBar.padding = new RectOffset(0, 0, 0, 0);
+            progressBar.margin = new RectOffset(0, 0, 0, 0);
+            progressBar.border = new RectOffset(0, 0, 0, 0);
+            return progressBar;
         }
     }
 }

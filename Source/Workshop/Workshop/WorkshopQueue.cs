@@ -3,17 +3,17 @@ using System.Linq;
 
 namespace Workshop
 {
-    public class WorkshopQueue : List<AvailablePart>
+    public class WorkshopQueue : List<WorkshopItem>
     {
-        public AvailablePart Pop()
+        public WorkshopItem Pop()
         {
             if (Count <= 0)
             {
                 return null;
             }
-            var availablePart = this.ElementAt(0);
+            var item = this.ElementAt(0);
             RemoveAt(0);
-            return availablePart;
+            return item;
         }
     }
 }

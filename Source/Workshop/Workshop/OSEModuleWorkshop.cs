@@ -12,7 +12,7 @@
     {
         private WorkshopItem[] _items;
         private WorkshopItem[] _filteredItems;
-        private AvailablePart _builtPart;
+        private WorkshopItem _builtPart;
         private double _massProcessed;
 
         private readonly Clock _clock;
@@ -43,18 +43,6 @@
         [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Progress", guiUnits = "%", guiFormat = "F1")]
         [UI_ProgressBar(minValue = 0, maxValue = 100F)]
         public float Progress = 0;
-
-        [KSPEvent(guiActive = true, guiName = "Print Textures")]
-        public void PrintTextures()
-        {
-            foreach (var textureInfo in GameDatabase.Instance.databaseTexture)
-            {
-                if (textureInfo.name.StartsWith("Squad/PartList"))
-                {
-                    print(textureInfo.name);
-                }
-            }
-        }
 
         [KSPEvent(guiActive = true, guiName = "Open Workbench")]
         public void ContextMenuOnOpenWorkbench()
@@ -90,11 +78,11 @@
             LoadModuleState(node);
             LoadUpkeep();
             LoadAvailableParts();
-            LoadFilters(node);
+            LoadFilters();
             base.OnLoad(node);
         }
 
-        private void LoadFilters(ConfigNode node)
+        private void LoadFilters()
         {
             _filters = new List<FilterBase>
                        {
@@ -106,7 +94,8 @@
                            new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", PartCategories.Structural),
                            new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", PartCategories.Aero),
                            new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", PartCategories.Utility),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", PartCategories.Science)
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", PartCategories.Science),
+                           new FilterModule("Squad/PartList/SimpleIcons/R&D_node_icon_evatech", "ModuleKISItem")
                        };
         }
 
@@ -119,14 +108,16 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        _builtPart = availablePart;
+                        _builtPart = new WorkshopItem(availablePart);
+                        _builtPart.EnableIcon();
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
                 if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
                 {
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
-                    _queue.Add(availablePart);
+                    var item = new WorkshopItem(availablePart);
+                    _queue.Add(item);
                 }
             }
         }
@@ -155,14 +146,14 @@
             if (_builtPart != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", _builtPart.name);
+                builtPartNode.AddValue("Name", _builtPart.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
             foreach (var queuedPart in _queue)
             {
                 var queuedPartNode = node.AddNode("QUEUEDPART");
-                queuedPartNode.AddValue("Name", queuedPart.name);
+                queuedPartNode.AddValue("Name", queuedPart.Part.name);
             }
 
             base.OnSave(node);
@@ -198,7 +189,8 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _builtPart = nextQueuedPart;
+                _builtPart = new WorkshopItem(nextQueuedPart.Part);
+                _builtPart.EnableIcon();
             }
         }
 
@@ -212,15 +204,15 @@
             }
             else
             {
-                Status = "Building " + _builtPart.title;
+                Status = "Building " + _builtPart.Part.title;
                 foreach (var res in _upkeep)
                 {
                     RequestResource(res.ResourceName, res.Ratio * deltaTime);
                 }
 
                 //Consume Recipe Input
-                var demand = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-                var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+                var demand = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
+                var totalRatio = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
                 foreach (var res in demand)
                 {
                     var resourcesUsed = RequestResource(res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
@@ -228,7 +220,7 @@
                 }
             }
 
-            Progress = (float)(_massProcessed / _builtPart.partPrefab.mass * 100);
+            Progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -270,6 +262,7 @@
         {
             if (AddToContainer(_builtPart))
             {
+                _builtPart.DisableIcon();
                 _builtPart = null;
                 _massProcessed = 0;
                 Progress = 0;
@@ -305,8 +298,8 @@
                 }
             }
 
-            var demand = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-            var totalRatio = _builtPart.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+            var demand = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
+            var totalRatio = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
             foreach (var res in demand)
             {
                 if (this.AmountAvailable(res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
@@ -318,7 +311,7 @@
             return "Ok";
         }
 
-        private bool AddToContainer(AvailablePart availablePart)
+        private bool AddToContainer(WorkshopItem item)
         {
             var kisModuleContainers = vessel.FindPartModulesImplementing<ModuleKISInventory>();
 
@@ -329,9 +322,9 @@
 
             foreach (var container in kisModuleContainers)
             {
-                if (container.GetContentVolume() + KIS_Shared.GetPartVolume(availablePart.partPrefab) < container.maxVolume)
+                if (container.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) < container.maxVolume)
                 {
-                    container.AddItem(availablePart.partPrefab);
+                    container.AddItem(item.Part.partPrefab);
                     return true;
                 }
             }
@@ -375,7 +368,8 @@
             DrawAvailableItems();
             DrawQueuedItems();
             GUILayout.EndHorizontal();
-            DrawAvailableInventories();
+            DrawBuiltItem();
+            //DrawAvailableInventories();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
             {
@@ -396,7 +390,7 @@
                 if (GUI.Button(textureRect, texture))
                 {
                     _filteredItems = filter.Filter(_items);
-                };
+                }
             }
             GUILayout.EndHorizontal();
         }
@@ -408,14 +402,10 @@
             foreach (var item in _filteredItems)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-                var textureRect = GUILayoutUtility.GetLastRect();
-                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
-                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(200f));
-                GUILayout.Label(" " + item.Part.partPrefab.mass, GuiStyles.Center(), GUILayout.Width(50f));
-                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(50f)))
+                item.DrawListItem();
+                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    _queue.Add(item.Part);
+                    _queue.Add(item);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -427,18 +417,46 @@
         {
             GUILayout.BeginVertical();
             _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var availablePart in _queue)
+            foreach (var item in _queue)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(" " + availablePart.title, GuiStyles.Center(), GUILayout.Width(270f));
-                if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(80f)))
+                item.DrawListItem();
+                if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    _queue.Remove(availablePart);
+                    _queue.Remove(item);
                 }
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
+        }
+
+        private void DrawBuiltItem()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
+            if (_builtPart != null)
+            {
+                var textureRect = GUILayoutUtility.GetLastRect();
+                GUI.DrawTexture(textureRect, _builtPart.Icon.texture, ScaleMode.ScaleToFit);
+            }
+            GUILayout.Box("", GUILayout.Width(750), GUILayout.Height(50));
+            var boxRect = GUILayoutUtility.GetLastRect();
+
+            if (Progress > 0)
+            {    
+                var color = GUI.color;
+                GUI.color = new Color(0, 1, 0, 0.8f);
+                GUI.Box(new Rect(boxRect.xMin, boxRect.yMin, boxRect.width * Progress / 100, boxRect.height), "");
+                GUI.color = color;
+            }
+
+            GUI.Label(boxRect, " " + Progress.ToString("0") + " / 100", GuiStyles.Center());
+            //if (GUILayout.Button("X", GuiStyles.Button(), GUILayout.Width(40f), GUILayout.Height(40f)))
+            //{
+            //    // Todo Cancel Production
+            //}
+            GUILayout.EndHorizontal();
         }
 
         private void DrawAvailableInventories()

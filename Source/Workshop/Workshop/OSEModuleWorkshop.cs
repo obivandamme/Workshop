@@ -383,14 +383,11 @@
         {
             GUILayout.Space(15);
             DrawFilter();
-            GUILayout.Space(15);
-
             GUILayout.BeginHorizontal();
             DrawAvailableItems();
             DrawQueuedItems();
             GUILayout.EndHorizontal();
             DrawBuiltItem();
-            //DrawAvailableInventories();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
             {
@@ -402,31 +399,36 @@
 
         private void DrawFilter()
         {
-            GUILayout.BeginHorizontal();
-            foreach (var filter in _filters)
+            GUILayout.Box("", GUILayout.Width(805), GUILayout.Height(42));
+            var boxRect = GUILayoutUtility.GetLastRect();
+            for (var index = 0; index < this._filters.Count; index++)
             {
-                GUILayout.Box("", GUILayout.Width(32), GUILayout.Height(32));
-                var textureRect = GUILayoutUtility.GetLastRect();
+                var filter = this._filters[index];
                 var texture = GameDatabase.Instance.databaseTexture.Single(t => t.name == filter.TexturePath).texture;
-                if (GUI.Button(textureRect, texture))
+                if (GUI.Button(new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32), texture, GuiStyles.Button()))
                 {
-                    _filteredItems = filter.Filter(_items);
+                    this._filteredItems = filter.Filter(this._items);
                 }
             }
-            GUILayout.EndHorizontal();
         }
 
         private void DrawAvailableItems()
         {
             GUILayout.BeginVertical();
             _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in _filteredItems)
+            foreach (var item in this._filteredItems)
             {
                 GUILayout.BeginHorizontal();
-                item.DrawListItem();
+                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
+                var textureRect = GUILayoutUtility.GetLastRect();
+                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
+                GUILayout.BeginVertical();
+                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(250f));
+                GUILayout.Label(" " + item.GetRequiredRocketParts() + " RocketParts", GuiStyles.Center(), GUILayout.Width(250f));
+                GUILayout.EndVertical();
                 if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    _queue.Add(item);
+                    this._queue.Add(item);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -438,13 +440,19 @@
         {
             GUILayout.BeginVertical();
             _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in _queue)
+            foreach (var item in this._queue)
             {
                 GUILayout.BeginHorizontal();
-                item.DrawListItem();
+                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
+                var textureRect = GUILayoutUtility.GetLastRect();
+                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
+                GUILayout.BeginVertical();
+                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(250f));
+                GUILayout.Label(" " + item.GetRequiredRocketParts() + " RocketParts", GuiStyles.Center(), GUILayout.Width(250f));
+                GUILayout.EndVertical();
                 if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    _queue.Remove(item);
+                    this._queue.Remove(item);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -465,40 +473,36 @@
             var boxRect = GUILayoutUtility.GetLastRect();
 
             if (Progress >= 1)
-            {    
+            {
                 var color = GUI.color;
-                GUI.color = new Color(0, 1, 0, 0.8f);
+                GUI.color = new Color(0, 1, 0, 1);
                 GUI.Box(new Rect(boxRect.xMin, boxRect.yMin, boxRect.width * Progress / 100, boxRect.height), "");
                 GUI.color = color;
             }
 
             GUI.Label(boxRect, " " + Progress.ToString("0") + " / 100", GuiStyles.Center());
-            //if (GUILayout.Button("X", GuiStyles.Button(), GUILayout.Width(40f), GUILayout.Height(40f)))
-            //{
-            //    // Todo Cancel Production
-            //}
             GUILayout.EndHorizontal();
         }
 
-        private void DrawAvailableInventories()
-        {
-            GUILayout.Label("- Available Inventories -", GuiStyles.Heading());
-            _scrollPosInventories = GUILayout.BeginScrollView(_scrollPosInventories, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(100f));
-            foreach (var inventory in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>())
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label(" " + inventory.maxVolume, GuiStyles.Center(), GUILayout.Width(400f));
-                if (GUILayout.Button("Highlight", GuiStyles.Button(), GUILayout.Width(80f)))
-                {
-                    inventory.part.SetHighlight(true, false);
-                }
-                if (GUILayout.Button("Unhighlight", GuiStyles.Button(), GUILayout.Width(80f)))
-                {
-                    inventory.part.SetHighlight(false, false);
-                }
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndScrollView();
-        }
+        //private void DrawAvailableInventories()
+        //{
+        //    GUILayout.Label("- Available Inventories -", GuiStyles.Heading());
+        //    _scrollPosInventories = GUILayout.BeginScrollView(_scrollPosInventories, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(100f));
+        //    foreach (var inventory in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>())
+        //    {
+        //        GUILayout.BeginHorizontal();
+        //        GUILayout.Label(" " + inventory.maxVolume, GuiStyles.Center(), GUILayout.Width(400f));
+        //        if (GUILayout.Button("Highlight", GuiStyles.Button(), GUILayout.Width(80f)))
+        //        {
+        //            inventory.part.SetHighlight(true, false);
+        //        }
+        //        if (GUILayout.Button("Unhighlight", GuiStyles.Button(), GUILayout.Width(80f)))
+        //        {
+        //            inventory.part.SetHighlight(false, false);
+        //        }
+        //        GUILayout.EndHorizontal();
+        //    }
+        //    GUILayout.EndScrollView();
+        //}
     }
 }

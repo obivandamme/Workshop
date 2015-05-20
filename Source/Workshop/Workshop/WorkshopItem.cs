@@ -30,16 +30,5 @@ namespace Workshop
             var density = PartResourceLibrary.Instance.GetDefinition("RocketParts").density;
             return this.Part.partPrefab.mass / density;
         }
-
-        public void DrawListItem()
-        {
-            GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-            var textureRect = GUILayoutUtility.GetLastRect();
-            GUI.DrawTexture(textureRect, this.Icon.texture, ScaleMode.ScaleToFit);
-            GUILayout.BeginVertical();
-            GUILayout.Label(" " + this.Part.title, GuiStyles.Center(), GUILayout.Width(250f));
-            GUILayout.Label(" " + this.GetRequiredRocketParts() + " RocketParts", GuiStyles.Center(), GUILayout.Width(250f));
-            GUILayout.EndVertical();
-        }
     }
 }

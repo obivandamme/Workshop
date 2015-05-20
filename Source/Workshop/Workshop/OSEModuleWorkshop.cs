@@ -18,6 +18,7 @@
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
         private readonly List<Demand> _upkeep;
+        private readonly List<Limit> _limits;
 
         // GUI Properties
         private readonly int _windowId;
@@ -25,7 +26,6 @@
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
-        private Vector2 _scrollPosInventories = Vector2.zero;
         private bool _showGui;
 
         [KSPField]
@@ -33,6 +33,9 @@
 
         [KSPField]
         public string Upkeep = "";
+
+        [KSPField]
+        public string Limits = "";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -67,10 +70,12 @@
 
         public OseModuleWorkshop()
         {
+            Debug.Log("[Workshop] - Constructed Module");
             _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
             _upkeep = new List<Demand>();
+            _limits = new List<Limit>();
         }
 
         public override void OnStart(StartState state)
@@ -84,6 +89,7 @@
         {
             LoadModuleState(node);
             LoadUpkeep();
+            LoadLimits();
             LoadFilters();
             base.OnLoad(node);
         }
@@ -141,13 +147,58 @@
             }
         }
 
+        private void LoadLimits()
+        {
+            var techs = Limits.Split(',');
+            for (var i = 0; i < techs.Length; i += 2)
+            {
+                _limits.Add(new Limit
+                {
+                    Technology = techs[i],
+                    MaxVolume = float.Parse(techs[i + 1])
+                });
+            }
+        }
+
         private void LoadAvailableParts()
         {
-            var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+            var maxVolume = this.GetMaxVolume();
             _items = PartLoader.LoadedPartsList
                 .Where(availablePart => availablePart.HasRecipeModule() && KIS_Shared.GetPartVolume(availablePart.partPrefab) <= maxVolume)
                 .Select(p => new WorkshopItem(p)).ToArray();
             _filteredItems = _items;
+        }
+
+        private float GetMaxVolume()
+        {
+            var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+            var unlockedLimits = _limits.Where(l => HasTech(l.Technology)).ToArray();
+            if (unlockedLimits.Length > 0)
+            {
+                var largestUnlockedLimit = unlockedLimits.Max(l => l.MaxVolume);
+                maxVolume = Math.Min(maxVolume, largestUnlockedLimit);
+            }
+            Debug.Log("[Workshop] - Max volume is: " + maxVolume + "liters");
+            return maxVolume;
+        }
+
+        private static bool HasTech(string techid)
+        {
+            try
+            {
+                var persistentfile = KSPUtil.ApplicationRootPath + "saves/" + HighLogic.SaveFolder + "/persistent.sfs";
+                var config = ConfigNode.Load(persistentfile);
+                var gameconf = config.GetNode("GAME");
+                var scenarios = gameconf.GetNodes("SCENARIO");
+                return scenarios
+                    .Where(scenario => scenario.GetValue("name") == "ResearchAndDevelopment")
+                    .SelectMany(scenario => scenario.GetNodes("Tech"))
+                    .Any(technode => technode.GetValue("id") == techid);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public override void OnSave(ConfigNode node)

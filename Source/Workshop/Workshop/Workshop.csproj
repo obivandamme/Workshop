@@ -56,6 +56,7 @@
     <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
+    <Compile Include="Limit.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="GuiStyles.cs" />

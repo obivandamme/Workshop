@@ -59,10 +59,11 @@
     <Compile Include="Limit.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="Clock.cs" />
-    <Compile Include="GuiStyles.cs" />
+    <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
     <Compile Include="OseModuleRecipe.cs" />
     <Compile Include="OseModuleWorkshop.cs" />
+    <Compile Include="WorkshopGui.cs" />
     <Compile Include="WorkshopItem.cs" />
     <Compile Include="WorkshopQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

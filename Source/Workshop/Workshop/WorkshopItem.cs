@@ -24,11 +24,5 @@ namespace Workshop
         {
             this.Icon = null;
         }
-
-        public float GetRequiredRocketParts()
-        {
-            var density = PartResourceLibrary.Instance.GetDefinition("RocketParts").density;
-            return this.Part.partPrefab.mass / density;
-        }
     }
 }

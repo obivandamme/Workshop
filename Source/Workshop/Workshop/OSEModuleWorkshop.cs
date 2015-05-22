@@ -52,7 +52,7 @@
         {
             if (_showGui)
             {
-                foreach (var item in _items)
+                foreach (var item in _filteredItems)
                 {
                     item.DisableIcon();
                 }
@@ -60,7 +60,7 @@
             }
             else
             {
-                foreach (var item in _items)
+                foreach (var item in _filteredItems)
                 {
                     item.EnableIcon();
                 }
@@ -433,11 +433,15 @@
         private void DrawWindowContents(int windowId)
         {
             GUILayout.Space(15);
-            DrawFilter();
+            this.DrawFilters();
+            
+            GUILayout.Space(5);
             GUILayout.BeginHorizontal();
             DrawAvailableItems();
             DrawQueuedItems();
             GUILayout.EndHorizontal();
+            
+            GUILayout.Space(5);
             DrawBuiltItem();
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
@@ -448,17 +452,24 @@
             GUI.DragWindow();
         }
 
-        private void DrawFilter()
+        private void DrawFilters()
         {
             GUILayout.Box("", GUILayout.Width(805), GUILayout.Height(42));
             var boxRect = GUILayoutUtility.GetLastRect();
             for (var index = 0; index < this._filters.Count; index++)
             {
                 var filter = this._filters[index];
-                var texture = GameDatabase.Instance.databaseTexture.Single(t => t.name == filter.TexturePath).texture;
-                if (GUI.Button(new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32), texture, GuiStyles.Button()))
+                if (WorkshopGui.FilterButton(filter, new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32)))
                 {
+                    foreach (var filteredItem in _filteredItems)
+                    {
+                        filteredItem.DisableIcon();
+                    }
                     this._filteredItems = filter.Filter(this._items);
+                    foreach (var filteredItem in _filteredItems)
+                    {
+                        filteredItem.EnableIcon();
+                    }
                 }
             }
         }
@@ -466,20 +477,17 @@
         private void DrawAvailableItems()
         {
             GUILayout.BeginVertical();
-            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
+            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
             foreach (var item in this._filteredItems)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-                var textureRect = GUILayoutUtility.GetLastRect();
-                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
-                GUILayout.BeginVertical();
-                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(250f));
-                GUILayout.Label(" " + item.GetRequiredRocketParts() + " RocketParts", GuiStyles.Center(), GUILayout.Width(250f));
-                GUILayout.EndVertical();
-                if (GUILayout.Button("Queue", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
+                WorkshopGui.ItemThumbnail(item);
+                WorkshopGui.ItemDescription(item);
+                if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    this._queue.Add(item);
+                    var queuedItem = new WorkshopItem(item.Part);
+                    queuedItem.EnableIcon();
+                    this._queue.Add(queuedItem);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -490,19 +498,15 @@
         private void DrawQueuedItems()
         {
             GUILayout.BeginVertical();
-            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, GuiStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
+            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
             foreach (var item in this._queue)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-                var textureRect = GUILayoutUtility.GetLastRect();
-                GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
-                GUILayout.BeginVertical();
-                GUILayout.Label(" " + item.Part.title, GuiStyles.Center(), GUILayout.Width(250f));
-                GUILayout.Label(" " + item.GetRequiredRocketParts() + " RocketParts", GuiStyles.Center(), GUILayout.Width(250f));
-                GUILayout.EndVertical();
-                if (GUILayout.Button("Remove", GuiStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
+                WorkshopGui.ItemThumbnail(item);
+                WorkshopGui.ItemDescription(item);
+                if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
+                    item.DisableIcon();
                     this._queue.Remove(item);
                 }
                 GUILayout.EndHorizontal();
@@ -514,24 +518,15 @@
         private void DrawBuiltItem()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             if (_builtPart != null)
             {
-                var textureRect = GUILayoutUtility.GetLastRect();
-                GUI.DrawTexture(textureRect, _builtPart.Icon.texture, ScaleMode.ScaleToFit);
+                WorkshopGui.ItemThumbnail(_builtPart);
             }
-            GUILayout.Box("", GUILayout.Width(750), GUILayout.Height(50));
-            var boxRect = GUILayoutUtility.GetLastRect();
-
-            if (Progress >= 1)
+            else
             {
-                var color = GUI.color;
-                GUI.color = new Color(0, 1, 0, 1);
-                GUI.Box(new Rect(boxRect.xMin, boxRect.yMin, boxRect.width * Progress / 100, boxRect.height), "");
-                GUI.color = color;
+                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             }
-
-            GUI.Label(boxRect, " " + Progress.ToString("0") + " / 100", GuiStyles.Center());
+            WorkshopGui.ProgressBar(Progress);
             GUILayout.EndHorizontal();
         }
 

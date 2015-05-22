@@ -1,4 +1,4 @@
-OSE Workshop - KAS/KIS Addon
+OSE Workshop - KIS/MKS Addon
 ===
 
 This is the repository for the OSE Workshop mod for [Kerbal Space Program](http://kerbalspaceprogram.com)

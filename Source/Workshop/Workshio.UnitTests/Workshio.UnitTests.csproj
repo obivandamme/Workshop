@@ -58,7 +58,6 @@
   </Choose>
   <ItemGroup>
     <Compile Include="OseWorkshopQueueTests.cs" />
-    <Compile Include="ListExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

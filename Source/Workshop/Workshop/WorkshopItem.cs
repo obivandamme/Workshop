@@ -2,8 +2,6 @@
 
 namespace Workshop
 {
-    using UnityEngine;
-
     public class WorkshopItem
     {
         public AvailablePart Part;

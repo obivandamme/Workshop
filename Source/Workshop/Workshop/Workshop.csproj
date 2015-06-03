@@ -51,13 +51,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AvailablePartsExtensions.cs" />
     <Compile Include="Demand.cs" />
     <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
     <Compile Include="Limit.cs" />
-    <Compile Include="ListExtensions.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
@@ -67,6 +65,7 @@
     <Compile Include="WorkshopItem.cs" />
     <Compile Include="WorkshopQueue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WorkshopUtils.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

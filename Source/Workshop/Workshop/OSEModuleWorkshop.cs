@@ -164,7 +164,9 @@
         {
             var maxVolume = this.GetMaxVolume();
             _items = PartLoader.LoadedPartsList
-                .Where(availablePart => availablePart.HasRecipeModule() && KIS_Shared.GetPartVolume(availablePart.partPrefab) <= maxVolume)
+                .Where(WorkshopUtils.HasRecipeModule)
+                .Where(p => KIS_Shared.GetPartVolume(p.partPrefab) <= maxVolume)
+                .Where(ResearchAndDevelopment.PartModelPurchased)
                 .Select(p => new WorkshopItem(p)).ToArray();
             _filteredItems = _items;
         }

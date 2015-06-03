@@ -57,6 +57,7 @@
     <Compile Include="FilterBase.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
+    <Compile Include="OseModuleRecycler.cs" />
     <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
     <Compile Include="OseModuleRecipe.cs" />

@@ -3,6 +3,8 @@
     using System.Linq;
     using System.Text;
 
+    using KIS;
+
     using UnityEngine;
 
     public class WorkshopGui
@@ -21,25 +23,25 @@
             GUI.Label(boxRect, " " + progress.ToString("0.0") + " / 100", WorkshopStyles.Center());
         }
 
-        public static void ItemThumbnail(WorkshopItem item)
+        public static void ItemThumbnail(KIS_IconViewer icon)
         {
             GUILayout.BeginVertical();
             GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             var textureRect = GUILayoutUtility.GetLastRect();
-            GUI.DrawTexture(textureRect, item.Icon.texture, ScaleMode.ScaleToFit);
+            GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
             GUILayout.EndVertical();
         }
 
-        public static void ItemDescription(WorkshopItem item)
+        public static void ItemDescription(AvailablePart part)
         {
             GUILayout.BeginVertical();
             var text = new StringBuilder();
-            text.AppendLine(item.Part.title);
-            var totalRatio = item.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
-            foreach (var demand in item.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand)
+            text.AppendLine(part.title);
+            var totalRatio = part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+            foreach (var demand in part.partPrefab.GetComponent<OseModuleRecipe>().Demand)
             {
                 var density = PartResourceLibrary.Instance.GetDefinition(demand.ResourceName).density;
-                var requiredResources = item.Part.partPrefab.mass * (demand.Ratio / totalRatio) / density;
+                var requiredResources = part.partPrefab.mass * (demand.Ratio / totalRatio) / density;
                 text.AppendLine(" " + requiredResources + " " + demand.ResourceName);
             }
             GUILayout.Box(text.ToString(), WorkshopStyles.Databox(), GUILayout.Width(250), GUILayout.Height(50));

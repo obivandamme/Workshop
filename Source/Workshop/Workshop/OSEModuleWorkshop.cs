@@ -40,7 +40,7 @@
         [KSPField]
         public int MinimumCrew = 2;
 
-        [KSPField(guiName = "Status", guiActive = true)]
+        [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
         [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Progress", guiUnits = "%", guiFormat = "F1")]
@@ -483,8 +483,8 @@
             foreach (var item in this._filteredItems)
             {
                 GUILayout.BeginHorizontal();
-                WorkshopGui.ItemThumbnail(item);
-                WorkshopGui.ItemDescription(item);
+                WorkshopGui.ItemThumbnail(item.Icon);
+                WorkshopGui.ItemDescription(item.Part);
                 if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     var queuedItem = new WorkshopItem(item.Part);
@@ -504,8 +504,8 @@
             foreach (var item in this._queue)
             {
                 GUILayout.BeginHorizontal();
-                WorkshopGui.ItemThumbnail(item);
-                WorkshopGui.ItemDescription(item);
+                WorkshopGui.ItemThumbnail(item.Icon);
+                WorkshopGui.ItemDescription(item.Part);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     item.DisableIcon();
@@ -522,7 +522,7 @@
             GUILayout.BeginHorizontal();
             if (_builtPart != null)
             {
-                WorkshopGui.ItemThumbnail(_builtPart);
+                WorkshopGui.ItemThumbnail(_builtPart.Icon);
             }
             else
             {

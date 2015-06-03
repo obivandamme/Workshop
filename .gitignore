@@ -185,3 +185,4 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+GameData/ModuleManager.2.6.5.dll

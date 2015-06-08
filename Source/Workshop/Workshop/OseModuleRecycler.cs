@@ -10,7 +10,7 @@
 
     public class OseModuleRecycler : PartModule
     {
-        private WorkshopItem _builtPart;
+        private WorkshopItem _scrappedPart;
         private double _massProcessed;
         private float _progress;
 
@@ -19,7 +19,6 @@
         private readonly List<Demand> _upkeep;
 
         // GUI Properties
-        private readonly int _windowId;
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
@@ -53,20 +52,12 @@
             }
             else
             {
-                foreach (var inventory in part.vessel.FindPartModulesImplementing<ModuleKISInventory>())
-                {
-                    foreach (var item in inventory.items)
-                    {
-                        item.Value.EnableIcon(128);
-                    }
-                }
                 _showGui = true;
             }
         }
 
         public OseModuleRecycler()
         {
-            _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
             _upkeep = new List<Demand>();
@@ -94,8 +85,8 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        _builtPart = new WorkshopItem(availablePart);
-                        _builtPart.EnableIcon();
+                        this._scrappedPart = new WorkshopItem(availablePart);
+                        this._scrappedPart.EnableIcon();
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
@@ -123,10 +114,10 @@
 
         public override void OnSave(ConfigNode node)
         {
-            if (_builtPart != null)
+            if (this._scrappedPart != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", _builtPart.Part.name);
+                builtPartNode.AddValue("Name", this._scrappedPart.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
@@ -148,7 +139,7 @@
                 {
                     FinishManufacturing();
                 }
-                else if (_builtPart != null)
+                else if (this._scrappedPart != null)
                 {
                     ExecuteManufacturing(deltaTime);
                 }
@@ -169,8 +160,8 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _builtPart = nextQueuedPart;
-                _builtPart.EnableIcon();
+                this._scrappedPart = nextQueuedPart;
+                this._scrappedPart.EnableIcon();
             }
         }
 
@@ -184,15 +175,15 @@
             }
             else
             {
-                Status = "Building " + _builtPart.Part.title;
+                Status = "Scrapping " + this._scrappedPart.Part.title;
                 foreach (var res in _upkeep)
                 {
                     this.StoreResource(res.ResourceName, res.Ratio * deltaTime);
                 }
 
                 //Consume Recipe Input
-                var demand = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-                var totalRatio = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
+                var demand = this._scrappedPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
+                var totalRatio = this._scrappedPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
                 foreach (var res in demand)
                 {
                     var resourcesUsed = this.StoreResource(res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
@@ -200,7 +191,7 @@
                 }
             }
 
-            this._progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
+            this._progress = (float)(_massProcessed / this._scrappedPart.Part.partPrefab.mass * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -241,8 +232,8 @@
 
         private void FinishManufacturing()
         {
-            _builtPart.DisableIcon();
-            _builtPart = null;
+            this._scrappedPart.DisableIcon();
+            this._scrappedPart = null;
             _massProcessed = 0;
             this._progress = 0;
             Status = "Online";
@@ -300,7 +291,7 @@
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
             _windowPos = GUILayout.Window(
-                   _windowId,
+                   GetInstanceID(),
                    _windowPos,
                    DrawWindowContents,
                    "Recycler Menu",
@@ -337,6 +328,10 @@
             {
                 foreach (var item in inventory.items)
                 {
+                    if (item.Value.icon == null)
+                    {
+                        item.Value.EnableIcon(128);
+                    }
                     GUILayout.BeginHorizontal();
                     WorkshopGui.ItemThumbnail(item.Value.icon);
                     WorkshopGui.ItemDescription(item.Value.availablePart);
@@ -377,9 +372,9 @@
         private void DrawBuiltItem()
         {
             GUILayout.BeginHorizontal();
-            if (_builtPart != null)
+            if (this._scrappedPart != null)
             {
-                WorkshopGui.ItemThumbnail(_builtPart.Icon);
+                WorkshopGui.ItemThumbnail(this._scrappedPart.Icon);
             }
             else
             {

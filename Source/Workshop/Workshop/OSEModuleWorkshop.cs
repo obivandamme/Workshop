@@ -14,6 +14,7 @@
         private WorkshopItem[] _filteredItems;
         private WorkshopItem _builtPart;
         private double _massProcessed;
+        private float _progress;
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
@@ -43,10 +44,6 @@
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
-        [KSPField(isPersistant = false, guiActive = true, guiActiveEditor = false, guiName = "Progress", guiUnits = "%", guiFormat = "F1")]
-        [UI_ProgressBar(minValue = 0, maxValue = 100F)]
-        public float Progress = 0;
-
         [KSPEvent(guiActive = true, guiName = "Open Workbench")]
         public void ContextMenuOnOpenWorkbench()
         {
@@ -70,7 +67,6 @@
 
         public OseModuleWorkshop()
         {
-            Debug.Log("[Workshop] - Constructed Module");
             _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
@@ -80,18 +76,18 @@
 
         public override void OnStart(StartState state)
         {
+            base.OnStart(state);
             LoadAvailableParts();
             GameEvents.onVesselChange.Add(this.OnVesselChange);
-            base.OnStart(state);
         }
 
         public override void OnLoad(ConfigNode node)
         {
+            base.OnLoad(node);
             LoadModuleState(node);
             LoadUpkeep();
             LoadLimits();
             LoadFilters();
-            base.OnLoad(node);
         }
 
         private void LoadFilters()
@@ -162,47 +158,31 @@
 
         private void LoadAvailableParts()
         {
-            var maxVolume = this.GetMaxVolume();
-            _items = PartLoader.LoadedPartsList
-                .Where(WorkshopUtils.HasRecipeModule)
-                .Where(p => KIS_Shared.GetPartVolume(p.partPrefab) <= maxVolume)
-                .Where(ResearchAndDevelopment.PartModelPurchased)
-                .Select(p => new WorkshopItem(p)).ToArray();
-            _filteredItems = _items;
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                var maxVolume = this.GetMaxVolume();
+                _items = PartLoader.LoadedPartsList
+                    .Where(WorkshopUtils.HasRecipeModule)
+                    .Where(p => KIS_Shared.GetPartVolume(p.partPrefab) <= maxVolume)
+                    .Where(ResearchAndDevelopment.PartModelPurchased)
+                    .Select(p => new WorkshopItem(p)).ToArray();
+                _filteredItems = _items;
+            }
         }
 
         private float GetMaxVolume()
         {
             var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
-            var unlockedLimits = _limits.Where(l => HasTech(l.Technology)).ToArray();
+            var unlockedLimits = _limits.Where(l => WorkshopUtils.HasTech(l.Technology)).ToArray();
             if (unlockedLimits.Length > 0)
             {
                 var largestUnlockedLimit = unlockedLimits.Max(l => l.MaxVolume);
                 maxVolume = Math.Min(maxVolume, largestUnlockedLimit);
             }
-            Debug.Log("[Workshop] - Max volume is: " + maxVolume + "liters");
+            Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
             return maxVolume;
         }
-
-        private static bool HasTech(string techid)
-        {
-            try
-            {
-                var persistentfile = KSPUtil.ApplicationRootPath + "saves/" + HighLogic.SaveFolder + "/persistent.sfs";
-                var config = ConfigNode.Load(persistentfile);
-                var gameconf = config.GetNode("GAME");
-                var scenarios = gameconf.GetNodes("SCENARIO");
-                return scenarios
-                    .Where(scenario => scenario.GetValue("name") == "ResearchAndDevelopment")
-                    .SelectMany(scenario => scenario.GetNodes("Tech"))
-                    .Any(technode => technode.GetValue("id") == techid);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
+        
         public override void OnSave(ConfigNode node)
         {
             if (_builtPart != null)
@@ -226,7 +206,7 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (Progress >= 100)
+                if (this._progress >= 100)
                 {
                     FinishManufacturing();
                 }
@@ -282,7 +262,7 @@
                 }
             }
 
-            Progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
+            this._progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -327,7 +307,7 @@
                 _builtPart.DisableIcon();
                 _builtPart = null;
                 _massProcessed = 0;
-                Progress = 0;
+                this._progress = 0;
                 Status = "Online";
             }
             else
@@ -390,17 +370,18 @@
                 throw new Exception("No KIS Container found");
             }
 
-            foreach (var container in kisModuleContainers)
+            foreach (var inventory in kisModuleContainers.Where(i => WorkshopUtils.IsToSmall(i, item) || i.isFull() || WorkshopUtils.IsNotOccupied(i)))
             {
-                if (container.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) < container.maxVolume)
+                var kisItem = inventory.AddItem(item.Part.partPrefab);
+                if (kisItem == null)
                 {
-                    var kisItem = container.AddItem(item.Part.partPrefab);
-                    foreach (var resourceInfo in kisItem.GetResources())
-                    {
-                        kisItem.SetResource(resourceInfo.resourceName, 0);
-                    }
-                    return true;
+                    throw new Exception("Error adding item " + item.Part.name + " to inventory");
                 }
+                foreach (var resourceInfo in kisItem.GetResources())
+                {
+                    kisItem.SetResource(resourceInfo.resourceName, 0);
+                }
+                return true;
             }
             return false;
         }
@@ -436,13 +417,13 @@
         {
             GUILayout.Space(15);
             this.DrawFilters();
-            
+
             GUILayout.Space(5);
             GUILayout.BeginHorizontal();
             DrawAvailableItems();
             DrawQueuedItems();
             GUILayout.EndHorizontal();
-            
+
             GUILayout.Space(5);
             DrawBuiltItem();
 
@@ -528,7 +509,7 @@
             {
                 GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             }
-            WorkshopGui.ProgressBar(Progress);
+            WorkshopGui.ProgressBar(this._progress);
             GUILayout.EndHorizontal();
         }
 

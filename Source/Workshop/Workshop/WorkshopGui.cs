@@ -32,18 +32,14 @@
             GUILayout.EndVertical();
         }
 
-        public static void ItemDescription(AvailablePart part)
+        public static void ItemDescription(AvailablePart part, string resourceName)
         {
             GUILayout.BeginVertical();
             var text = new StringBuilder();
             text.AppendLine(part.title);
-            var totalRatio = part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
-            foreach (var demand in part.partPrefab.GetComponent<OseModuleRecipe>().Demand)
-            {
-                var density = PartResourceLibrary.Instance.GetDefinition(demand.ResourceName).density;
-                var requiredResources = part.partPrefab.mass * (demand.Ratio / totalRatio) / density;
-                text.AppendLine(" " + requiredResources + " " + demand.ResourceName);
-            }
+            var density = PartResourceLibrary.Instance.GetDefinition(resourceName).density;
+            var requiredResources = part.partPrefab.mass / density;
+            text.AppendLine(" " + requiredResources + " " + resourceName);
             GUILayout.Box(text.ToString(), WorkshopStyles.Databox(), GUILayout.Width(250), GUILayout.Height(50));
             GUILayout.EndVertical();
         }

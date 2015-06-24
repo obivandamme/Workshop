@@ -19,7 +19,6 @@
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
         private readonly List<Demand> _upkeep;
-        private readonly List<Limit> _limits;
 
         // GUI Properties
         private readonly int _windowId;
@@ -36,7 +35,7 @@
         public string Upkeep = "";
 
         [KSPField]
-        public string Limits = "";
+        public string ResourceName = "RocketParts";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -71,7 +70,6 @@
             _clock = new Clock();
             _queue = new WorkshopQueue();
             _upkeep = new List<Demand>();
-            _limits = new List<Limit>();
         }
 
         public override void OnStart(StartState state)
@@ -94,7 +92,6 @@
             base.OnLoad(node);
             LoadModuleState(node);
             LoadUpkeep();
-            LoadLimits();
             LoadFilters();
         }
 
@@ -151,26 +148,12 @@
             }
         }
 
-        private void LoadLimits()
-        {
-            var techs = Limits.Split(',');
-            for (var i = 0; i < techs.Length; i += 2)
-            {
-                _limits.Add(new Limit
-                {
-                    Technology = techs[i],
-                    MaxVolume = float.Parse(techs[i + 1])
-                });
-            }
-        }
-
         private void LoadAvailableParts()
         {
             if (HighLogic.LoadedSceneIsFlight)
             {
                 var maxVolume = this.GetMaxVolume();
                 _items = PartLoader.LoadedPartsList
-                    .Where(WorkshopUtils.HasRecipeModule)
                     .Where(p => KIS_Shared.GetPartVolume(p.partPrefab) <= maxVolume)
                     .Where(ResearchAndDevelopment.PartModelPurchased)
                     .Select(p => new WorkshopItem(p)).ToArray();
@@ -181,16 +164,10 @@
         private float GetMaxVolume()
         {
             var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
-            var unlockedLimits = _limits.Where(l => WorkshopUtils.HasTech(l.Technology)).ToArray();
-            if (unlockedLimits.Length > 0)
-            {
-                var largestUnlockedLimit = unlockedLimits.Max(l => l.MaxVolume);
-                maxVolume = Math.Min(maxVolume, largestUnlockedLimit);
-            }
             Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
             return maxVolume;
         }
-        
+
         public override void OnSave(ConfigNode node)
         {
             if (_builtPart != null)
@@ -261,13 +238,9 @@
                 }
 
                 //Consume Recipe Input
-                var demand = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-                var totalRatio = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
-                foreach (var res in demand)
-                {
-                    var resourcesUsed = RequestResource(res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
-                    _massProcessed += resourcesUsed * res.Density;
-                }
+                var density = PartResourceLibrary.Instance.GetDefinition(this.ResourceName).density;
+                var resourcesUsed = RequestResource(this.ResourceName, deltaTime * ProductivityFactor);
+                _massProcessed += resourcesUsed * density;
             }
 
             this._progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
@@ -356,15 +329,11 @@
                 }
             }
 
-            var demand = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-            var totalRatio = _builtPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
-            foreach (var res in demand)
+            if (this.AmountAvailable(this.ResourceName) < deltaTime * ProductivityFactor)
             {
-                if (this.AmountAvailable(res.ResourceName) < (res.Ratio / totalRatio) * deltaTime * ProductivityFactor)
-                {
-                    return "Not enough " + res.ResourceName;
-                }
+                return "Not enough " + this.ResourceName;
             }
+
 
             return "Ok";
         }
@@ -473,7 +442,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part);
+                WorkshopGui.ItemDescription(item.Part, ResourceName);
                 if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     var queuedItem = new WorkshopItem(item.Part);
@@ -494,7 +463,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part);
+                WorkshopGui.ItemDescription(item.Part, ResourceName);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     item.DisableIcon();

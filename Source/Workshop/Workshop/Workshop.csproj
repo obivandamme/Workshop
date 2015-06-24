@@ -62,7 +62,6 @@
     <Compile Include="WorkshopSettings.cs" />
     <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
-    <Compile Include="OseModuleRecipe.cs" />
     <Compile Include="OseModuleWorkshop.cs" />
     <Compile Include="WorkshopGui.cs" />
     <Compile Include="WorkshopItem.cs" />

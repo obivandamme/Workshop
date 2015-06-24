@@ -28,6 +28,9 @@
         public float ProductivityFactor = 0.1f;
 
         [KSPField]
+        public string ResourceName = "RocketParts";
+
+        [KSPField]
         public string Upkeep = "";
 
         [KSPField]
@@ -184,19 +187,17 @@
             else
             {
                 Status = "Scrapping " + this._scrappedPart.Part.title;
+
+                //Consume Upkeep
                 foreach (var res in _upkeep)
                 {
                     this.StoreResource(res.ResourceName, res.Ratio * deltaTime);
                 }
 
                 //Consume Recipe Input
-                var demand = this._scrappedPart.Part.partPrefab.GetComponent<OseModuleRecipe>().Demand;
-                var totalRatio = this._scrappedPart.Part.partPrefab.GetComponent<OseModuleRecipe>().TotalRatio;
-                foreach (var res in demand)
-                {
-                    var resourcesUsed = this.StoreResource(res.ResourceName, (res.Ratio / totalRatio) * deltaTime * ProductivityFactor);
-                    _massProcessed += resourcesUsed * res.Density;
-                }
+                var density = PartResourceLibrary.Instance.GetDefinition(this.ResourceName).density;
+                var resourcesUsed = this.StoreResource(ResourceName, deltaTime * ProductivityFactor);
+                _massProcessed += resourcesUsed * density;
             }
 
             this._progress = (float)(_massProcessed / this._scrappedPart.Part.partPrefab.mass * 100);
@@ -342,7 +343,7 @@
                     }
                     GUILayout.BeginHorizontal();
                     WorkshopGui.ItemThumbnail(item.Value.icon);
-                    WorkshopGui.ItemDescription(item.Value.availablePart);
+                    WorkshopGui.ItemDescription(item.Value.availablePart, ResourceName);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
                         var queuedItem = new WorkshopItem(item.Value.availablePart);
@@ -365,7 +366,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part);
+                WorkshopGui.ItemDescription(item.Part, ResourceName);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     item.DisableIcon();

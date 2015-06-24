@@ -65,7 +65,15 @@
 
         public override void OnStart(StartState state)
         {
-            GameEvents.onVesselChange.Add(this.OnVesselChange);
+            if (WorkshopSettings.IsKISAvailable)
+            {
+                GameEvents.onVesselChange.Add(this.OnVesselChange);
+            }
+            else
+            {
+                this.Fields["Status"].guiActive = false;
+                this.Events["ContextMenuOnOpenWorkbench"].guiActive = false;
+            }
             base.OnStart(state);
         }
 

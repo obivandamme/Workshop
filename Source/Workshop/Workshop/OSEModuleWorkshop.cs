@@ -76,9 +76,17 @@
 
         public override void OnStart(StartState state)
         {
+            if (WorkshopSettings.IsKISAvailable)
+            {
+                LoadAvailableParts();
+                GameEvents.onVesselChange.Add(this.OnVesselChange);
+            }
+            else
+            {
+                this.Fields["Status"].guiActive = false;
+                this.Events["ContextMenuOnOpenWorkbench"].guiActive = false;
+            }
             base.OnStart(state);
-            LoadAvailableParts();
-            GameEvents.onVesselChange.Add(this.OnVesselChange);
         }
 
         public override void OnLoad(ConfigNode node)

@@ -32,11 +32,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Workshop Dev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\Workshop Dev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="KIS">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Workshop Dev\GameData\KIS\Plugins\KIS.dll</HintPath>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\Workshop Dev\GameData\KIS\Plugins\KIS.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -46,18 +46,20 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Workshop Dev\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\Workshop Dev\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Demand.cs" />
+    <Compile Include="DependancyChecker.cs" />
     <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="OseModuleRecycler.cs" />
+    <Compile Include="WorkshopSettings.cs" />
     <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
     <Compile Include="OseModuleRecipe.cs" />

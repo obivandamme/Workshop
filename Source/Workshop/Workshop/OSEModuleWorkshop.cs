@@ -18,7 +18,6 @@
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
-        private readonly List<Demand> _upkeep;
 
         // GUI Properties
         private readonly int _windowId;
@@ -29,13 +28,16 @@
         private bool _showGui;
 
         [KSPField]
+        public float ConversionRate = 1f;
+
+        [KSPField]
         public float ProductivityFactor = 0.1f;
 
         [KSPField]
-        public string Upkeep = "";
+        public string UpkeepResource = "ElectricCharge";
 
         [KSPField]
-        public string ResourceName = "RocketParts";
+        public string InputResource = "RocketParts";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -69,7 +71,6 @@
             _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
-            _upkeep = new List<Demand>();
         }
 
         public override void OnStart(StartState state)
@@ -91,7 +92,6 @@
         {
             base.OnLoad(node);
             LoadModuleState(node);
-            LoadUpkeep();
             LoadFilters();
         }
 
@@ -132,19 +132,6 @@
                     var item = new WorkshopItem(availablePart);
                     _queue.Add(item);
                 }
-            }
-        }
-
-        private void LoadUpkeep()
-        {
-            var resources = Upkeep.Split(',');
-            for (var i = 0; i < resources.Length; i += 2)
-            {
-                _upkeep.Add(new Demand
-                {
-                    ResourceName = resources[i],
-                    Ratio = float.Parse(resources[i + 1])
-                });
             }
         }
 
@@ -232,18 +219,15 @@
             else
             {
                 Status = "Building " + _builtPart.Part.title;
-                foreach (var res in _upkeep)
-                {
-                    RequestResource(res.ResourceName, res.Ratio * deltaTime);
-                }
+                this.RequestResource(this.UpkeepResource, deltaTime);
 
                 //Consume Recipe Input
-                var density = PartResourceLibrary.Instance.GetDefinition(this.ResourceName).density;
-                var resourcesUsed = RequestResource(this.ResourceName, deltaTime * ProductivityFactor);
+                var density = PartResourceLibrary.Instance.GetDefinition(this.InputResource).density;
+                var resourcesUsed = this.RequestResource(this.InputResource, deltaTime * ProductivityFactor);
                 _massProcessed += resourcesUsed * density;
             }
 
-            this._progress = (float)(_massProcessed / _builtPart.Part.partPrefab.mass * 100);
+            this._progress = (float)(_massProcessed / (_builtPart.Part.partPrefab.mass * this.ConversionRate) * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -321,17 +305,14 @@
                 return "Not enough Crew to operate";
             }
 
-            foreach (var res in _upkeep)
+            if (this.AmountAvailable(this.UpkeepResource) < deltaTime)
             {
-                if (this.AmountAvailable(res.ResourceName) < (res.Ratio * deltaTime))
-                {
-                    return "Not enough " + res.ResourceName;
-                }
+                return "Not enough " + this.UpkeepResource;
             }
 
-            if (this.AmountAvailable(this.ResourceName) < deltaTime * ProductivityFactor)
+            if (this.AmountAvailable(this.InputResource) < deltaTime * this.ProductivityFactor)
             {
-                return "Not enough " + this.ResourceName;
+                return "Not enough " + this.InputResource;
             }
 
 
@@ -340,25 +321,30 @@
 
         private bool AddToContainer(WorkshopItem item)
         {
-            var kisModuleContainers = vessel.FindPartModulesImplementing<ModuleKISInventory>();
+            var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
 
-            if (kisModuleContainers == null || kisModuleContainers.Count == 0)
+            if (inventories == null || inventories.Count == 0)
             {
-                throw new Exception("No KIS Container found");
+                throw new Exception("No KIS Inventory found!");
             }
 
-            foreach (var inventory in kisModuleContainers.Where(i => WorkshopUtils.IsToSmall(i, item) || i.isFull() || WorkshopUtils.IsNotOccupied(i)))
+            var freeInventories = inventories.Where(i => WorkshopUtils.HasFreeSpace(i, item) && WorkshopUtils.HasFreeSlot(i) && WorkshopUtils.IsOccupied(i));
+
+            if (freeInventories.Count() > 0)
             {
-                var kisItem = inventory.AddItem(item.Part.partPrefab);
-                if (kisItem == null)
+                foreach (var inventory in freeInventories)
                 {
-                    throw new Exception("Error adding item " + item.Part.name + " to inventory");
+                    var kisItem = inventory.AddItem(item.Part.partPrefab);
+                    if (kisItem == null)
+                    {
+                        throw new Exception("Error adding item " + item.Part.name + " to inventory");
+                    }
+                    foreach (var resourceInfo in kisItem.GetResources())
+                    {
+                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                    }
+                    return true;
                 }
-                foreach (var resourceInfo in kisItem.GetResources())
-                {
-                    kisItem.SetResource(resourceInfo.resourceName, 0);
-                }
-                return true;
             }
             return false;
         }
@@ -442,7 +428,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, ResourceName);
+                WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     var queuedItem = new WorkshopItem(item.Part);
@@ -463,7 +449,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, ResourceName);
+                WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     item.DisableIcon();

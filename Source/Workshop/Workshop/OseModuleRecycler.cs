@@ -16,7 +16,6 @@
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
-        private readonly List<Demand> _upkeep;
 
         // GUI Properties
         private Rect _windowPos;
@@ -25,13 +24,16 @@
         private bool _showGui;
 
         [KSPField]
+        public float ConversionRate = 0.25f;
+
+        [KSPField]
         public float ProductivityFactor = 0.1f;
 
         [KSPField]
-        public string ResourceName = "RocketParts";
+        public string OutputResource = "RocketParts";
 
         [KSPField]
-        public string Upkeep = "";
+        public string UpkeepResource = "ElectricCharge";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -63,7 +65,6 @@
         {
             _clock = new Clock();
             _queue = new WorkshopQueue();
-            _upkeep = new List<Demand>();
         }
 
         public override void OnStart(StartState state)
@@ -83,7 +84,6 @@
         public override void OnLoad(ConfigNode node)
         {
             LoadModuleState(node);
-            LoadUpkeep();
             base.OnLoad(node);
         }
 
@@ -107,19 +107,6 @@
                     var item = new WorkshopItem(availablePart);
                     _queue.Add(item);
                 }
-            }
-        }
-
-        private void LoadUpkeep()
-        {
-            var resources = Upkeep.Split(',');
-            for (var i = 0; i < resources.Length; i += 2)
-            {
-                _upkeep.Add(new Demand
-                {
-                    ResourceName = resources[i],
-                    Ratio = float.Parse(resources[i + 1])
-                });
             }
         }
 
@@ -189,18 +176,15 @@
                 Status = "Scrapping " + this._scrappedPart.Part.title;
 
                 //Consume Upkeep
-                foreach (var res in _upkeep)
-                {
-                    this.StoreResource(res.ResourceName, res.Ratio * deltaTime);
-                }
+                this.RequestResource(this.UpkeepResource, deltaTime);
 
-                //Consume Recipe Input
-                var density = PartResourceLibrary.Instance.GetDefinition(this.ResourceName).density;
-                var resourcesUsed = this.StoreResource(ResourceName, deltaTime * ProductivityFactor);
+                //Produce Output
+                var density = PartResourceLibrary.Instance.GetDefinition(this.OutputResource).density;
+                var resourcesUsed = this.StoreResource(this.OutputResource, deltaTime * ProductivityFactor);
                 _massProcessed += resourcesUsed * density;
             }
 
-            this._progress = (float)(_massProcessed / this._scrappedPart.Part.partPrefab.mass * 100);
+            this._progress = (float)(_massProcessed / (_scrappedPart.Part.partPrefab.mass * this.ConversionRate) * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -239,6 +223,33 @@
             return amountStored;
         }
 
+        public double RequestResource(string resource, double amount)
+        {
+            var res = PartResourceLibrary.Instance.GetDefinition(resource);
+            var resList = new List<PartResource>();
+            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
+            var demandLeft = amount;
+            var amountTaken = 0d;
+
+            foreach (var r in resList)
+            {
+                if (r.amount >= demandLeft)
+                {
+                    amountTaken += demandLeft;
+                    r.amount -= demandLeft;
+                    demandLeft = 0;
+                }
+                else
+                {
+                    amountTaken += r.amount;
+                    demandLeft -= r.amount;
+                    r.amount = 0;
+                }
+            }
+
+            return amountTaken;
+        }
+
         private void FinishManufacturing()
         {
             this._scrappedPart.DisableIcon();
@@ -272,12 +283,9 @@
                 return "Not enough Crew to operate";
             }
 
-            foreach (var res in _upkeep)
+            if (this.AmountAvailable(this.UpkeepResource) < deltaTime)
             {
-                if (this.AmountAvailable(res.ResourceName) < (res.Ratio * deltaTime))
-                {
-                    return "Not enough " + res.ResourceName;
-                }
+                return "Not enough " + this.UpkeepResource;
             }
 
             return "Ok";
@@ -343,7 +351,7 @@
                     }
                     GUILayout.BeginHorizontal();
                     WorkshopGui.ItemThumbnail(item.Value.icon);
-                    WorkshopGui.ItemDescription(item.Value.availablePart, ResourceName);
+                    WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
                         var queuedItem = new WorkshopItem(item.Value.availablePart);
@@ -366,7 +374,7 @@
             {
                 GUILayout.BeginHorizontal();
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, ResourceName);
+                WorkshopGui.ItemDescription(item.Part, this.OutputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     item.DisableIcon();

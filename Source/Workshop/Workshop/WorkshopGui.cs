@@ -39,7 +39,7 @@
             text.AppendLine(part.title);
             var density = PartResourceLibrary.Instance.GetDefinition(resourceName).density;
             var requiredResources = part.partPrefab.mass / density;
-            text.AppendLine(" " + requiredResources + " " + resourceName);
+            text.AppendLine(" " + requiredResources.ToString("0.00") + " " + resourceName);
             GUILayout.Box(text.ToString(), WorkshopStyles.Databox(), GUILayout.Width(250), GUILayout.Height(50));
             GUILayout.EndVertical();
         }

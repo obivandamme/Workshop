@@ -1,4 +1,6 @@
-﻿namespace Workshop
+﻿using System.Collections.Generic;
+using System.Linq;
+namespace Workshop
 {
     public class FilterBase
     {
@@ -9,9 +11,9 @@
             this.TexturePath = texturePath;
         }
 
-        public virtual WorkshopItem[] Filter(WorkshopItem[] items)
+        public virtual WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
-            return items;
+            return items.ToArray();
         }
     }
 }

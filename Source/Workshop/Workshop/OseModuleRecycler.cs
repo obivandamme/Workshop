@@ -400,5 +400,10 @@
             WorkshopGui.ProgressBar(this._progress);
             GUILayout.EndHorizontal();
         }
+
+        public override string GetInfo()
+        {
+            return "Recycler Description for VAB";
+        }
     }
 }

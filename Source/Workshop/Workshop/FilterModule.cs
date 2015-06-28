@@ -1,5 +1,6 @@
 ﻿namespace Workshop
 {
+    using System.Collections.Generic;
     using System.Linq;
 
     public class FilterModule : FilterBase
@@ -11,7 +12,7 @@
             this.Module = module;
         }
 
-        public override WorkshopItem[] Filter(WorkshopItem[] items)
+        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
             return items.Where(i => i.Part.partPrefab.GetComponent(Module) != null).ToArray();
         }

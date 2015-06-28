@@ -36,9 +36,9 @@ namespace Workshop
                 {
                     Debug.LogError(assemblyName + " version " + dependancyAssembly.GetName().Version + "is not compatible with OSE Workshop!");
                     var sb = new StringBuilder();
-                    sb.AppendFormat("{0} version must be {1} for this version of OSE Workshop.", assemblyName, minimalVersion); 
+                    sb.AppendFormat("{0} version must be at least {1} for this version of OSE Workshop!", assemblyName, minimalVersion); 
                     sb.AppendLine();
-                    sb.AppendFormat("Please update {0} to Version {1}", assemblyName, minimalVersion); 
+                    sb.AppendFormat("Please update {0} to the latest Version!", assemblyName); 
                     sb.AppendLine();
                     PopupDialog.SpawnPopupDialog("OSE Workshop/" + assemblyName + " Version mismatch", sb.ToString(), "OK", false, HighLogic.Skin);
                 }

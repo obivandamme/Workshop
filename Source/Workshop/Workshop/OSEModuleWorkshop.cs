@@ -10,7 +10,7 @@
 
     public class OseModuleWorkshop : PartModule
     {
-        private WorkshopItem[] _items;
+        private List<WorkshopItem> _items;
         private WorkshopItem[] _filteredItems;
         private WorkshopItem _builtPart;
         private double _massProcessed;
@@ -42,6 +42,9 @@
         [KSPField]
         public int MinimumCrew = 2;
 
+        [KSPField]
+        public int MaxPartVolume = 300;
+
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
@@ -58,10 +61,6 @@
             }
             else
             {
-                foreach (var item in _filteredItems)
-                {
-                    item.EnableIcon();
-                }
                 _showGui = true;
             }
         }
@@ -71,6 +70,7 @@
             _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
+            _items = new List<WorkshopItem>();
         }
 
         public override void OnStart(StartState state)
@@ -140,17 +140,28 @@
             if (HighLogic.LoadedSceneIsFlight)
             {
                 var maxVolume = this.GetMaxVolume();
-                _items = PartLoader.LoadedPartsList
-                    .Where(p => KIS_Shared.GetPartVolume(p.partPrefab) <= maxVolume)
-                    .Where(ResearchAndDevelopment.PartModelPurchased)
-                    .Select(p => new WorkshopItem(p)).ToArray();
-                _filteredItems = _items;
+                foreach (var loadedPart in PartLoader.LoadedPartsList)
+                {
+                    try
+                    {
+                        if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
+                        {
+                            _items.Add(new WorkshopItem(loadedPart));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
+                    }
+                }
+                _filteredItems = _items.ToArray();
             }
         }
 
         private float GetMaxVolume()
         {
-            var maxVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+            var maxInventoyVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+            var maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
             Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
             return maxVolume;
         }
@@ -412,10 +423,6 @@
                         filteredItem.DisableIcon();
                     }
                     this._filteredItems = filter.Filter(this._items);
-                    foreach (var filteredItem in _filteredItems)
-                    {
-                        filteredItem.EnableIcon();
-                    }
                 }
             }
         }
@@ -427,13 +434,15 @@
             foreach (var item in this._filteredItems)
             {
                 GUILayout.BeginHorizontal();
+                if (item.Icon == null)
+                {
+                    item.EnableIcon();
+                }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    var queuedItem = new WorkshopItem(item.Part);
-                    queuedItem.EnableIcon();
-                    this._queue.Add(queuedItem);
+                    this._queue.Add(new WorkshopItem(item.Part));
                 }
                 GUILayout.EndHorizontal();
             }
@@ -448,6 +457,10 @@
             foreach (var item in this._queue)
             {
                 GUILayout.BeginHorizontal();
+                if (item.Icon == null)
+                {
+                    item.EnableIcon();
+                }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
@@ -476,25 +489,9 @@
             GUILayout.EndHorizontal();
         }
 
-        //private void DrawAvailableInventories()
-        //{
-        //    GUILayout.Label("- Available Inventories -", GuiStyles.Heading());
-        //    _scrollPosInventories = GUILayout.BeginScrollView(_scrollPosInventories, GuiStyles.Databox(), GUILayout.Width(600f), GUILayout.Height(100f));
-        //    foreach (var inventory in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleKISInventory>())
-        //    {
-        //        GUILayout.BeginHorizontal();
-        //        GUILayout.Label(" " + inventory.maxVolume, GuiStyles.Center(), GUILayout.Width(400f));
-        //        if (GUILayout.Button("Highlight", GuiStyles.Button(), GUILayout.Width(80f)))
-        //        {
-        //            inventory.part.SetHighlight(true, false);
-        //        }
-        //        if (GUILayout.Button("Unhighlight", GuiStyles.Button(), GUILayout.Width(80f)))
-        //        {
-        //            inventory.part.SetHighlight(false, false);
-        //        }
-        //        GUILayout.EndHorizontal();
-        //    }
-        //    GUILayout.EndScrollView();
-        //}
+        public override string GetInfo()
+        {
+            return "Workshop Description for VAB";
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace Workshop
 {
+    using System.Collections.Generic;
     using System.Linq;
 
     public class FilterCategory : FilterBase
@@ -11,7 +12,7 @@
             this.Category = category;
         }
 
-        public override WorkshopItem[] Filter(WorkshopItem[] items)
+        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
             return items.Where(i => i.Part.category == Category).ToArray();
         }

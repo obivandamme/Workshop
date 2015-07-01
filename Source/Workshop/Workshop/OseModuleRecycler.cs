@@ -373,6 +373,10 @@
             foreach (var item in this._queue)
             {
                 GUILayout.BeginHorizontal();
+                if (item.Icon == null)
+                {
+                    item.EnableIcon();
+                }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))

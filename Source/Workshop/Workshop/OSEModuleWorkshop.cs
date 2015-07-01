@@ -278,8 +278,11 @@
 
         private void FinishManufacturing()
         {
-            if (AddToContainer(_builtPart))
+            var destinationInventory = AddToContainer(_builtPart);
+            if (destinationInventory != null)
             {
+                ScreenMessages.PostScreenMessage("3D Printing of " + _builtPart.Part.title + " finished.",5,ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("The Part was placed in " + destinationInventory.invName, 5, ScreenMessageStyle.UPPER_CENTER);
                 _builtPart.DisableIcon();
                 _builtPart = null;
                 _massProcessed = 0;
@@ -330,7 +333,7 @@
             return "Ok";
         }
 
-        private bool AddToContainer(WorkshopItem item)
+        private ModuleKISInventory AddToContainer(WorkshopItem item)
         {
             var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
 
@@ -339,9 +342,9 @@
                 throw new Exception("No KIS Inventory found!");
             }
 
-            var freeInventories = inventories.Where(i => WorkshopUtils.HasFreeSpace(i, item) && WorkshopUtils.HasFreeSlot(i) && WorkshopUtils.IsOccupied(i));
+            var freeInventories = inventories.Where(i => WorkshopUtils.HasFreeSpace(i, item) && WorkshopUtils.HasFreeSlot(i) && WorkshopUtils.IsOccupied(i)).ToArray();
 
-            if (freeInventories.Count() > 0)
+            if (freeInventories.Any())
             {
                 foreach (var inventory in freeInventories)
                 {
@@ -354,10 +357,10 @@
                     {
                         kisItem.SetResource(resourceInfo.resourceName, 0);
                     }
-                    return true;
+                    return inventory;
                 }
             }
-            return false;
+            return null;
         }
 
         // ReSharper disable once UnusedMember.Local => Unity3D

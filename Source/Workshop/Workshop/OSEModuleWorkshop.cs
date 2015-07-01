@@ -282,7 +282,6 @@
             if (destinationInventory != null)
             {
                 ScreenMessages.PostScreenMessage("3D Printing of " + _builtPart.Part.title + " finished.",5,ScreenMessageStyle.UPPER_CENTER);
-                ScreenMessages.PostScreenMessage("The Part was placed in " + destinationInventory.invName, 5, ScreenMessageStyle.UPPER_CENTER);
                 _builtPart.DisableIcon();
                 _builtPart = null;
                 _massProcessed = 0;

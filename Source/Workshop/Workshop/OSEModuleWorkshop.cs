@@ -10,7 +10,7 @@
 
     public class OseModuleWorkshop : PartModule
     {
-        private List<WorkshopItem> _items;
+        private WorkshopItem[] _items;
         private WorkshopItem[] _filteredItems;
         private WorkshopItem _builtPart;
         private double _massProcessed;
@@ -20,7 +20,6 @@
         private readonly WorkshopQueue _queue;
 
         // GUI Properties
-        private readonly int _windowId;
         private List<FilterBase> _filters = new List<FilterBase>();
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
@@ -37,7 +36,7 @@
         public string UpkeepResource = "ElectricCharge";
 
         [KSPField]
-        public string InputResource = "RocketParts";
+        public string InputResource = "MaterialKits";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -67,10 +66,8 @@
 
         public OseModuleWorkshop()
         {
-            _windowId = new System.Random().Next(65536);
             _clock = new Clock();
             _queue = new WorkshopQueue();
-            _items = new List<WorkshopItem>();
         }
 
         public override void OnStart(StartState state)
@@ -139,6 +136,7 @@
         {
             if (HighLogic.LoadedSceneIsFlight)
             {
+                var items = new List<WorkshopItem>();
                 var maxVolume = this.GetMaxVolume();
                 foreach (var loadedPart in PartLoader.LoadedPartsList)
                 {
@@ -146,24 +144,33 @@
                     {
                         if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
                         {
-                            _items.Add(new WorkshopItem(loadedPart));
+                            items.Add(new WorkshopItem(loadedPart));
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
                     }
                 }
-                _filteredItems = _items.ToArray();
+                _items = items.ToArray();
+                _filteredItems = items.ToArray();
             }
         }
 
         private float GetMaxVolume()
         {
-            var maxInventoyVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
-            var maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
-            Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
-            return maxVolume;
+            try
+            {
+                var maxInventoyVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
+                var maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
+                Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
+                return maxVolume;
+            }
+            catch (Exception)
+            {
+                Debug.LogError("[OSE] - Error while determing maximum volume");
+                return 0;
+            }
         }
 
         public override void OnSave(ConfigNode node)
@@ -379,9 +386,9 @@
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
             _windowPos = GUILayout.Window(
-                   _windowId,
+                   this.GetInstanceID(),
                    _windowPos,
-                   DrawWindowContents,
+                   this.DrawWindowContents,
                    "Workshop Build Menu",
                    GUILayout.ExpandWidth(true),
                    GUILayout.ExpandHeight(true),
@@ -489,11 +496,6 @@
             }
             WorkshopGui.ProgressBar(this._progress);
             GUILayout.EndHorizontal();
-        }
-
-        public override string GetInfo()
-        {
-            return "Workshop Description for VAB";
         }
     }
 }

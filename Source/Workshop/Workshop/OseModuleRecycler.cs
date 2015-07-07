@@ -30,7 +30,7 @@
         public float ProductivityFactor = 0.1f;
 
         [KSPField]
-        public string OutputResource = "RocketParts";
+        public string OutputResource = "MaterialKits";
 
         [KSPField]
         public string UpkeepResource = "ElectricCharge";

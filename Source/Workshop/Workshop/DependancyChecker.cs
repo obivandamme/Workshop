@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using System.Text;
 
@@ -10,42 +8,34 @@ namespace Workshop
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     internal class DependancyChecker : MonoBehaviour
     {
-        string assemblyName = "KIS";
-        int minimalVersionMajor = 1;
-        int minimalVersionMinor = 1;
-        int minimalVersionBuild = 5;
-        
+        private const string AssemblyName = "KIS";
+        private const int MinimalVersionMajor = 1;
+        private const int MinimalVersionMinor = 1;
+        private const int MinimalVersionBuild = 5;
+
         public void Start()
         {
-            string minimalVersion = minimalVersionMajor + "." + minimalVersionMinor + "." + minimalVersionBuild;
-            Assembly dependancyAssembly = null;
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                if (assembly.GetName().Name == assemblyName)
-                {
-                    dependancyAssembly = assembly;
-                    break;
-                }
-            }
+            var minimalVersion = MinimalVersionMajor + "." + MinimalVersionMinor + "." + MinimalVersionBuild;
+            var dependancyAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly => assembly.GetName().Name == AssemblyName);
             if (dependancyAssembly != null)
             {
                 Debug.Log("Assembly : " + dependancyAssembly.GetName().Name + " | Version : " + dependancyAssembly.GetName().Version + " found !");
                 Debug.Log("Minimal version needed is : " + minimalVersion);
 
-                if (dependancyAssembly.GetName().Version.Major < minimalVersionMajor || dependancyAssembly.GetName().Version.Minor < minimalVersionMinor || dependancyAssembly.GetName().Version.Build < minimalVersionBuild)
+                if (dependancyAssembly.GetName().Version.Major < MinimalVersionMajor || dependancyAssembly.GetName().Version.Minor < MinimalVersionMinor || dependancyAssembly.GetName().Version.Build < MinimalVersionBuild)
                 {
-                    Debug.LogError(assemblyName + " version " + dependancyAssembly.GetName().Version + "is not compatible with OSE Workshop!");
+                    Debug.LogError(AssemblyName + " version " + dependancyAssembly.GetName().Version + "is not compatible with OSE Workshop!");
                     var sb = new StringBuilder();
-                    sb.AppendFormat("{0} version must be at least {1} for this version of OSE Workshop!", assemblyName, minimalVersion); 
+                    sb.AppendFormat("{0} version must be at least {1} for this version of OSE Workshop!", AssemblyName, minimalVersion); 
                     sb.AppendLine();
-                    sb.AppendFormat("Please update {0} to the latest Version!", assemblyName); 
+                    sb.AppendFormat("Please update {0} to the latest Version!", AssemblyName); 
                     sb.AppendLine();
-                    PopupDialog.SpawnPopupDialog("OSE Workshop/" + assemblyName + " Version mismatch", sb.ToString(), "OK", false, HighLogic.Skin);
+                    PopupDialog.SpawnPopupDialog("OSE Workshop / " + AssemblyName + " Version mismatch", sb.ToString(), "OK", false, HighLogic.Skin);
                 }
             }
             else
             {
-                Debug.Log("Assembly : " + assemblyName + " not found !");
+                Debug.Log("Assembly : " + AssemblyName + " not found !");
                 Debug.Log("Disabling OSE Workshop!");
             }
         }

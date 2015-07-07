@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Workshop
 {
-    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new GameScenes[] {
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, new [] {
 			GameScenes.SPACECENTER,
 			GameScenes.EDITOR,
 			GameScenes.FLIGHT,

@@ -1,8 +1,9 @@
-﻿using System;
-using System.Linq;
-
-namespace Workshop
+﻿namespace Workshop
 {
+    using System;
+    using System.Linq;
+    using UnityEngine;
+
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, new [] {
 			GameScenes.SPACECENTER,
 			GameScenes.EDITOR,
@@ -19,8 +20,16 @@ namespace Workshop
 
         public override void OnAwake()
         {
-            IsKISAvailable = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.Equals("KIS", StringComparison.InvariantCultureIgnoreCase));
             base.OnAwake();
+            try
+            {
+                IsKISAvailable = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.Equals("KIS", StringComparison.InvariantCultureIgnoreCase));
+            }
+            catch (Exception)
+            {
+                IsKISAvailable = false;
+                Debug.LogError("Error while checking for KIS. It will be disabled");
+            }
         }
     }
 }

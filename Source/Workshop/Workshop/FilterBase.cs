@@ -13,7 +13,7 @@ namespace Workshop
 
         public virtual WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
-            return items.ToArray();
+            return items.OrderBy(i => i.Part.title).ToArray();
         }
     }
 }

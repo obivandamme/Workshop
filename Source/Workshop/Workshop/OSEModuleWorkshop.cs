@@ -152,8 +152,8 @@
                         Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
                     }
                 }
-                _items = items.ToArray();
-                _filteredItems = items.ToArray();
+                _items = items.OrderBy(i => i.Part.title).ToArray();
+                _filteredItems = items.OrderBy(i => i.Part.title).ToArray();
             }
         }
 

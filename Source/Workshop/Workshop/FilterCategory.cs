@@ -14,7 +14,7 @@
 
         public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
-            return items.Where(i => i.Part.category == Category).ToArray();
+            return items.Where(i => i.Part.category == Category).OrderBy(i => i.Part.title).ToArray();
         }
     }
 }

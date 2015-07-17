@@ -13,7 +13,9 @@
         private WorkshopItem[] _items;
         private WorkshopItem[] _filteredItems;
         private WorkshopItem _builtPart;
+        private WorkshopItem _canceledPart;
         private double _massProcessed;
+
         private float _progress;
 
         private readonly Clock _clock;
@@ -208,6 +210,12 @@
                 {
                     StartManufacturing();
                 }
+                if (_canceledPart != null)
+                {
+                    _canceledPart.DisableIcon();
+                    _queue.Remove(_canceledPart);
+                    _canceledPart = null;
+                }
             }
             catch (Exception ex)
             {
@@ -221,8 +229,7 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _builtPart = new WorkshopItem(nextQueuedPart.Part);
-                _builtPart.EnableIcon();
+                _builtPart = nextQueuedPart;
             }
         }
 
@@ -474,8 +481,7 @@
                 WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    item.DisableIcon();
-                    this._queue.Remove(item);
+                    this._canceledPart = item;
                 }
                 GUILayout.EndHorizontal();
             }

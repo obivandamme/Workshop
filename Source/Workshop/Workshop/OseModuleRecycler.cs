@@ -11,6 +11,8 @@
     public class OseModuleRecycler : PartModule
     {
         private WorkshopItem _scrappedPart;
+        private WorkshopItem _canceledPart;
+
         private double _massProcessed;
         private float _progress;
 
@@ -145,6 +147,12 @@
                 {
                     StartManufacturing();
                 }
+                if (_canceledPart != null)
+                {
+                    _canceledPart.DisableIcon();
+                    _queue.Remove(_canceledPart);
+                    _canceledPart = null;
+                }
             }
             catch (Exception ex)
             {
@@ -158,8 +166,7 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                this._scrappedPart = nextQueuedPart;
-                this._scrappedPart.EnableIcon();
+                _scrappedPart = nextQueuedPart;
             }
         }
 
@@ -252,10 +259,10 @@
 
         private void FinishManufacturing()
         {
-            this._scrappedPart.DisableIcon();
-            this._scrappedPart = null;
+            _scrappedPart.DisableIcon();
+            _scrappedPart = null;
             _massProcessed = 0;
-            this._progress = 0;
+            _progress = 0;
             Status = "Online";
         }
 
@@ -381,8 +388,7 @@
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    item.DisableIcon();
-                    this._queue.Remove(item);
+                    _canceledPart = item;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -393,21 +399,25 @@
         private void DrawBuiltItem()
         {
             GUILayout.BeginHorizontal();
-            if (this._scrappedPart != null)
+            if (_scrappedPart != null)
             {
-                WorkshopGui.ItemThumbnail(this._scrappedPart.Icon);
+                if (_scrappedPart.Icon == null)
+                {
+                    _scrappedPart.EnableIcon();
+                }
+                WorkshopGui.ItemThumbnail(_scrappedPart.Icon);
             }
             else
             {
                 GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             }
-            WorkshopGui.ProgressBar(this._progress);
+            WorkshopGui.ProgressBar(_progress);
             GUILayout.EndHorizontal();
         }
 
         public override string GetInfo()
         {
-            return "Recycler Description for VAB";
+            return "Recycler Description for TechTree";
         }
     }
 }

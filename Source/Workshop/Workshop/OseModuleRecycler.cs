@@ -10,9 +10,9 @@
 
     public class OseModuleRecycler : PartModule
     {
-        private WorkshopItem _scrappedPart;
-        private WorkshopItem _canceledPart;
-        private WorkshopItem _addedPart;
+        private WorkshopItem _processedItem;
+        private WorkshopItem _canceledItem;
+        private WorkshopItem _addedItem;
 
         private double _massProcessed;
         private float _progress;
@@ -59,9 +59,9 @@
                     {
                         item.DisableIcon();
                     }
-                    if (_scrappedPart != null)
+                    if (this._processedItem != null)
                     {
-                        _scrappedPart.DisableIcon();
+                        this._processedItem.DisableIcon();
                     }
                 }
                 _showGui = false;
@@ -110,7 +110,7 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        this._scrappedPart = new WorkshopItem(availablePart);
+                        this._processedItem = new WorkshopItem(availablePart);
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
@@ -125,10 +125,10 @@
 
         public override void OnSave(ConfigNode node)
         {
-            if (this._scrappedPart != null)
+            if (this._processedItem != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", this._scrappedPart.Part.name);
+                builtPartNode.AddValue("Name", this._processedItem.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
@@ -146,8 +146,8 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                this.RemoveCanceledPartFromQueue();
-                this.AddNewPartToQueue();
+                this.RemoveCanceledItemFromQueue();
+                this.AddNewItemToQueue();
                 this.ProcessItem(deltaTime);
             }
             catch (Exception ex)
@@ -159,39 +159,39 @@
 
         private void ProcessItem(double deltaTime)
         {
-            if (this._progress >= 100)
+            if (_progress >= 100)
             {
-                this.FinishManufacturing();
+                FinishManufacturing();
             }
-            else if (this._scrappedPart != null)
+            else if (this._processedItem != null)
             {
-                this.ExecuteManufacturing(deltaTime);
+                ExecuteManufacturing(deltaTime);
             }
             else
             {
-                this.StartManufacturing();
+                StartManufacturing();
             }
         }
 
-        private void RemoveCanceledPartFromQueue()
+        private void RemoveCanceledItemFromQueue()
         {
-            if (this._canceledPart != null)
+            if (_canceledItem != null)
             {
-                this._canceledPart.DisableIcon();
-                this._queue.Remove(this._canceledPart);
-                this._canceledPart = null;
+                _canceledItem.DisableIcon();
+                _queue.Remove(_canceledItem);
+                _canceledItem = null;
             }
         }
 
-        private void AddNewPartToQueue()
+        private void AddNewItemToQueue()
         {
-            if (_addedPart == null)
+            if (_addedItem == null)
             {
                 return;
             }
 
-            _queue.Add(_addedPart);
-            _addedPart = null;
+            _queue.Add(_addedItem);
+            _addedItem = null;
         }
 
         private void StartManufacturing()
@@ -199,7 +199,7 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                _scrappedPart = nextQueuedPart;
+                _processedItem = nextQueuedPart;
             }
         }
 
@@ -213,7 +213,7 @@
             }
             else
             {
-                Status = "Scrapping " + this._scrappedPart.Part.title;
+                Status = "Scrapping " + this._processedItem.Part.title;
 
                 //Consume Upkeep
                 this.RequestResource(this.UpkeepResource, deltaTime);
@@ -224,7 +224,7 @@
                 _massProcessed += resourcesUsed * density;
             }
 
-            this._progress = (float)(_massProcessed / (_scrappedPart.Part.partPrefab.mass * this.ConversionRate) * 100);
+            this._progress = (float)(_massProcessed / (this._processedItem.Part.partPrefab.mass * this.ConversionRate) * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -292,8 +292,8 @@
 
         private void FinishManufacturing()
         {
-            _scrappedPart.DisableIcon();
-            _scrappedPart = null;
+            this._processedItem.DisableIcon();
+            this._processedItem = null;
             _massProcessed = 0;
             _progress = 0;
             Status = "Online";
@@ -394,7 +394,7 @@
                     WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
-                        _addedPart = new WorkshopItem(item.Value.availablePart);
+                        this._addedItem = new WorkshopItem(item.Value.availablePart);
                         inventory.DeleteItem(item.Key);
                     }
                     GUILayout.EndHorizontal();
@@ -419,7 +419,7 @@
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    _canceledPart = item;
+                    this._canceledItem = item;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -430,13 +430,13 @@
         private void DrawBuiltItem()
         {
             GUILayout.BeginHorizontal();
-            if (_scrappedPart != null)
+            if (this._processedItem != null)
             {
-                if (_scrappedPart.Icon == null)
+                if (this._processedItem.Icon == null)
                 {
-                    _scrappedPart.EnableIcon();
+                    this._processedItem.EnableIcon();
                 }
-                WorkshopGui.ItemThumbnail(_scrappedPart.Icon);
+                WorkshopGui.ItemThumbnail(this._processedItem.Icon);
             }
             else
             {

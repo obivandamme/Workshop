@@ -12,6 +12,7 @@
     {
         private WorkshopItem _scrappedPart;
         private WorkshopItem _canceledPart;
+        private WorkshopItem _addedPart;
 
         private double _massProcessed;
         private float _progress;
@@ -54,6 +55,14 @@
                     {
                         item.Value.DisableIcon();
                     }
+                    foreach (var item in _queue)
+                    {
+                        item.DisableIcon();
+                    }
+                    if (_scrappedPart != null)
+                    {
+                        _scrappedPart.DisableIcon();
+                    }
                 }
                 _showGui = false;
             }
@@ -85,8 +94,11 @@
 
         public override void OnLoad(ConfigNode node)
         {
-            LoadModuleState(node);
             base.OnLoad(node);
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                LoadModuleState(node);
+            }
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -99,7 +111,6 @@
                     if (availablePart != null)
                     {
                         this._scrappedPart = new WorkshopItem(availablePart);
-                        this._scrappedPart.EnableIcon();
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
@@ -135,30 +146,52 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (this._progress >= 100)
-                {
-                    FinishManufacturing();
-                }
-                else if (this._scrappedPart != null)
-                {
-                    ExecuteManufacturing(deltaTime);
-                }
-                else
-                {
-                    StartManufacturing();
-                }
-                if (_canceledPart != null)
-                {
-                    _canceledPart.DisableIcon();
-                    _queue.Remove(_canceledPart);
-                    _canceledPart = null;
-                }
+                this.RemoveCanceledPartFromQueue();
+                this.AddNewPartToQueue();
+                this.ProcessItem(deltaTime);
             }
             catch (Exception ex)
             {
                 Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate - " + ex.Message);
             }
             base.OnUpdate();
+        }
+
+        private void ProcessItem(double deltaTime)
+        {
+            if (this._progress >= 100)
+            {
+                this.FinishManufacturing();
+            }
+            else if (this._scrappedPart != null)
+            {
+                this.ExecuteManufacturing(deltaTime);
+            }
+            else
+            {
+                this.StartManufacturing();
+            }
+        }
+
+        private void RemoveCanceledPartFromQueue()
+        {
+            if (this._canceledPart != null)
+            {
+                this._canceledPart.DisableIcon();
+                this._queue.Remove(this._canceledPart);
+                this._canceledPart = null;
+            }
+        }
+
+        private void AddNewPartToQueue()
+        {
+            if (_addedPart == null)
+            {
+                return;
+            }
+
+            _queue.Add(_addedPart);
+            _addedPart = null;
         }
 
         private void StartManufacturing()
@@ -361,9 +394,7 @@
                     WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
-                        var queuedItem = new WorkshopItem(item.Value.availablePart);
-                        queuedItem.EnableIcon();
-                        this._queue.Add(queuedItem);
+                        _addedPart = new WorkshopItem(item.Value.availablePart);
                         inventory.DeleteItem(item.Key);
                     }
                     GUILayout.EndHorizontal();

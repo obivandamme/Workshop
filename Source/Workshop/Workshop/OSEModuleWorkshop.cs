@@ -10,19 +10,21 @@
 
     public class OseModuleWorkshop : PartModule
     {
-        private WorkshopItem[] _items;
+        private WorkshopItem[] _availableItems;
         private WorkshopItem[] _filteredItems;
         private WorkshopItem _builtPart;
         private WorkshopItem _canceledPart;
-        private double _massProcessed;
+        private WorkshopItem _addedPart;
 
+        private double _massProcessed;
         private float _progress;
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
 
         // GUI Properties
-        private List<FilterBase> _filters = new List<FilterBase>();
+        private List<FilterBase> _filters;
+        private FilterBase _selectedFilter;
         private Rect _windowPos;
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
@@ -58,6 +60,14 @@
                 {
                     item.DisableIcon();
                 }
+                foreach (var item in _queue)
+                {
+                    item.DisableIcon();
+                }
+                if (_builtPart != null)
+                {
+                    _builtPart.DisableIcon();
+                }
                 _showGui = false;
             }
             else
@@ -76,7 +86,6 @@
         {
             if (WorkshopSettings.IsKISAvailable)
             {
-                LoadAvailableParts();
                 GameEvents.onVesselChange.Add(this.OnVesselChange);
             }
             else
@@ -90,8 +99,12 @@
         public override void OnLoad(ConfigNode node)
         {
             base.OnLoad(node);
-            LoadModuleState(node);
-            LoadFilters();
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                LoadAvailableParts();
+                LoadModuleState(node);
+                LoadFilters();
+            }
         }
 
         private void LoadFilters()
@@ -121,7 +134,6 @@
                     if (availablePart != null)
                     {
                         _builtPart = new WorkshopItem(availablePart);
-                        _builtPart.EnableIcon();
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
@@ -136,27 +148,24 @@
 
         private void LoadAvailableParts()
         {
-            if (HighLogic.LoadedSceneIsFlight)
+            var items = new List<WorkshopItem>();
+            var maxVolume = this.GetMaxVolume();
+            foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
-                var items = new List<WorkshopItem>();
-                var maxVolume = this.GetMaxVolume();
-                foreach (var loadedPart in PartLoader.LoadedPartsList)
+                try
                 {
-                    try
+                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
                     {
-                        if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
-                        {
-                            items.Add(new WorkshopItem(loadedPart));
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
+                        items.Add(new WorkshopItem(loadedPart));
                     }
                 }
-                _items = items.OrderBy(i => i.Part.title).ToArray();
-                _filteredItems = items.OrderBy(i => i.Part.title).ToArray();
+                catch (Exception)
+                {
+                    Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
+                }
             }
+            this._availableItems = items.OrderBy(i => i.Part.title).ToArray();
+            _filteredItems = items.OrderBy(i => i.Part.title).ToArray();
         }
 
         private float GetMaxVolume()
@@ -198,30 +207,70 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (this._progress >= 100)
-                {
-                    FinishManufacturing();
-                }
-                else if (_builtPart != null)
-                {
-                    ExecuteManufacturing(deltaTime);
-                }
-                else
-                {
-                    StartManufacturing();
-                }
-                if (_canceledPart != null)
-                {
-                    _canceledPart.DisableIcon();
-                    _queue.Remove(_canceledPart);
-                    _canceledPart = null;
-                }
+                this.ApplyFilter();
+                this.RemoveCanceledPartFromQueue();
+                this.AddNewPartToQueue();
+                this.ProcessItem(deltaTime);
             }
             catch (Exception ex)
             {
                 Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate - " + ex.Message);
             }
             base.OnUpdate();
+        }
+
+        private void ProcessItem(double deltaTime)
+        {
+            if (_progress >= 100)
+            {
+                FinishManufacturing();
+            }
+            else if (_builtPart != null)
+            {
+                ExecuteManufacturing(deltaTime);
+            }
+            else
+            {
+                StartManufacturing();
+            }
+        }
+
+        private void RemoveCanceledPartFromQueue()
+        {
+            if (_canceledPart == null)
+            {
+                return;
+            }
+
+            _canceledPart.DisableIcon();
+            _queue.Remove(_canceledPart);
+            _canceledPart = null;
+        }
+
+        private void AddNewPartToQueue()
+        {
+            if (_addedPart == null)
+            {
+                return;
+            }
+
+            _queue.Add(_addedPart);
+            _addedPart = null;
+        }
+
+        private void ApplyFilter()
+        {
+            if (_selectedFilter == null)
+            {
+                return;
+            }
+
+            foreach (var item in _filteredItems)
+            {
+                item.DisableIcon();
+            }
+            _filteredItems = _selectedFilter.Filter(_availableItems);
+            _selectedFilter = null;
         }
 
         private void StartManufacturing()
@@ -244,18 +293,22 @@
             else
             {
                 Status = "Building " + _builtPart.Part.title;
-                this.RequestResource(this.UpkeepResource, deltaTime);
 
-                //Consume Recipe Input
-                var density = PartResourceLibrary.Instance.GetDefinition(this.InputResource).density;
-                var resourcesUsed = this.RequestResource(this.InputResource, deltaTime * ProductivityFactor);
-                _massProcessed += resourcesUsed * density;
+                RequestResource(UpkeepResource, deltaTime);
+                _massProcessed += ConsumeInputResource(deltaTime);
             }
 
-            this._progress = (float)(_massProcessed / (_builtPart.Part.partPrefab.mass * this.ConversionRate) * 100);
+            _progress = (float)(_massProcessed / (_builtPart.Part.partPrefab.mass * this.ConversionRate) * 100);
         }
 
-        public double AmountAvailable(string resource)
+        private double ConsumeInputResource(double deltaTime)
+        {
+            var density = PartResourceLibrary.Instance.GetDefinition(this.InputResource).density;
+            var resourcesUsed = this.RequestResource(this.InputResource, deltaTime * this.ProductivityFactor);
+            return resourcesUsed * density;
+        }
+
+        private double AmountAvailable(string resource)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -263,7 +316,7 @@
             return resList.Sum(r => r.amount);
         }
 
-        public double RequestResource(string resource, double amount)
+        private double RequestResource(string resource, double amount)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -295,11 +348,11 @@
             var destinationInventory = AddToContainer(_builtPart);
             if (destinationInventory != null)
             {
-                ScreenMessages.PostScreenMessage("3D Printing of " + _builtPart.Part.title + " finished.",5,ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("3D Printing of " + _builtPart.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
                 _builtPart.DisableIcon();
                 _builtPart = null;
                 _massProcessed = 0;
-                this._progress = 0;
+                _progress = 0;
                 Status = "Online";
             }
             else
@@ -317,7 +370,7 @@
             base.OnInactive();
         }
 
-        void OnVesselChange(Vessel v)
+        private void OnVesselChange(Vessel v)
         {
             if (_showGui)
             {
@@ -434,11 +487,7 @@
                 var filter = this._filters[index];
                 if (WorkshopGui.FilterButton(filter, new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32)))
                 {
-                    foreach (var filteredItem in _filteredItems)
-                    {
-                        filteredItem.DisableIcon();
-                    }
-                    this._filteredItems = filter.Filter(this._items);
+                    _selectedFilter = filter;
                 }
             }
         }
@@ -458,7 +507,7 @@
                 WorkshopGui.ItemDescription(item.Part, this.InputResource);
                 if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    this._queue.Add(new WorkshopItem(item.Part));
+                    _addedPart = new WorkshopItem(item.Part);
                 }
                 GUILayout.EndHorizontal();
             }
@@ -494,13 +543,17 @@
             GUILayout.BeginHorizontal();
             if (_builtPart != null)
             {
+                if (_builtPart.Icon == null)
+                {
+                    _builtPart.EnableIcon();
+                }
                 WorkshopGui.ItemThumbnail(_builtPart.Icon);
             }
             else
             {
                 GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             }
-            WorkshopGui.ProgressBar(this._progress);
+            WorkshopGui.ProgressBar(_progress);
             GUILayout.EndHorizontal();
         }
     }

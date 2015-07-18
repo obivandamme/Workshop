@@ -46,8 +46,14 @@
 
         public static bool FilterButton(FilterBase filter, Rect position)
         {
-            var texture = GameDatabase.Instance.databaseTexture.Single(t => t.name == filter.TexturePath).texture;
-            return GUI.Button(position, texture, WorkshopStyles.Button());
+            if (filter.Texture != null)
+            {
+                return GUI.Button(position, filter.Texture, WorkshopStyles.Button());
+            }
+            else
+            {
+                return GUI.Button(position, filter.Name, WorkshopStyles.Button());
+            }
         }
     }
 }

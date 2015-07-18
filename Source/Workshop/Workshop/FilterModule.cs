@@ -7,7 +7,7 @@
     {
         public string Module;
 
-        public FilterModule(string texturePath, string module) : base(texturePath)
+        public FilterModule(string texturePath, string name, string module) : base(texturePath, name)
         {
             this.Module = module;
         }

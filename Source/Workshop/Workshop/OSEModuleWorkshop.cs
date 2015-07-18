@@ -96,16 +96,16 @@
         {
             _filters = new List<FilterBase>
                        {
-                           new FilterBase("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry"),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_commandmodules", PartCategories.Pods),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced", PartCategories.FuelTank),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_propulsionSystems", PartCategories.Engine),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol", PartCategories.Control),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", PartCategories.Structural),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", PartCategories.Aero),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", PartCategories.Utility),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", PartCategories.Science),
-                           new FilterModule("Squad/PartList/SimpleIcons/R&D_node_icon_evatech", "ModuleKISItem")
+                           new FilterBase("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry", "All"),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_commandmodules", "Pods", PartCategories.Pods),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced", "Tanks", PartCategories.FuelTank),
+                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_propulsionSystems", "Engine", PartCategories.Engine),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol", "Control", PartCategories.Control),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", "Structural", PartCategories.Structural),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", "Aero", PartCategories.Aero),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", "Util", PartCategories.Utility),
+                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", "Science", PartCategories.Science),
+                           new FilterModule("Squad/PartList/SimpleIcons/R&D_node_icon_evatech", "EVA", "ModuleKISItem")
                        };
         }
 

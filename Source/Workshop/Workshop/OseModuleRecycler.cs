@@ -391,7 +391,7 @@
                     }
                     GUILayout.BeginHorizontal();
                     WorkshopGui.ItemThumbnail(item.Value.icon);
-                    WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource);
+                    WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource, this.ConversionRate);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
                         this._addedItem = new WorkshopItem(item.Value.availablePart);
@@ -416,7 +416,7 @@
                     item.EnableIcon();
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.OutputResource);
+                WorkshopGui.ItemDescription(item.Part, this.OutputResource, this.ConversionRate);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
                     this._canceledItem = item;

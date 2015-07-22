@@ -47,7 +47,7 @@
         public int MinimumCrew = 2;
 
         [KSPField]
-        public int MaxPartVolume = 300;
+        public float MaxPartVolume = 300f;
 
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
@@ -171,18 +171,31 @@
 
         private float GetMaxVolume()
         {
+            var maxVolume = this.MaxPartVolume;
             try
             {
-                var maxInventoyVolume = part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Max(i => i.maxVolume);
-                var maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
-                Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
-                return maxVolume;
+                var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
+                if (inventories.Count == 0)
+                {
+                    Debug.Log("[OSE] - No Inventories found on this vessel!");
+                    
+                }
+                else
+                {
+
+                    Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
+                    var maxInventoyVolume = inventories.Max(i => i.maxVolume);
+                    maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Debug.LogError("[OSE] - Error while determing maximum volume");
-                return 0;
+                Debug.LogError("[OSE] - Error while determing maximum volume of available inventories - using configured value!");
+                Debug.LogError("[OSE] - " + ex.Message);
+                Debug.LogError("[OSE] - " + ex.StackTrace);
             }
+            Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
+            return maxVolume; 
         }
 
         public override void OnSave(ConfigNode node)

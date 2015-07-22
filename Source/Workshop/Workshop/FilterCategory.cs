@@ -7,14 +7,14 @@
     {
         public PartCategories Category;
 
-        public FilterCategory(string texturePath, PartCategories category) : base(texturePath)
+        public FilterCategory(string texturePath, string name, PartCategories category) : base(texturePath, name)
         {
             this.Category = category;
         }
 
         public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
         {
-            return items.Where(i => i.Part.category == Category).ToArray();
+            return items.Where(i => i.Part.category == Category).OrderBy(i => i.Part.title).ToArray();
         }
     }
 }

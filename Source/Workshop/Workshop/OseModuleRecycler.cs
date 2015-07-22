@@ -10,7 +10,10 @@
 
     public class OseModuleRecycler : PartModule
     {
-        private WorkshopItem _scrappedPart;
+        private WorkshopItem _processedItem;
+        private WorkshopItem _canceledItem;
+        private WorkshopItem _addedItem;
+
         private double _massProcessed;
         private float _progress;
 
@@ -52,6 +55,14 @@
                     {
                         item.Value.DisableIcon();
                     }
+                    foreach (var item in _queue)
+                    {
+                        item.DisableIcon();
+                    }
+                    if (this._processedItem != null)
+                    {
+                        this._processedItem.DisableIcon();
+                    }
                 }
                 _showGui = false;
             }
@@ -83,8 +94,11 @@
 
         public override void OnLoad(ConfigNode node)
         {
-            LoadModuleState(node);
             base.OnLoad(node);
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                LoadModuleState(node);
+            }
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -96,8 +110,7 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        this._scrappedPart = new WorkshopItem(availablePart);
-                        this._scrappedPart.EnableIcon();
+                        this._processedItem = new WorkshopItem(availablePart);
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
                     }
                 }
@@ -112,10 +125,10 @@
 
         public override void OnSave(ConfigNode node)
         {
-            if (this._scrappedPart != null)
+            if (this._processedItem != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", this._scrappedPart.Part.name);
+                builtPartNode.AddValue("Name", this._processedItem.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
@@ -133,18 +146,9 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                if (this._progress >= 100)
-                {
-                    FinishManufacturing();
-                }
-                else if (this._scrappedPart != null)
-                {
-                    ExecuteManufacturing(deltaTime);
-                }
-                else
-                {
-                    StartManufacturing();
-                }
+                this.RemoveCanceledItemFromQueue();
+                this.AddNewItemToQueue();
+                this.ProcessItem(deltaTime);
             }
             catch (Exception ex)
             {
@@ -153,13 +157,49 @@
             base.OnUpdate();
         }
 
+        private void ProcessItem(double deltaTime)
+        {
+            if (_progress >= 100)
+            {
+                FinishManufacturing();
+            }
+            else if (this._processedItem != null)
+            {
+                ExecuteManufacturing(deltaTime);
+            }
+            else
+            {
+                StartManufacturing();
+            }
+        }
+
+        private void RemoveCanceledItemFromQueue()
+        {
+            if (_canceledItem != null)
+            {
+                _canceledItem.DisableIcon();
+                _queue.Remove(_canceledItem);
+                _canceledItem = null;
+            }
+        }
+
+        private void AddNewItemToQueue()
+        {
+            if (_addedItem == null)
+            {
+                return;
+            }
+
+            _queue.Add(_addedItem);
+            _addedItem = null;
+        }
+
         private void StartManufacturing()
         {
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                this._scrappedPart = nextQueuedPart;
-                this._scrappedPart.EnableIcon();
+                _processedItem = nextQueuedPart;
             }
         }
 
@@ -173,7 +213,7 @@
             }
             else
             {
-                Status = "Scrapping " + this._scrappedPart.Part.title;
+                Status = "Scrapping " + this._processedItem.Part.title;
 
                 //Consume Upkeep
                 this.RequestResource(this.UpkeepResource, deltaTime);
@@ -184,7 +224,7 @@
                 _massProcessed += resourcesUsed * density;
             }
 
-            this._progress = (float)(_massProcessed / (_scrappedPart.Part.partPrefab.mass * this.ConversionRate) * 100);
+            this._progress = (float)(_massProcessed / (this._processedItem.Part.partPrefab.mass * this.ConversionRate) * 100);
         }
 
         public double AmountAvailable(string resource)
@@ -252,10 +292,10 @@
 
         private void FinishManufacturing()
         {
-            this._scrappedPart.DisableIcon();
-            this._scrappedPart = null;
+            this._processedItem.DisableIcon();
+            this._processedItem = null;
             _massProcessed = 0;
-            this._progress = 0;
+            _progress = 0;
             Status = "Online";
         }
 
@@ -351,12 +391,10 @@
                     }
                     GUILayout.BeginHorizontal();
                     WorkshopGui.ItemThumbnail(item.Value.icon);
-                    WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource);
+                    WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource, this.ConversionRate);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
-                        var queuedItem = new WorkshopItem(item.Value.availablePart);
-                        queuedItem.EnableIcon();
-                        this._queue.Add(queuedItem);
+                        this._addedItem = new WorkshopItem(item.Value.availablePart);
                         inventory.DeleteItem(item.Key);
                     }
                     GUILayout.EndHorizontal();
@@ -378,11 +416,10 @@
                     item.EnableIcon();
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.OutputResource);
+                WorkshopGui.ItemDescription(item.Part, this.OutputResource, this.ConversionRate);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    item.DisableIcon();
-                    this._queue.Remove(item);
+                    this._canceledItem = item;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -393,21 +430,25 @@
         private void DrawBuiltItem()
         {
             GUILayout.BeginHorizontal();
-            if (this._scrappedPart != null)
+            if (this._processedItem != null)
             {
-                WorkshopGui.ItemThumbnail(this._scrappedPart.Icon);
+                if (this._processedItem.Icon == null)
+                {
+                    this._processedItem.EnableIcon();
+                }
+                WorkshopGui.ItemThumbnail(this._processedItem.Icon);
             }
             else
             {
                 GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             }
-            WorkshopGui.ProgressBar(this._progress);
+            WorkshopGui.ProgressBar(_progress);
             GUILayout.EndHorizontal();
         }
 
         public override string GetInfo()
         {
-            return "Recycler Description for VAB";
+            return "Recycler Description for TechTree";
         }
     }
 }

@@ -32,13 +32,13 @@
             GUILayout.EndVertical();
         }
 
-        public static void ItemDescription(AvailablePart part, string resourceName)
+        public static void ItemDescription(AvailablePart part, string resourceName, double productivity)
         {
             GUILayout.BeginVertical();
             var text = new StringBuilder();
             text.AppendLine(part.title);
             var density = PartResourceLibrary.Instance.GetDefinition(resourceName).density;
-            var requiredResources = part.partPrefab.mass / density;
+            var requiredResources = (part.partPrefab.mass / density) * productivity;
             text.AppendLine(" " + requiredResources.ToString("0.00") + " " + resourceName);
             GUILayout.Box(text.ToString(), WorkshopStyles.Databox(), GUILayout.Width(250), GUILayout.Height(50));
             GUILayout.EndVertical();
@@ -46,8 +46,14 @@
 
         public static bool FilterButton(FilterBase filter, Rect position)
         {
-            var texture = GameDatabase.Instance.databaseTexture.Single(t => t.name == filter.TexturePath).texture;
-            return GUI.Button(position, texture, WorkshopStyles.Button());
+            if (filter.Texture != null)
+            {
+                return GUI.Button(position, filter.Texture, WorkshopStyles.Button());
+            }
+            else
+            {
+                return GUI.Button(position, filter.Name, WorkshopStyles.Button());
+            }
         }
     }
 }

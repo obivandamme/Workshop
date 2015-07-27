@@ -196,8 +196,12 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        this._processedItem = new WorkshopItem(availablePart);
+                        _processedItem = new WorkshopItem(availablePart);
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
+                        if (Animate)
+                        {
+                            StartCoroutine(StartAnimations());
+                        }
                     }
                 }
                 if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))

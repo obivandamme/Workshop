@@ -541,13 +541,15 @@
             _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
             // Available Items
-            for (var y = 0; y < 10; y++)
+            const int ItemRows = 10;
+            const int ItemColumns = 3;
+            for (var y = 0; y < ItemRows; y++)
             {
-                for (var x = 0; x < 3; x++)
+                for (var x = 0; x < ItemColumns; x++)
                 {
                     var left = 15 + x * 55;
                     var top = 70 + y * 55;
-                    var itemIndex = y * 3 + x;
+                    var itemIndex = y * ItemColumns + x;
                     if (_filteredItems.Length > itemIndex)
                     {
                         var item = _filteredItems[itemIndex];
@@ -582,14 +584,16 @@
             }
 
             // Queued Items
+            const int QueueRows = 4;
+            const int QueueColumns = 7;
             GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
-            for (var y = 0; y < 4; y++)
+            for (var y = 0; y < QueueRows; y++)
             {
-                for (var x = 0; x < 7; x++)
+                for (var x = 0; x < QueueColumns; x++)
                 {
                     var left = 205 + x * 60;
                     var top = 370 + y * 60;
-                    var itemIndex = y * 7 + x;
+                    var itemIndex = y * QueueColumns + x;
                     if (_queue.Count > itemIndex)
                     {
                         var item = _queue[itemIndex];
@@ -650,29 +654,6 @@
             }
 
             GUI.DragWindow();
-        }
-
-        private void DrawQueuedItems()
-        {
-            GUILayout.BeginVertical();
-            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in this._queue)
-            {
-                GUILayout.BeginHorizontal();
-                if (item.Icon == null)
-                {
-                    item.EnableIcon(128);
-                }
-                WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
-                if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
-                {
-                    this._canceledItem = item;
-                }
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
         }
     }
 }

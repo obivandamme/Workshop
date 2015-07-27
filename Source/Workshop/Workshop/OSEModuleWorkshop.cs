@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
     using System.Collections.Generic;
+    using System.Text;
 
     using KIS;
 
@@ -26,7 +27,8 @@
         // GUI Properties
         private List<FilterBase> _filters;
         private FilterBase _selectedFilter;
-        private Rect _windowPos;
+
+        private Rect _windowPos = new Rect(50, 50, 640, 680);
         private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
         private bool _showGui;
@@ -459,32 +461,98 @@
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUILayout.Window(
+            _windowPos = GUI.Window(
                    this.GetInstanceID(),
                    _windowPos,
                    this.DrawWindowContents,
-                   "Workshop Build Menu",
-                   GUILayout.ExpandWidth(true),
-                   GUILayout.ExpandHeight(true),
-                   GUILayout.MinWidth(64),
-                   GUILayout.MinHeight(64));
+                   "Workbench");
         }
 
         private void DrawWindowContents(int windowId)
         {
-            GUILayout.Space(15);
-            this.DrawFilters();
+            var labels = new[] { "All", "Pods", "Tanks", "Engines", "Control", "Structural", "Aero", "Util", "Science", "EVA" };
+            GUI.Toolbar(new Rect(15, 35, 615, 30), 0, labels);
 
-            GUILayout.Space(5);
-            GUILayout.BeginHorizontal();
-            DrawAvailableItems();
-            DrawQueuedItems();
-            GUILayout.EndHorizontal();
+            for (var y = 0; y < 10; y++)
+            {
+                for (var x = 0; x < 3; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    var itemIndex = y * 3 + x;
+                    if (_filteredItems.Length > itemIndex)
+                    {
+                        var item = _filteredItems[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture);
+                    }
+                }
+            }
+            GUI.Button(new Rect(15, 645, 75, 25), "Prev");
+            GUI.Button(new Rect(100, 645, 75, 25), "Next");
 
-            GUILayout.Space(5);
-            DrawBuiltItem();
+            GUI.Box(new Rect(190, 70, 440, 270), "");
+            GUI.Box(new Rect(200, 80, 100, 100), _filteredItems[0].Icon.texture);
+            GUI.Box(new Rect(310, 80, 150, 100), new StringBuilder().AppendLine("Mass: 0.1 tons").AppendLine("Volume: 10 litres").AppendLine("ElectricCharge: 0 / 10").ToString());
+            GUI.Box(new Rect(470, 80, 150, 100), new StringBuilder().AppendLine("MaterialKits: 120").AppendLine("Duration: 1h 5m").ToString());
+            GUI.Box(new Rect(200, 190, 420, 140), "Lorem ipsum dolor sit amet");
 
-            if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue");
+
+            GUI.Box(new Rect(190, 620, 50, 50), _filteredItems[0].Icon.texture);
+            GUI.Box(new Rect(250, 620, 380, 50), "0.0 / 100");
+
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
+            {
+                ContextMenuOnOpenWorkbench();
+            }
+
+            GUI.DragWindow();
+        }
+
+        private void DrawWindowMockup(int windowId)
+        {
+            GUI.Box(new Rect(15, 35, 615, 30), "Filter");
+
+            for (var y = 0; y < 10; y++)
+            {
+                for (var x = 0; x < 3; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    GUI.Box(new Rect(left, top, 50, 50), "Part " + ((y * 3) + x));
+                }
+            }
+            GUI.Box(new Rect(15, 645, 75, 25), "Prev");
+            GUI.Box(new Rect(100, 645, 75, 25), "Next");
+
+            GUI.Box(new Rect(190,70,440,270), "");
+            GUI.Box(new Rect(200,80,100,100), "Selected thumb");
+            GUI.Box(new Rect(310,80,150,100), "KIS Stats");
+            GUI.Box(new Rect(470,80,150,100), "OSE Stats");
+            GUI.Box(new Rect(200, 190, 420, 140), "Description");
+
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue");
+
+            GUI.Box(new Rect(190,620,50,50), "Thumb");
+            GUI.Box(new Rect(250, 620, 380, 50), "Progress");
+
+            //GUILayout.Space(15);
+            //this.DrawFilters();
+
+            //GUILayout.Space(5);
+            //GUILayout.BeginHorizontal();
+            //DrawAvailableItems();
+            //DrawQueuedItems();
+            //GUILayout.EndHorizontal();
+
+            //GUILayout.Space(5);
+            //DrawBuiltItem();
+
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
                 ContextMenuOnOpenWorkbench();
             }
@@ -515,7 +583,7 @@
                 GUILayout.BeginHorizontal();
                 if (item.Icon == null)
                 {
-                    item.EnableIcon();
+                    item.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
@@ -538,7 +606,7 @@
                 GUILayout.BeginHorizontal();
                 if (item.Icon == null)
                 {
-                    item.EnableIcon();
+                    item.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
@@ -559,7 +627,7 @@
             {
                 if (this._processedItem.Icon == null)
                 {
-                    this._processedItem.EnableIcon();
+                    this._processedItem.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(this._processedItem.Icon);
             }

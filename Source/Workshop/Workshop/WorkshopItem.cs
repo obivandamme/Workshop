@@ -13,9 +13,9 @@ namespace Workshop
             this.Part = part;
         }
 
-        public void EnableIcon()
+        public void EnableIcon(int resultion)
         {
-            this.Icon = new KIS_IconViewer(this.Part.partPrefab, 128);
+            this.Icon = new KIS_IconViewer(this.Part.partPrefab, resultion);
         }
 
         public void DisableIcon()

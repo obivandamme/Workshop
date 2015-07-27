@@ -413,7 +413,7 @@
                 GUILayout.BeginHorizontal();
                 if (item.Icon == null)
                 {
-                    item.EnableIcon();
+                    item.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource, this.ConversionRate);
@@ -434,7 +434,7 @@
             {
                 if (this._processedItem.Icon == null)
                 {
-                    this._processedItem.EnableIcon();
+                    this._processedItem.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(this._processedItem.Icon);
             }

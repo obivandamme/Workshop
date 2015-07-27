@@ -12,9 +12,9 @@
             this.Module = module;
         }
 
-        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
+        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)
         {
-            return items.Where(i => i.Part.partPrefab.GetComponent(Module) != null).OrderBy(i => i.Part.title).ToArray();
+            return items.Where(i => i.Part.partPrefab.GetComponent(Module) != null).OrderBy(i => i.Part.title).Skip(skip).Take(30).ToArray();
         }
     }
 }

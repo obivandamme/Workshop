@@ -3,7 +3,6 @@
     using System;
     using System.Linq;
     using System.Collections.Generic;
-    using System.Text;
 
     using KIS;
 
@@ -20,16 +19,21 @@
 
         private double _massProcessed;
         private float _progress;
+        private float _maxVolume;
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
 
         // GUI Properties
         private List<FilterBase> _filters;
-        private FilterBase _selectedFilter;
+        private int _activeFilterId;
+        private int _selectedFilterId;
+
+        private int _activePage;
+        private int _selectedPage;
+        private int _maxPage;
 
         private Rect _windowPos = new Rect(50, 50, 640, 680);
-        private Vector2 _scrollPosItems = Vector2.zero;
         private Vector2 _scrollPosQueue = Vector2.zero;
         private bool _showGui;
 
@@ -104,6 +108,7 @@
             base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
+                LoadMaxVolume();
                 LoadAvailableParts();
                 LoadModuleState(node);
                 LoadFilters();
@@ -152,12 +157,11 @@
         private void LoadAvailableParts()
         {
             var items = new List<WorkshopItem>();
-            var maxVolume = this.GetMaxVolume();
             foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
                 try
                 {
-                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
+                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -168,12 +172,13 @@
                 }
             }
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
-            _filteredItems = items.OrderBy(i => i.Part.title).ToArray();
+            _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
+            _maxPage = _availableItems.Count() / 30;
         }
 
-        private float GetMaxVolume()
+        private void LoadMaxVolume()
         {
-            var maxVolume = this.MaxPartVolume;
+            _maxVolume = this.MaxPartVolume;
             try
             {
                 var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
@@ -187,7 +192,7 @@
 
                     Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
                     var maxInventoyVolume = inventories.Max(i => i.maxVolume);
-                    maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
+                    _maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
                 }
             }
             catch (Exception ex)
@@ -196,8 +201,7 @@
                 Debug.LogError("[OSE] - " + ex.Message);
                 Debug.LogError("[OSE] - " + ex.StackTrace);
             }
-            Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
-            return maxVolume; 
+            Debug.Log("[OSE] - Max volume is: " + _maxVolume + "liters");
         }
 
         public override void OnSave(ConfigNode node)
@@ -224,6 +228,7 @@
             try
             {
                 this.ApplyFilter();
+                this.ApplyPaging();
                 this.RemoveCanceledItemFromQueue();
                 this.AddNewItemToQueue();
                 this.ProcessItem(deltaTime);
@@ -276,7 +281,24 @@
 
         private void ApplyFilter()
         {
-            if (_selectedFilter == null)
+            if (_activeFilterId == _selectedFilterId)
+            {
+                return;
+            }
+            
+            foreach (var item in _filteredItems)
+            {
+                item.DisableIcon();
+            }
+
+            var selectedFilter = _filters[_selectedFilterId];
+            _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
+            _activeFilterId = _selectedFilterId;
+        }
+
+        private void ApplyPaging()
+        {
+            if (_activePage == _selectedPage)
             {
                 return;
             }
@@ -285,8 +307,10 @@
             {
                 item.DisableIcon();
             }
-            _filteredItems = _selectedFilter.Filter(_availableItems);
-            _selectedFilter = null;
+
+            var selectedFilter = _filters[_activeFilterId];
+            _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
+            _activePage = _selectedPage;
         }
 
         private void StartManufacturing()
@@ -465,14 +489,29 @@
                    this.GetInstanceID(),
                    _windowPos,
                    this.DrawWindowContents,
-                   "Workbench");
+                   "Workbench (" + _maxVolume + " litres)");
         }
 
         private void DrawWindowContents(int windowId)
         {
-            var labels = new[] { "All", "Pods", "Tanks", "Engines", "Control", "Structural", "Aero", "Util", "Science", "EVA" };
-            GUI.Toolbar(new Rect(15, 35, 615, 30), 0, labels);
+            WorkshopItem mouseOverItem = null;
 
+            // styles 
+            var statsStyle = new GUIStyle(GUI.skin.box);
+            statsStyle.fontSize = 11;
+            statsStyle.alignment = TextAnchor.UpperLeft;
+            statsStyle.padding.left = statsStyle.padding.top = 5;
+
+            var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
+            tooltipDescriptionStyle.fontSize = 11;
+            tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
+            tooltipDescriptionStyle.padding.top = 5;
+
+            // Filters
+            var labels = new[] { "All", "Pods", "Tanks", "Engines", "Control", "Struct", "Aero", "Util", "Science", "EVA" };
+            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, labels);
+
+            // Available Items
             for (var y = 0; y < 10; y++)
             {
                 for (var x = 0; x < 3; x++)
@@ -487,24 +526,71 @@
                         {
                             item.EnableIcon(64);
                         }
-                        GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture);
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _addedItem = new WorkshopItem(item.Part);
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
                     }
                 }
             }
-            GUI.Button(new Rect(15, 645, 75, 25), "Prev");
-            GUI.Button(new Rect(100, 645, 75, 25), "Next");
+            if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
+            {
+                if (_activePage > 0)
+                {
+                    _selectedPage = _activePage - 1;
+                }
+            }
+            if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
+            {
+                if (_activePage < _maxPage)
+                {
+                    _selectedPage = _activePage + 1;
+                }
+            }
 
+            // Tooltip
             GUI.Box(new Rect(190, 70, 440, 270), "");
-            GUI.Box(new Rect(200, 80, 100, 100), _filteredItems[0].Icon.texture);
-            GUI.Box(new Rect(310, 80, 150, 100), new StringBuilder().AppendLine("Mass: 0.1 tons").AppendLine("Volume: 10 litres").AppendLine("ElectricCharge: 0 / 10").ToString());
-            GUI.Box(new Rect(470, 80, 150, 100), new StringBuilder().AppendLine("MaterialKits: 120").AppendLine("Duration: 1h 5m").ToString());
-            GUI.Box(new Rect(200, 190, 420, 140), "Lorem ipsum dolor sit amet");
+            if (mouseOverItem != null)
+            {
+                GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
+                GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetOseStats(InputResource, ConversionRate, ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
+            }
+            
 
+            // Queued Items
             GUI.Box(new Rect(190, 345, 440, 270), "Queue");
 
-            GUI.Box(new Rect(190, 620, 50, 50), _filteredItems[0].Icon.texture);
-            GUI.Box(new Rect(250, 620, 380, 50), "0.0 / 100");
+            // Currently build item
+            if (_processedItem != null)
+            {
+                if (_processedItem.Icon == null)
+                {
+                    _processedItem.EnableIcon(64);
+                }
+                GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
+            }
+            else
+            {
+                GUI.Box(new Rect(190, 620, 50, 50), "");
+            }
 
+            // Progressbar
+            GUI.Box(new Rect(250, 620, 380, 50), "");
+            if (_progress >= 1)
+            {
+                var color = GUI.color;
+                GUI.color = new Color(0, 1, 0, 1);
+                GUI.Box(new Rect(250, 620, 380 * _progress / 100, 50), "");
+                GUI.color = color;
+            }
+            GUI.Label(new Rect(250, 620, 380, 50), " " + _progress.ToString("0.0") + " / 100");
+            
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
                 ContextMenuOnOpenWorkbench();
@@ -512,91 +598,7 @@
 
             GUI.DragWindow();
         }
-
-        private void DrawWindowMockup(int windowId)
-        {
-            GUI.Box(new Rect(15, 35, 615, 30), "Filter");
-
-            for (var y = 0; y < 10; y++)
-            {
-                for (var x = 0; x < 3; x++)
-                {
-                    var left = 15 + x * 55;
-                    var top = 70 + y * 55;
-                    GUI.Box(new Rect(left, top, 50, 50), "Part " + ((y * 3) + x));
-                }
-            }
-            GUI.Box(new Rect(15, 645, 75, 25), "Prev");
-            GUI.Box(new Rect(100, 645, 75, 25), "Next");
-
-            GUI.Box(new Rect(190,70,440,270), "");
-            GUI.Box(new Rect(200,80,100,100), "Selected thumb");
-            GUI.Box(new Rect(310,80,150,100), "KIS Stats");
-            GUI.Box(new Rect(470,80,150,100), "OSE Stats");
-            GUI.Box(new Rect(200, 190, 420, 140), "Description");
-
-            GUI.Box(new Rect(190, 345, 440, 270), "Queue");
-
-            GUI.Box(new Rect(190,620,50,50), "Thumb");
-            GUI.Box(new Rect(250, 620, 380, 50), "Progress");
-
-            //GUILayout.Space(15);
-            //this.DrawFilters();
-
-            //GUILayout.Space(5);
-            //GUILayout.BeginHorizontal();
-            //DrawAvailableItems();
-            //DrawQueuedItems();
-            //GUILayout.EndHorizontal();
-
-            //GUILayout.Space(5);
-            //DrawBuiltItem();
-
-            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
-            {
-                ContextMenuOnOpenWorkbench();
-            }
-
-            GUI.DragWindow();
-        }
-
-        private void DrawFilters()
-        {
-            GUILayout.Box("", GUILayout.Width(805), GUILayout.Height(42));
-            var boxRect = GUILayoutUtility.GetLastRect();
-            for (var index = 0; index < this._filters.Count; index++)
-            {
-                var filter = this._filters[index];
-                if (WorkshopGui.FilterButton(filter, new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32)))
-                {
-                    _selectedFilter = filter;
-                }
-            }
-        }
-
-        private void DrawAvailableItems()
-        {
-            GUILayout.BeginVertical();
-            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in this._filteredItems)
-            {
-                GUILayout.BeginHorizontal();
-                if (item.Icon == null)
-                {
-                    item.EnableIcon(128);
-                }
-                WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
-                if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
-                {
-                    this._addedItem = new WorkshopItem(item.Part);
-                }
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
-        }
-
+        
         private void DrawQueuedItems()
         {
             GUILayout.BeginVertical();
@@ -618,25 +620,6 @@
             }
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
-        }
-
-        private void DrawBuiltItem()
-        {
-            GUILayout.BeginHorizontal();
-            if (this._processedItem != null)
-            {
-                if (this._processedItem.Icon == null)
-                {
-                    this._processedItem.EnableIcon(128);
-                }
-                WorkshopGui.ItemThumbnail(this._processedItem.Icon);
-            }
-            else
-            {
-                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-            }
-            WorkshopGui.ProgressBar(_progress);
-            GUILayout.EndHorizontal();
         }
     }
 }

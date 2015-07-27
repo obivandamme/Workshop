@@ -25,7 +25,9 @@
         private readonly WorkshopQueue _queue;
 
         // GUI Properties
-        private List<FilterBase> _filters;
+        private FilterBase[] _filters;
+        private Texture[] _filterTextures;
+
         private int _activeFilterId;
         private int _selectedFilterId;
 
@@ -117,19 +119,40 @@
 
         private void LoadFilters()
         {
-            _filters = new List<FilterBase>
-                       {
-                           new FilterBase("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry", "All"),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_commandmodules", "Pods", PartCategories.Pods),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced", "Tanks", PartCategories.FuelTank),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_propulsionSystems", "Engine", PartCategories.Engine),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol", "Control", PartCategories.Control),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", "Structural", PartCategories.Structural),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", "Aero", PartCategories.Aero),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", "Util", PartCategories.Utility),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", "Science", PartCategories.Science),
-                           new FilterModule("Squad/PartList/SimpleIcons/R&D_node_icon_evatech", "EVA", "ModuleKISItem")
-                       };
+            _filters = new FilterBase[10];
+            _filters[0] = new FilterBase();
+            _filters[1] = new FilterCategory(PartCategories.Pods);
+            _filters[2] = new FilterCategory(PartCategories.FuelTank);
+            _filters[3] = new FilterCategory(PartCategories.Engine);
+            _filters[4] = new FilterCategory(PartCategories.Control);
+            _filters[5] = new FilterCategory(PartCategories.Structural);
+            _filters[6] = new FilterCategory(PartCategories.Aero);
+            _filters[7] = new FilterCategory(PartCategories.Utility);
+            _filters[8] = new FilterCategory(PartCategories.Science);
+            _filters[9] = new FilterModule("ModuleKISItem");
+
+            _filterTextures = new Texture[10];
+            _filterTextures[0] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
+            _filterTextures[1] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
+            _filterTextures[2] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
+            _filterTextures[3] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
+            _filterTextures[4] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
+            _filterTextures[5] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
+            _filterTextures[6] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
+            _filterTextures[7] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
+            _filterTextures[8] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
+            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+        }
+
+        private Texture2D LoadTexture(string path)
+        {
+            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == path);
+            if (textureInfo == null)
+            {
+                Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
+                return new Texture2D(25, 25);
+            }
+            return textureInfo.texture;
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -185,7 +208,7 @@
                 if (inventories.Count == 0)
                 {
                     Debug.Log("[OSE] - No Inventories found on this vessel!");
-                    
+
                 }
                 else
                 {
@@ -263,9 +286,9 @@
                 return;
             }
 
-            this._canceledItem.DisableIcon();
+            _canceledItem.DisableIcon();
             _queue.Remove(this._canceledItem);
-            this._canceledItem = null;
+            _canceledItem = null;
         }
 
         private void AddNewItemToQueue()
@@ -276,7 +299,7 @@
             }
 
             _queue.Add(this._addedItem);
-            this._addedItem = null;
+            _addedItem = null;
         }
 
         private void ApplyFilter()
@@ -285,7 +308,7 @@
             {
                 return;
             }
-            
+
             foreach (var item in _filteredItems)
             {
                 item.DisableIcon();
@@ -318,7 +341,7 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                this._processedItem = nextQueuedPart;
+                _processedItem = nextQueuedPart;
             }
         }
 
@@ -332,19 +355,18 @@
             }
             else
             {
-                Status = "Building " + this._processedItem.Part.title;
-
+                Status = "Building " + _processedItem.Part.title;
                 RequestResource(UpkeepResource, deltaTime);
                 _massProcessed += ConsumeInputResource(deltaTime);
             }
 
-            _progress = (float)(_massProcessed / (this._processedItem.Part.partPrefab.mass * this.ConversionRate) * 100);
+            _progress = (float)(_massProcessed / (_processedItem.Part.partPrefab.mass * ConversionRate) * 100);
         }
 
         private double ConsumeInputResource(double deltaTime)
         {
-            var density = PartResourceLibrary.Instance.GetDefinition(this.InputResource).density;
-            var resourcesUsed = this.RequestResource(this.InputResource, deltaTime * this.ProductivityFactor);
+            var density = PartResourceLibrary.Instance.GetDefinition(InputResource).density;
+            var resourcesUsed = RequestResource(InputResource, deltaTime * ProductivityFactor);
             return resourcesUsed * density;
         }
 
@@ -389,8 +411,8 @@
             if (destinationInventory != null)
             {
                 ScreenMessages.PostScreenMessage("3D Printing of " + this._processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
-                this._processedItem.DisableIcon();
-                this._processedItem = null;
+                _processedItem.DisableIcon();
+                _processedItem = null;
                 _massProcessed = 0;
                 _progress = 0;
                 Status = "Online";
@@ -414,23 +436,23 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOnOpenWorkbench();
+                ContextMenuOnOpenWorkbench();
             }
         }
 
         private string CheckPrerequisites(double deltaTime)
         {
-            if (this.part.protoModuleCrew.Count < MinimumCrew)
+            if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 return "Not enough Crew to operate";
             }
 
-            if (this.AmountAvailable(this.UpkeepResource) < deltaTime)
+            if (AmountAvailable(this.UpkeepResource) < deltaTime)
             {
                 return "Not enough " + this.UpkeepResource;
             }
 
-            if (this.AmountAvailable(this.InputResource) < deltaTime * this.ProductivityFactor)
+            if (AmountAvailable(this.InputResource) < deltaTime * this.ProductivityFactor)
             {
                 return "Not enough " + this.InputResource;
             }
@@ -448,7 +470,11 @@
                 throw new Exception("No KIS Inventory found!");
             }
 
-            var freeInventories = inventories.Where(i => WorkshopUtils.HasFreeSpace(i, item) && WorkshopUtils.HasFreeSlot(i) && WorkshopUtils.IsOccupied(i)).ToArray();
+            var freeInventories = inventories
+                .Where(i => WorkshopUtils.HasFreeSpace(i, item))
+                .Where(WorkshopUtils.HasFreeSlot)
+                .Where(WorkshopUtils.IsOccupied)
+                .ToArray();
 
             if (freeInventories.Any())
             {
@@ -507,9 +533,12 @@
             tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
             tooltipDescriptionStyle.padding.top = 5;
 
+            var queueSkin = new GUIStyle(GUI.skin.box);
+            queueSkin.alignment = TextAnchor.UpperCenter;
+            queueSkin.padding.top = 5;
+
             // Filters
-            var labels = new[] { "All", "Pods", "Tanks", "Engines", "Control", "Struct", "Aero", "Util", "Science", "EVA" };
-            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, labels);
+            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
             // Available Items
             for (var y = 0; y < 10; y++)
@@ -552,6 +581,34 @@
                 }
             }
 
+            // Queued Items
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
+            for (var y = 0; y < 4; y++)
+            {
+                for (var x = 0; x < 7; x++)
+                {
+                    var left = 205 + x * 60;
+                    var top = 370 + y * 60;
+                    var itemIndex = y * 7 + x;
+                    if (_queue.Count > itemIndex)
+                    {
+                        var item = _queue[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _canceledItem = item;
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+
             // Tooltip
             GUI.Box(new Rect(190, 70, 440, 270), "");
             if (mouseOverItem != null)
@@ -561,10 +618,6 @@
                 GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetOseStats(InputResource, ConversionRate, ProductivityFactor), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
             }
-            
-
-            // Queued Items
-            GUI.Box(new Rect(190, 345, 440, 270), "Queue");
 
             // Currently build item
             if (_processedItem != null)
@@ -590,7 +643,7 @@
                 GUI.color = color;
             }
             GUI.Label(new Rect(250, 620, 380, 50), " " + _progress.ToString("0.0") + " / 100");
-            
+
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
                 ContextMenuOnOpenWorkbench();
@@ -598,7 +651,7 @@
 
             GUI.DragWindow();
         }
-        
+
         private void DrawQueuedItems()
         {
             GUILayout.BeginVertical();

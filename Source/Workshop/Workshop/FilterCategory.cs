@@ -7,7 +7,7 @@
     {
         public PartCategories Category;
 
-        public FilterCategory(string texturePath, string name, PartCategories category) : base(texturePath, name)
+        public FilterCategory(PartCategories category)
         {
             this.Category = category;
         }

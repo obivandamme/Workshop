@@ -1,6 +1,7 @@
 ﻿namespace Workshop
 {
     using System;
+    using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
 
@@ -24,6 +25,10 @@
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
 
+        // Animations
+        private AnimationState heatAnimation;
+        private AnimationState workAnimation;
+
         // GUI Properties
         private FilterBase[] _filters;
         private Texture[] _filterTextures;
@@ -36,8 +41,10 @@
         private int _maxPage;
 
         private Rect _windowPos = new Rect(50, 50, 640, 680);
-        private Vector2 _scrollPosQueue = Vector2.zero;
         private bool _showGui;
+
+        [KSPField]
+        public bool Animate = false;
 
         [KSPField]
         public float ConversionRate = 1f;
@@ -114,6 +121,31 @@
                 LoadAvailableParts();
                 LoadModuleState(node);
                 LoadFilters();
+                LoadAnimations();
+            }
+        }
+
+        private void LoadAnimations()
+        {
+            if (Animate)
+            {
+                foreach (var animator in part.FindModelAnimators("workshop_emissive"))
+                {
+                    heatAnimation = animator["workshop_emissive"];
+                    heatAnimation.speed = 0;
+                    heatAnimation.enabled = true;
+                    heatAnimation.wrapMode = WrapMode.ClampForever;
+                    animator.Blend("workshop_emissive");
+                    break;
+                }
+                foreach (var animator in part.FindModelAnimators("work"))
+                {
+                    workAnimation = animator["work"];
+                    workAnimation.speed = 0;
+                    workAnimation.enabled = true;
+                    workAnimation.wrapMode = WrapMode.ClampForever;
+                    animator.Blend("work");
+                }   
             }
         }
 
@@ -342,7 +374,51 @@
             if (nextQueuedPart != null)
             {
                 _processedItem = nextQueuedPart;
+
+                if (Animate)
+                {
+                    StartCoroutine(StartAnimations());   
+                }
             }
+        }
+
+        private IEnumerator StartAnimations()
+        {
+            heatAnimation.enabled = true;
+            heatAnimation.normalizedSpeed = 0.5f;
+            while (heatAnimation.normalizedTime < 1)
+            {
+                yield return null;
+            }
+            heatAnimation.enabled = false;
+
+            workAnimation.enabled = true;
+            workAnimation.wrapMode = WrapMode.Loop;
+            workAnimation.normalizedSpeed = 0.5f;
+        }
+
+        private IEnumerator StopAnimations()
+        {
+            heatAnimation.enabled = true;
+            heatAnimation.normalizedTime = 1;
+            heatAnimation.normalizedSpeed = -0.5f;
+
+            workAnimation.enabled = true;
+            workAnimation.wrapMode = WrapMode.Loop;
+            workAnimation.normalizedSpeed = 0.5f;
+
+            while (workAnimation.normalizedTime < 1)
+            {
+                yield return null;
+            }
+            workAnimation.enabled = false;
+            
+            
+            while (heatAnimation.normalizedTime > 0)
+            {
+                yield return null;
+            }
+            heatAnimation.enabled = false;
         }
 
         private void ExecuteManufacturing(double deltaTime)
@@ -416,6 +492,11 @@
                 _massProcessed = 0;
                 _progress = 0;
                 Status = "Online";
+
+                if (Animate)
+                {
+                    StartCoroutine(StopAnimations());
+                }
             }
             else
             {

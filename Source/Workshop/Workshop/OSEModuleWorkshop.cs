@@ -26,8 +26,8 @@
         private readonly WorkshopQueue _queue;
 
         // Animations
-        private AnimationState heatAnimation;
-        private AnimationState workAnimation;
+        private AnimationState _heatAnimation;
+        private AnimationState _workAnimation;
 
         // GUI Properties
         private FilterBase[] _filters;
@@ -80,9 +80,9 @@
                 {
                     item.DisableIcon();
                 }
-                if (this._processedItem != null)
+                if (_processedItem != null)
                 {
-                    this._processedItem.DisableIcon();
+                    _processedItem.DisableIcon();
                 }
                 _showGui = false;
             }
@@ -102,12 +102,13 @@
         {
             if (WorkshopSettings.IsKISAvailable)
             {
-                GameEvents.onVesselChange.Add(this.OnVesselChange);
+                SetupAnimations();
+                GameEvents.onVesselChange.Add(OnVesselChange);
             }
             else
             {
-                this.Fields["Status"].guiActive = false;
-                this.Events["ContextMenuOnOpenWorkbench"].guiActive = false;
+                Fields["Status"].guiActive = false;
+                Events["ContextMenuOnOpenWorkbench"].guiActive = false;
             }
             base.OnStart(state);
         }
@@ -121,30 +122,37 @@
                 LoadAvailableParts();
                 LoadModuleState(node);
                 LoadFilters();
-                LoadAnimations();
             }
         }
 
-        private void LoadAnimations()
+        private void SetupAnimations()
         {
             if (Animate)
             {
                 foreach (var animator in part.FindModelAnimators("workshop_emissive"))
                 {
-                    heatAnimation = animator["workshop_emissive"];
-                    heatAnimation.speed = 0;
-                    heatAnimation.enabled = true;
-                    heatAnimation.wrapMode = WrapMode.ClampForever;
-                    animator.Blend("workshop_emissive");
-                    break;
+                    _heatAnimation = animator["workshop_emissive"];
+                    if (_heatAnimation != null)
+                    {
+                        _heatAnimation.speed = 0;
+                        _heatAnimation.enabled = true;
+                        _heatAnimation.wrapMode = WrapMode.ClampForever;
+                        animator.Blend("workshop_emissive");
+                        break;
+                    } 
+                    Debug.LogError("[OSE] - OnLoad - Unable to load workshop_emissive animation");
                 }
                 foreach (var animator in part.FindModelAnimators("work"))
                 {
-                    workAnimation = animator["work"];
-                    workAnimation.speed = 0;
-                    workAnimation.enabled = true;
-                    workAnimation.wrapMode = WrapMode.ClampForever;
-                    animator.Blend("work");
+                    _workAnimation = animator["work"];
+                    if (_workAnimation != null)
+                    {
+                        _workAnimation.speed = 0;
+                        _workAnimation.enabled = true;
+                        _workAnimation.wrapMode = WrapMode.ClampForever;
+                        animator.Blend("work");   
+                    }
+                    Debug.LogError("[OSE] - OnLoad - Unable to load work animation");
                 }   
             }
         }
@@ -198,7 +206,7 @@
                     {
                         _processedItem = new WorkshopItem(availablePart);
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
-                        if (Animate)
+                        if (Animate && _heatAnimation != null && _workAnimation != null)
                         {
                             StartCoroutine(StartAnimations());
                         }
@@ -237,7 +245,7 @@
 
         private void LoadMaxVolume()
         {
-            _maxVolume = this.MaxPartVolume;
+            _maxVolume = MaxPartVolume;
             try
             {
                 var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
@@ -251,7 +259,7 @@
 
                     Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
                     var maxInventoyVolume = inventories.Max(i => i.maxVolume);
-                    _maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
+                    _maxVolume = Math.Min(maxInventoyVolume, MaxPartVolume);
                 }
             }
             catch (Exception ex)
@@ -268,7 +276,7 @@
             if (this._processedItem != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", this._processedItem.Part.name);
+                builtPartNode.AddValue("Name", _processedItem.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
@@ -286,11 +294,11 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                this.ApplyFilter();
-                this.ApplyPaging();
-                this.RemoveCanceledItemFromQueue();
-                this.AddNewItemToQueue();
-                this.ProcessItem(deltaTime);
+                ApplyFilter();
+                ApplyPaging();
+                RemoveCanceledItemFromQueue();
+                AddNewItemToQueue();
+                ProcessItem(deltaTime);
             }
             catch (Exception ex)
             {
@@ -317,7 +325,7 @@
 
         private void RemoveCanceledItemFromQueue()
         {
-            if (this._canceledItem == null)
+            if (_canceledItem == null)
             {
                 return;
             }
@@ -329,12 +337,12 @@
 
         private void AddNewItemToQueue()
         {
-            if (this._addedItem == null)
+            if (_addedItem == null)
             {
                 return;
             }
 
-            _queue.Add(this._addedItem);
+            _queue.Add(_addedItem);
             _addedItem = null;
         }
 
@@ -379,7 +387,7 @@
             {
                 _processedItem = nextQueuedPart;
 
-                if (Animate)
+                if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
                     StartCoroutine(StartAnimations());   
                 }
@@ -388,41 +396,41 @@
 
         private IEnumerator StartAnimations()
         {
-            heatAnimation.enabled = true;
-            heatAnimation.normalizedSpeed = 0.5f;
-            while (heatAnimation.normalizedTime < 1)
+            _heatAnimation.enabled = true;
+            _heatAnimation.normalizedSpeed = 0.5f;
+            while (_heatAnimation.normalizedTime < 1)
             {
                 yield return null;
             }
-            heatAnimation.enabled = false;
+            _heatAnimation.enabled = false;
 
-            workAnimation.enabled = true;
-            workAnimation.wrapMode = WrapMode.Loop;
-            workAnimation.normalizedSpeed = 0.5f;
+            _workAnimation.enabled = true;
+            _workAnimation.wrapMode = WrapMode.Loop;
+            _workAnimation.normalizedSpeed = 0.5f;
         }
 
         private IEnumerator StopAnimations()
         {
-            heatAnimation.enabled = true;
-            heatAnimation.normalizedTime = 1;
-            heatAnimation.normalizedSpeed = -0.5f;
+            _heatAnimation.enabled = true;
+            _heatAnimation.normalizedTime = 1;
+            _heatAnimation.normalizedSpeed = -0.5f;
 
-            workAnimation.enabled = true;
-            workAnimation.wrapMode = WrapMode.Loop;
-            workAnimation.normalizedSpeed = 0.5f;
+            _workAnimation.enabled = true;
+            _workAnimation.wrapMode = WrapMode.Loop;
+            _workAnimation.normalizedSpeed = 0.5f;
 
-            while (workAnimation.normalizedTime < 1)
+            while (_workAnimation.normalizedTime < 1)
             {
                 yield return null;
             }
-            workAnimation.enabled = false;
+            _workAnimation.enabled = false;
             
             
-            while (heatAnimation.normalizedTime > 0)
+            while (_heatAnimation.normalizedTime > 0)
             {
                 yield return null;
             }
-            heatAnimation.enabled = false;
+            _heatAnimation.enabled = false;
         }
 
         private void ExecuteManufacturing(double deltaTime)
@@ -487,17 +495,17 @@
 
         private void FinishManufacturing()
         {
-            var destinationInventory = AddToContainer(this._processedItem);
+            var destinationInventory = AddToContainer(_processedItem);
             if (destinationInventory != null)
             {
-                ScreenMessages.PostScreenMessage("3D Printing of " + this._processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("3D Printing of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
                 _processedItem.DisableIcon();
                 _processedItem = null;
                 _massProcessed = 0;
                 _progress = 0;
                 Status = "Online";
 
-                if (Animate)
+                if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
                     StartCoroutine(StopAnimations());
                 }
@@ -532,14 +540,14 @@
                 return "Not enough Crew to operate";
             }
 
-            if (AmountAvailable(this.UpkeepResource) < deltaTime)
+            if (AmountAvailable(UpkeepResource) < deltaTime)
             {
                 return "Not enough " + this.UpkeepResource;
             }
 
-            if (AmountAvailable(this.InputResource) < deltaTime * this.ProductivityFactor)
+            if (AmountAvailable(InputResource) < deltaTime * ProductivityFactor)
             {
-                return "Not enough " + this.InputResource;
+                return "Not enough " + InputResource;
             }
 
 
@@ -597,9 +605,9 @@
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
             _windowPos = GUI.Window(
-                   this.GetInstanceID(),
+                   GetInstanceID(),
                    _windowPos,
-                   this.DrawWindowContents,
+                   DrawWindowContents,
                    "Workbench (" + _maxVolume + " litres)");
         }
 

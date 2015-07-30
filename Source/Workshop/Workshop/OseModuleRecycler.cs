@@ -13,6 +13,8 @@
         private WorkshopItem _processedItem;
         private WorkshopItem _canceledItem;
         private WorkshopItem _addedItem;
+        private int _addedItemKey;
+        private ModuleKISInventory _addedItemInventory;
 
         private double _massProcessed;
         private float _progress;
@@ -191,7 +193,10 @@
             }
 
             _queue.Add(_addedItem);
+            _addedItemInventory.DeleteItem(_addedItemKey);
             _addedItem = null;
+            _addedItemInventory = null; 
+            _addedItemKey = -1;
         }
 
         private void StartManufacturing()
@@ -292,8 +297,8 @@
 
         private void FinishManufacturing()
         {
-            this._processedItem.DisableIcon();
-            this._processedItem = null;
+            _processedItem.DisableIcon();
+            _processedItem = null;
             _massProcessed = 0;
             _progress = 0;
             Status = "Online";
@@ -394,8 +399,9 @@
                     WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource, this.ConversionRate);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
-                        this._addedItem = new WorkshopItem(item.Value.availablePart);
-                        inventory.DeleteItem(item.Key);
+                        _addedItem = new WorkshopItem(item.Value.availablePart);
+                        _addedItemKey = item.Key;
+                        _addedItemInventory = inventory;
                     }
                     GUILayout.EndHorizontal();
                 }
@@ -413,13 +419,13 @@
                 GUILayout.BeginHorizontal();
                 if (item.Icon == null)
                 {
-                    item.EnableIcon();
+                    item.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(item.Icon);
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource, this.ConversionRate);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
-                    this._canceledItem = item;
+                    _canceledItem = item;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -434,7 +440,7 @@
             {
                 if (this._processedItem.Icon == null)
                 {
-                    this._processedItem.EnableIcon();
+                    this._processedItem.EnableIcon(128);
                 }
                 WorkshopGui.ItemThumbnail(this._processedItem.Icon);
             }

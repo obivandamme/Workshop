@@ -1,6 +1,7 @@
 ﻿namespace Workshop
 {
     using System;
+    using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
 
@@ -19,17 +20,31 @@
 
         private double _massProcessed;
         private float _progress;
+        private float _maxVolume;
 
         private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
 
+        // Animations
+        private AnimationState _heatAnimation;
+        private AnimationState _workAnimation;
+
         // GUI Properties
-        private List<FilterBase> _filters;
-        private FilterBase _selectedFilter;
-        private Rect _windowPos;
-        private Vector2 _scrollPosItems = Vector2.zero;
-        private Vector2 _scrollPosQueue = Vector2.zero;
+        private FilterBase[] _filters;
+        private Texture[] _filterTextures;
+
+        private int _activeFilterId;
+        private int _selectedFilterId;
+
+        private int _activePage;
+        private int _selectedPage;
+        private int _maxPage;
+
+        private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
+
+        [KSPField]
+        public bool Animate = false;
 
         [KSPField]
         public float ConversionRate = 1f;
@@ -65,9 +80,9 @@
                 {
                     item.DisableIcon();
                 }
-                if (this._processedItem != null)
+                if (_processedItem != null)
                 {
-                    this._processedItem.DisableIcon();
+                    _processedItem.DisableIcon();
                 }
                 _showGui = false;
             }
@@ -87,12 +102,13 @@
         {
             if (WorkshopSettings.IsKISAvailable)
             {
-                GameEvents.onVesselChange.Add(this.OnVesselChange);
+                SetupAnimations();
+                GameEvents.onVesselChange.Add(OnVesselChange);
             }
             else
             {
-                this.Fields["Status"].guiActive = false;
-                this.Events["ContextMenuOnOpenWorkbench"].guiActive = false;
+                Fields["Status"].guiActive = false;
+                Events["ContextMenuOnOpenWorkbench"].guiActive = false;
             }
             base.OnStart(state);
         }
@@ -102,27 +118,81 @@
             base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
+                LoadMaxVolume();
                 LoadAvailableParts();
                 LoadModuleState(node);
                 LoadFilters();
             }
         }
 
+        private void SetupAnimations()
+        {
+            if (Animate)
+            {
+                foreach (var animator in part.FindModelAnimators("workshop_emissive"))
+                {
+                    _heatAnimation = animator["workshop_emissive"];
+                    if (_heatAnimation != null)
+                    {
+                        _heatAnimation.speed = 0;
+                        _heatAnimation.enabled = true;
+                        _heatAnimation.wrapMode = WrapMode.ClampForever;
+                        animator.Blend("workshop_emissive");
+                        break;
+                    } 
+                    Debug.LogError("[OSE] - OnLoad - Unable to load workshop_emissive animation");
+                }
+                foreach (var animator in part.FindModelAnimators("work"))
+                {
+                    _workAnimation = animator["work"];
+                    if (_workAnimation != null)
+                    {
+                        _workAnimation.speed = 0;
+                        _workAnimation.enabled = true;
+                        _workAnimation.wrapMode = WrapMode.ClampForever;
+                        animator.Blend("work");   
+                    }
+                    Debug.LogError("[OSE] - OnLoad - Unable to load work animation");
+                }   
+            }
+        }
+
         private void LoadFilters()
         {
-            _filters = new List<FilterBase>
-                       {
-                           new FilterBase("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry", "All"),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_commandmodules", "Pods", PartCategories.Pods),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced", "Tanks", PartCategories.FuelTank),
-                           new FilterCategory("Squad/PartList/SimpleIcons/RDicon_propulsionSystems", "Engine", PartCategories.Engine),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol", "Control", PartCategories.Control),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction", "Structural", PartCategories.Structural),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics", "Aero", PartCategories.Aero),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_generic", "Util", PartCategories.Utility),
-                           new FilterCategory("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech", "Science", PartCategories.Science),
-                           new FilterModule("Squad/PartList/SimpleIcons/R&D_node_icon_evatech", "EVA", "ModuleKISItem")
-                       };
+            _filters = new FilterBase[10];
+            _filters[0] = new FilterBase();
+            _filters[1] = new FilterCategory(PartCategories.Pods);
+            _filters[2] = new FilterCategory(PartCategories.FuelTank);
+            _filters[3] = new FilterCategory(PartCategories.Engine);
+            _filters[4] = new FilterCategory(PartCategories.Control);
+            _filters[5] = new FilterCategory(PartCategories.Structural);
+            _filters[6] = new FilterCategory(PartCategories.Aero);
+            _filters[7] = new FilterCategory(PartCategories.Utility);
+            _filters[8] = new FilterCategory(PartCategories.Science);
+            _filters[9] = new FilterModule("ModuleKISItem");
+
+            _filterTextures = new Texture[10];
+            _filterTextures[0] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
+            _filterTextures[1] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
+            _filterTextures[2] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
+            _filterTextures[3] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
+            _filterTextures[4] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
+            _filterTextures[5] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
+            _filterTextures[6] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
+            _filterTextures[7] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
+            _filterTextures[8] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
+            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+        }
+
+        private Texture2D LoadTexture(string path)
+        {
+            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == path);
+            if (textureInfo == null)
+            {
+                Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
+                return new Texture2D(25, 25);
+            }
+            return textureInfo.texture;
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -134,8 +204,12 @@
                     var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
                     if (availablePart != null)
                     {
-                        this._processedItem = new WorkshopItem(availablePart);
+                        _processedItem = new WorkshopItem(availablePart);
                         _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
+                        if (Animate && _heatAnimation != null && _workAnimation != null)
+                        {
+                            StartCoroutine(StartAnimations());
+                        }
                     }
                 }
                 if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
@@ -150,12 +224,11 @@
         private void LoadAvailableParts()
         {
             var items = new List<WorkshopItem>();
-            var maxVolume = this.GetMaxVolume();
             foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
                 try
                 {
-                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= maxVolume)
+                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -166,26 +239,27 @@
                 }
             }
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
-            _filteredItems = items.OrderBy(i => i.Part.title).ToArray();
+            _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
+            _maxPage = _availableItems.Count() / 30;
         }
 
-        private float GetMaxVolume()
+        private void LoadMaxVolume()
         {
-            var maxVolume = this.MaxPartVolume;
+            _maxVolume = MaxPartVolume;
             try
             {
                 var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
                 if (inventories.Count == 0)
                 {
                     Debug.Log("[OSE] - No Inventories found on this vessel!");
-                    
+
                 }
                 else
                 {
 
                     Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
                     var maxInventoyVolume = inventories.Max(i => i.maxVolume);
-                    maxVolume = Math.Min(maxInventoyVolume, this.MaxPartVolume);
+                    _maxVolume = Math.Min(maxInventoyVolume, MaxPartVolume);
                 }
             }
             catch (Exception ex)
@@ -194,8 +268,7 @@
                 Debug.LogError("[OSE] - " + ex.Message);
                 Debug.LogError("[OSE] - " + ex.StackTrace);
             }
-            Debug.Log("[OSE] - Max volume is: " + maxVolume + "liters");
-            return maxVolume; 
+            Debug.Log("[OSE] - Max volume is: " + _maxVolume + "liters");
         }
 
         public override void OnSave(ConfigNode node)
@@ -203,7 +276,7 @@
             if (this._processedItem != null)
             {
                 var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", this._processedItem.Part.name);
+                builtPartNode.AddValue("Name", _processedItem.Part.name);
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
@@ -221,10 +294,11 @@
             var deltaTime = _clock.GetDeltaTime();
             try
             {
-                this.ApplyFilter();
-                this.RemoveCanceledItemFromQueue();
-                this.AddNewItemToQueue();
-                this.ProcessItem(deltaTime);
+                ApplyFilter();
+                ApplyPaging();
+                RemoveCanceledItemFromQueue();
+                AddNewItemToQueue();
+                ProcessItem(deltaTime);
             }
             catch (Exception ex)
             {
@@ -251,30 +325,30 @@
 
         private void RemoveCanceledItemFromQueue()
         {
-            if (this._canceledItem == null)
+            if (_canceledItem == null)
             {
                 return;
             }
 
-            this._canceledItem.DisableIcon();
+            _canceledItem.DisableIcon();
             _queue.Remove(this._canceledItem);
-            this._canceledItem = null;
+            _canceledItem = null;
         }
 
         private void AddNewItemToQueue()
         {
-            if (this._addedItem == null)
+            if (_addedItem == null)
             {
                 return;
             }
 
-            _queue.Add(this._addedItem);
-            this._addedItem = null;
+            _queue.Add(_addedItem);
+            _addedItem = null;
         }
 
         private void ApplyFilter()
         {
-            if (_selectedFilter == null)
+            if (_activeFilterId == _selectedFilterId)
             {
                 return;
             }
@@ -283,8 +357,27 @@
             {
                 item.DisableIcon();
             }
-            _filteredItems = _selectedFilter.Filter(_availableItems);
-            _selectedFilter = null;
+
+            var selectedFilter = _filters[_selectedFilterId];
+            _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
+            _activeFilterId = _selectedFilterId;
+        }
+
+        private void ApplyPaging()
+        {
+            if (_activePage == _selectedPage)
+            {
+                return;
+            }
+
+            foreach (var item in _filteredItems)
+            {
+                item.DisableIcon();
+            }
+
+            var selectedFilter = _filters[_activeFilterId];
+            _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
+            _activePage = _selectedPage;
         }
 
         private void StartManufacturing()
@@ -292,8 +385,52 @@
             var nextQueuedPart = _queue.Pop();
             if (nextQueuedPart != null)
             {
-                this._processedItem = nextQueuedPart;
+                _processedItem = nextQueuedPart;
+
+                if (Animate && _heatAnimation != null && _workAnimation != null)
+                {
+                    StartCoroutine(StartAnimations());   
+                }
             }
+        }
+
+        private IEnumerator StartAnimations()
+        {
+            _heatAnimation.enabled = true;
+            _heatAnimation.normalizedSpeed = 0.5f;
+            while (_heatAnimation.normalizedTime < 1)
+            {
+                yield return null;
+            }
+            _heatAnimation.enabled = false;
+
+            _workAnimation.enabled = true;
+            _workAnimation.wrapMode = WrapMode.Loop;
+            _workAnimation.normalizedSpeed = 0.5f;
+        }
+
+        private IEnumerator StopAnimations()
+        {
+            _heatAnimation.enabled = true;
+            _heatAnimation.normalizedTime = 1;
+            _heatAnimation.normalizedSpeed = -0.5f;
+
+            _workAnimation.enabled = true;
+            _workAnimation.wrapMode = WrapMode.Loop;
+            _workAnimation.normalizedSpeed = 0.5f;
+
+            while (_workAnimation.normalizedTime < 1)
+            {
+                yield return null;
+            }
+            _workAnimation.enabled = false;
+            
+            
+            while (_heatAnimation.normalizedTime > 0)
+            {
+                yield return null;
+            }
+            _heatAnimation.enabled = false;
         }
 
         private void ExecuteManufacturing(double deltaTime)
@@ -306,19 +443,18 @@
             }
             else
             {
-                Status = "Building " + this._processedItem.Part.title;
-
+                Status = "Building " + _processedItem.Part.title;
                 RequestResource(UpkeepResource, deltaTime);
                 _massProcessed += ConsumeInputResource(deltaTime);
             }
 
-            _progress = (float)(_massProcessed / (this._processedItem.Part.partPrefab.mass * this.ConversionRate) * 100);
+            _progress = (float)(_massProcessed / (_processedItem.Part.partPrefab.mass * ConversionRate) * 100);
         }
 
         private double ConsumeInputResource(double deltaTime)
         {
-            var density = PartResourceLibrary.Instance.GetDefinition(this.InputResource).density;
-            var resourcesUsed = this.RequestResource(this.InputResource, deltaTime * this.ProductivityFactor);
+            var density = PartResourceLibrary.Instance.GetDefinition(InputResource).density;
+            var resourcesUsed = RequestResource(InputResource, deltaTime * ProductivityFactor);
             return resourcesUsed * density;
         }
 
@@ -359,15 +495,20 @@
 
         private void FinishManufacturing()
         {
-            var destinationInventory = AddToContainer(this._processedItem);
+            var destinationInventory = AddToContainer(_processedItem);
             if (destinationInventory != null)
             {
-                ScreenMessages.PostScreenMessage("3D Printing of " + this._processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
-                this._processedItem.DisableIcon();
-                this._processedItem = null;
+                ScreenMessages.PostScreenMessage("3D Printing of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
+                _processedItem.DisableIcon();
+                _processedItem = null;
                 _massProcessed = 0;
                 _progress = 0;
                 Status = "Online";
+
+                if (Animate && _heatAnimation != null && _workAnimation != null)
+                {
+                    StartCoroutine(StopAnimations());
+                }
             }
             else
             {
@@ -388,25 +529,25 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOnOpenWorkbench();
+                ContextMenuOnOpenWorkbench();
             }
         }
 
         private string CheckPrerequisites(double deltaTime)
         {
-            if (this.part.protoModuleCrew.Count < MinimumCrew)
+            if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 return "Not enough Crew to operate";
             }
 
-            if (this.AmountAvailable(this.UpkeepResource) < deltaTime)
+            if (AmountAvailable(UpkeepResource) < deltaTime)
             {
                 return "Not enough " + this.UpkeepResource;
             }
 
-            if (this.AmountAvailable(this.InputResource) < deltaTime * this.ProductivityFactor)
+            if (AmountAvailable(InputResource) < deltaTime * ProductivityFactor)
             {
-                return "Not enough " + this.InputResource;
+                return "Not enough " + InputResource;
             }
 
 
@@ -422,7 +563,11 @@
                 throw new Exception("No KIS Inventory found!");
             }
 
-            var freeInventories = inventories.Where(i => WorkshopUtils.HasFreeSpace(i, item) && WorkshopUtils.HasFreeSlot(i) && WorkshopUtils.IsOccupied(i)).ToArray();
+            var freeInventories = inventories
+                .Where(i => WorkshopUtils.HasFreeSpace(i, item))
+                .Where(WorkshopUtils.HasFreeSlot)
+                .Where(WorkshopUtils.IsOccupied)
+                .ToArray();
 
             if (freeInventories.Any())
             {
@@ -459,116 +604,149 @@
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUILayout.Window(
-                   this.GetInstanceID(),
+            _windowPos = GUI.Window(
+                   GetInstanceID(),
                    _windowPos,
-                   this.DrawWindowContents,
-                   "Workshop Build Menu",
-                   GUILayout.ExpandWidth(true),
-                   GUILayout.ExpandHeight(true),
-                   GUILayout.MinWidth(64),
-                   GUILayout.MinHeight(64));
+                   DrawWindowContents,
+                   "Workbench (" + _maxVolume + " litres)");
         }
 
         private void DrawWindowContents(int windowId)
         {
-            GUILayout.Space(15);
-            this.DrawFilters();
+            WorkshopItem mouseOverItem = null;
 
-            GUILayout.Space(5);
-            GUILayout.BeginHorizontal();
-            DrawAvailableItems();
-            DrawQueuedItems();
-            GUILayout.EndHorizontal();
+            // styles 
+            var statsStyle = new GUIStyle(GUI.skin.box);
+            statsStyle.fontSize = 11;
+            statsStyle.alignment = TextAnchor.UpperLeft;
+            statsStyle.padding.left = statsStyle.padding.top = 5;
 
-            GUILayout.Space(5);
-            DrawBuiltItem();
+            var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
+            tooltipDescriptionStyle.fontSize = 11;
+            tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
+            tooltipDescriptionStyle.padding.top = 5;
 
-            if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
+            var queueSkin = new GUIStyle(GUI.skin.box);
+            queueSkin.alignment = TextAnchor.UpperCenter;
+            queueSkin.padding.top = 5;
+
+            // Filters
+            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
+
+            // Available Items
+            const int ItemRows = 10;
+            const int ItemColumns = 3;
+            for (var y = 0; y < ItemRows; y++)
+            {
+                for (var x = 0; x < ItemColumns; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    var itemIndex = y * ItemColumns + x;
+                    if (_filteredItems.Length > itemIndex)
+                    {
+                        var item = _filteredItems[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _addedItem = new WorkshopItem(item.Part);
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+            if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
+            {
+                if (_activePage > 0)
+                {
+                    _selectedPage = _activePage - 1;
+                }
+            }
+            if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
+            {
+                if (_activePage < _maxPage)
+                {
+                    _selectedPage = _activePage + 1;
+                }
+            }
+
+            // Queued Items
+            const int QueueRows = 4;
+            const int QueueColumns = 7;
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
+            for (var y = 0; y < QueueRows; y++)
+            {
+                for (var x = 0; x < QueueColumns; x++)
+                {
+                    var left = 205 + x * 60;
+                    var top = 370 + y * 60;
+                    var itemIndex = y * QueueColumns + x;
+                    if (_queue.Count > itemIndex)
+                    {
+                        var item = _queue[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _canceledItem = item;
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+
+            // Tooltip
+            GUI.Box(new Rect(190, 70, 440, 270), "");
+            if (mouseOverItem != null)
+            {
+                GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
+                GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetOseStats(InputResource, ConversionRate, ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
+            }
+
+            // Currently build item
+            if (_processedItem != null)
+            {
+                if (_processedItem.Icon == null)
+                {
+                    _processedItem.EnableIcon(64);
+                }
+                GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
+            }
+            else
+            {
+                GUI.Box(new Rect(190, 620, 50, 50), "");
+            }
+
+            // Progressbar
+            GUI.Box(new Rect(250, 620, 380, 50), "");
+            if (_progress >= 1)
+            {
+                var color = GUI.color;
+                GUI.color = new Color(0, 1, 0, 1);
+                GUI.Box(new Rect(250, 620, 380 * _progress / 100, 50), "");
+                GUI.color = color;
+            }
+            GUI.Label(new Rect(250, 620, 380, 50), " " + _progress.ToString("0.0") + " / 100");
+
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
                 ContextMenuOnOpenWorkbench();
             }
 
             GUI.DragWindow();
-        }
-
-        private void DrawFilters()
-        {
-            GUILayout.Box("", GUILayout.Width(805), GUILayout.Height(42));
-            var boxRect = GUILayoutUtility.GetLastRect();
-            for (var index = 0; index < this._filters.Count; index++)
-            {
-                var filter = this._filters[index];
-                if (WorkshopGui.FilterButton(filter, new Rect(boxRect.xMin + 5 + (37 * index), boxRect.yMin + 5, 32, 32)))
-                {
-                    _selectedFilter = filter;
-                }
-            }
-        }
-
-        private void DrawAvailableItems()
-        {
-            GUILayout.BeginVertical();
-            _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in this._filteredItems)
-            {
-                GUILayout.BeginHorizontal();
-                if (item.Icon == null)
-                {
-                    item.EnableIcon();
-                }
-                WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
-                if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
-                {
-                    this._addedItem = new WorkshopItem(item.Part);
-                }
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
-        }
-
-        private void DrawQueuedItems()
-        {
-            GUILayout.BeginVertical();
-            _scrollPosQueue = GUILayout.BeginScrollView(_scrollPosQueue, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var item in this._queue)
-            {
-                GUILayout.BeginHorizontal();
-                if (item.Icon == null)
-                {
-                    item.EnableIcon();
-                }
-                WorkshopGui.ItemThumbnail(item.Icon);
-                WorkshopGui.ItemDescription(item.Part, this.InputResource, this.ConversionRate);
-                if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
-                {
-                    this._canceledItem = item;
-                }
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
-        }
-
-        private void DrawBuiltItem()
-        {
-            GUILayout.BeginHorizontal();
-            if (this._processedItem != null)
-            {
-                if (this._processedItem.Icon == null)
-                {
-                    this._processedItem.EnableIcon();
-                }
-                WorkshopGui.ItemThumbnail(this._processedItem.Icon);
-            }
-            else
-            {
-                GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
-            }
-            WorkshopGui.ProgressBar(_progress);
-            GUILayout.EndHorizontal();
         }
     }
 }

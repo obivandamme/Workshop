@@ -6,28 +6,9 @@ namespace Workshop
 {
     public class FilterBase
     {
-        public Texture2D Texture;
-
-        public string Name;
-
-        public FilterBase(string texturePath, string name)
+        public virtual WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)
         {
-            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == texturePath);
-            if (textureInfo != null)
-            {
-                this.Texture = textureInfo.texture;
-            }
-            else
-            {
-                Debug.LogError("[OSE] - Filter - Unable to load texture file " + texturePath);
-            }
-            this.Name = name;
-
-        }
-
-        public virtual WorkshopItem[] Filter(IEnumerable<WorkshopItem> items)
-        {
-            return items.OrderBy(i => i.Part.title).ToArray();
+            return items.OrderBy(i => i.Part.title).Skip(skip).Take(30).ToArray();
         }
     }
 }

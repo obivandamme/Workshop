@@ -43,17 +43,5 @@
             GUILayout.Box(text.ToString(), WorkshopStyles.Databox(), GUILayout.Width(250), GUILayout.Height(50));
             GUILayout.EndVertical();
         }
-
-        public static bool FilterButton(FilterBase filter, Rect position)
-        {
-            if (filter.Texture != null)
-            {
-                return GUI.Button(position, filter.Texture, WorkshopStyles.Button());
-            }
-            else
-            {
-                return GUI.Button(position, filter.Name, WorkshopStyles.Button());
-            }
-        }
     }
 }

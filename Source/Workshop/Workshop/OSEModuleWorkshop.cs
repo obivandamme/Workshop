@@ -139,8 +139,11 @@
                         _heatAnimation.wrapMode = WrapMode.ClampForever;
                         animator.Blend("workshop_emissive");
                         break;
-                    } 
-                    Debug.LogError("[OSE] - OnLoad - Unable to load workshop_emissive animation");
+                    }
+                    else
+                    {
+                        Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
+                    }
                 }
                 foreach (var animator in part.FindModelAnimators("work"))
                 {
@@ -150,9 +153,12 @@
                         _workAnimation.speed = 0;
                         _workAnimation.enabled = true;
                         _workAnimation.wrapMode = WrapMode.ClampForever;
-                        animator.Blend("work");   
+                        animator.Blend("work");
                     }
-                    Debug.LogError("[OSE] - OnLoad - Unable to load work animation");
+                    else
+                    {
+                        Debug.LogError("[OSE] - Unable to load work animation");
+                    }
                 }   
             }
         }

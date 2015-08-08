@@ -103,6 +103,9 @@
             if (WorkshopSettings.IsKISAvailable)
             {
                 SetupAnimations();
+                LoadMaxVolume();
+                LoadAvailableParts();
+                LoadFilters();
                 GameEvents.onVesselChange.Add(OnVesselChange);
             }
             else
@@ -118,10 +121,7 @@
             base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
-                LoadMaxVolume();
-                LoadAvailableParts();
                 LoadModuleState(node);
-                LoadFilters();
             }
         }
 
@@ -571,6 +571,26 @@
 
             if (freeInventories.Any())
             {
+                // first pass with favored inventories
+                var favoredInventories = freeInventories
+                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>() != null)
+                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>().isFavored).ToArray();
+
+                foreach (var inventory in favoredInventories)
+                {
+                    var kisItem = inventory.AddItem(item.Part.partPrefab);
+                    if (kisItem == null)
+                    {
+                        throw new Exception("Error adding item " + item.Part.name + " to inventory");
+                    }
+                    foreach (var resourceInfo in kisItem.GetResources())
+                    {
+                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                    }
+                    return inventory;
+                }
+
+                // second pass with the rest
                 foreach (var inventory in freeInventories)
                 {
                     var kisItem = inventory.AddItem(item.Part.partPrefab);

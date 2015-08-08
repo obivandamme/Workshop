@@ -1,0 +1,58 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Workshop
+{
+    public class OseModuleInventoryPreference : PartModule
+    {
+        [KSPField]
+        public bool isFavored = false;
+
+        [KSPEvent(guiActive = false, guiName = "Favor Inventory")]
+        public void ContextMenuOnFavorInventory()
+        {
+            if (isFavored)
+            {
+                isFavored = false;
+                Events["ContextMenuOnFavorInventory"].guiName = "Favor Inventory";
+            }
+            else
+            {
+                isFavored = true;
+                Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
+            }
+        }
+
+        public override void OnStart(StartState state)
+        {
+            base.OnStart(state);
+            if (VesselHasWorkshop())
+            {
+                Events["ContextMenuOnFavorInventory"].guiActive = true;
+            }
+        }
+
+        public override void OnLoad(ConfigNode node)
+        {
+            base.OnLoad(node);
+            if (isFavored)
+            {
+                Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
+            }
+        }
+
+        private bool VesselHasWorkshop()
+        {
+            foreach (var part in vessel.Parts)
+            {
+                if (part.GetComponent<OseModuleWorkshop>() != null)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+}

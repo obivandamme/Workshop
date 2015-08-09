@@ -7,7 +7,7 @@ namespace Workshop
 {
     public class OseModuleInventoryPreference : PartModule
     {
-        [KSPField]
+        [KSPField(guiActive = true, guiName = "OSE Debug", isPersistant = true)]
         public bool isFavored = false;
 
         [KSPEvent(guiActive = false, guiName = "Favor Inventory")]
@@ -32,11 +32,6 @@ namespace Workshop
             {
                 Events["ContextMenuOnFavorInventory"].guiActive = true;
             }
-        }
-
-        public override void OnLoad(ConfigNode node)
-        {
-            base.OnLoad(node);
             if (isFavored)
             {
                 Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";

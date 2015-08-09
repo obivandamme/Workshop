@@ -165,7 +165,7 @@
 
         private void LoadFilters()
         {
-            _filters = new FilterBase[10];
+            _filters = new FilterBase[11];
             _filters[0] = new FilterBase();
             _filters[1] = new FilterCategory(PartCategories.Pods);
             _filters[2] = new FilterCategory(PartCategories.FuelTank);
@@ -175,9 +175,10 @@
             _filters[6] = new FilterCategory(PartCategories.Aero);
             _filters[7] = new FilterCategory(PartCategories.Utility);
             _filters[8] = new FilterCategory(PartCategories.Science);
-            _filters[9] = new FilterModule("ModuleKISItem");
+            _filters[9] = new FilterCategory(PartCategories.none);
+            _filters[10] = new FilterModule("ModuleKISItem");
 
-            _filterTextures = new Texture[10];
+            _filterTextures = new Texture[11];
             _filterTextures[0] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
             _filterTextures[1] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
             _filterTextures[2] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
@@ -187,7 +188,8 @@
             _filterTextures[6] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
             _filterTextures[7] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
             _filterTextures[8] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
-            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
+            _filterTextures[10] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
         }
 
         private Texture2D LoadTexture(string path)

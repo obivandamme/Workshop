@@ -26,7 +26,8 @@
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -53,6 +54,7 @@
     <Compile Include="FilterBase.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
+    <Compile Include="OseModuleInventoryPreference.cs" />
     <Compile Include="OseModuleRecycler.cs" />
     <Compile Include="WorkshopSettings.cs" />
     <Compile Include="WorkshopStyles.cs" />

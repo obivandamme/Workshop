@@ -103,6 +103,9 @@
             if (WorkshopSettings.IsKISAvailable)
             {
                 SetupAnimations();
+                LoadMaxVolume();
+                LoadAvailableParts();
+                LoadFilters();
                 GameEvents.onVesselChange.Add(OnVesselChange);
             }
             else
@@ -118,10 +121,7 @@
             base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
-                LoadMaxVolume();
-                LoadAvailableParts();
                 LoadModuleState(node);
-                LoadFilters();
             }
         }
 
@@ -139,8 +139,11 @@
                         _heatAnimation.wrapMode = WrapMode.ClampForever;
                         animator.Blend("workshop_emissive");
                         break;
-                    } 
-                    Debug.LogError("[OSE] - OnLoad - Unable to load workshop_emissive animation");
+                    }
+                    else
+                    {
+                        Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
+                    }
                 }
                 foreach (var animator in part.FindModelAnimators("work"))
                 {
@@ -150,16 +153,19 @@
                         _workAnimation.speed = 0;
                         _workAnimation.enabled = true;
                         _workAnimation.wrapMode = WrapMode.ClampForever;
-                        animator.Blend("work");   
+                        animator.Blend("work");
                     }
-                    Debug.LogError("[OSE] - OnLoad - Unable to load work animation");
+                    else
+                    {
+                        Debug.LogError("[OSE] - Unable to load work animation");
+                    }
                 }   
             }
         }
 
         private void LoadFilters()
         {
-            _filters = new FilterBase[10];
+            _filters = new FilterBase[11];
             _filters[0] = new FilterBase();
             _filters[1] = new FilterCategory(PartCategories.Pods);
             _filters[2] = new FilterCategory(PartCategories.FuelTank);
@@ -169,9 +175,10 @@
             _filters[6] = new FilterCategory(PartCategories.Aero);
             _filters[7] = new FilterCategory(PartCategories.Utility);
             _filters[8] = new FilterCategory(PartCategories.Science);
-            _filters[9] = new FilterModule("ModuleKISItem");
+            _filters[9] = new FilterCategory(PartCategories.none);
+            _filters[10] = new FilterModule("ModuleKISItem");
 
-            _filterTextures = new Texture[10];
+            _filterTextures = new Texture[11];
             _filterTextures[0] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
             _filterTextures[1] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
             _filterTextures[2] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
@@ -181,7 +188,8 @@
             _filterTextures[6] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
             _filterTextures[7] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
             _filterTextures[8] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
-            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
+            _filterTextures[10] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
         }
 
         private Texture2D LoadTexture(string path)
@@ -571,6 +579,26 @@
 
             if (freeInventories.Any())
             {
+                // first pass with favored inventories
+                var favoredInventories = freeInventories
+                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>() != null)
+                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>().isFavored).ToArray();
+
+                foreach (var inventory in favoredInventories)
+                {
+                    var kisItem = inventory.AddItem(item.Part.partPrefab);
+                    if (kisItem == null)
+                    {
+                        throw new Exception("Error adding item " + item.Part.name + " to inventory");
+                    }
+                    foreach (var resourceInfo in kisItem.GetResources())
+                    {
+                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                    }
+                    return inventory;
+                }
+
+                // second pass with the rest
                 foreach (var inventory in freeInventories)
                 {
                     var kisItem = inventory.AddItem(item.Part.partPrefab);

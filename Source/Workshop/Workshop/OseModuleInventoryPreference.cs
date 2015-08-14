@@ -40,6 +40,11 @@ namespace Workshop
 
         private bool VesselHasWorkshop()
         {
+            if (this.part.vessel == null)
+                return false;
+            if (this.part.vessel.Parts == null)
+                return false;
+
             foreach (var part in vessel.Parts)
             {
                 if (part.GetComponent<OseModuleWorkshop>() != null)

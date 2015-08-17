@@ -46,7 +46,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DependancyChecker.cs" />
     <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />

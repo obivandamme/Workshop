@@ -30,6 +30,7 @@ namespace Workshop
             var sb = new StringBuilder();
             sb.AppendLine("Mass: " + this.Part.partPrefab.mass + " tons");
             sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(this.Part.partPrefab).ToString("0.0") + " litres");
+            sb.AppendLine("Costs: " + this.Part.cost + "$");
 
             foreach (var resourceInfo in this.Part.partPrefab.Resources.list)
             {
@@ -41,13 +42,18 @@ namespace Workshop
         public string GetOseStats(string resourceName, double conversion, double productivity)
         {
             var sb = new StringBuilder();
-
-            var density = PartResourceLibrary.Instance.GetDefinition(resourceName).density;
+            var resourceInfo = PartResourceLibrary.Instance.GetDefinition(resourceName);
+            
+            var density = resourceInfo.density;
             var requiredResources = (this.Part.partPrefab.mass / density) * conversion;
             sb.AppendLine(resourceName + ": " + requiredResources.ToString("0.00"));
 
+            var costs = requiredResources * resourceInfo.unitCost;
+            sb.AppendLine("Resource costs: " + costs.ToString("0.00") + "$");
+
             var seconds = requiredResources / productivity;
             sb.AppendFormat("Duration: {0:00}h {1:00}m {2:00}s", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+
             return sb.ToString();
         }
 

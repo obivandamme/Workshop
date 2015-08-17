@@ -88,6 +88,7 @@
             }
             else
             {
+                LoadAvailableParts();
                 _showGui = true;
             }
         }
@@ -104,7 +105,6 @@
             {
                 SetupAnimations();
                 LoadMaxVolume();
-                LoadAvailableParts();
                 LoadFilters();
                 GameEvents.onVesselChange.Add(OnVesselChange);
             }
@@ -231,12 +231,14 @@
 
         private void LoadAvailableParts()
         {
+            Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count + " loaded parts");
+            Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Where(p => PartResearched(p)).Count() + " unlocked parts");
             var items = new List<WorkshopItem>();
             foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
                 try
                 {
-                    if (ResearchAndDevelopment.PartModelPurchased(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
+                    if (PartResearched(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -249,6 +251,11 @@
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
             _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
             _maxPage = _availableItems.Count() / 30;
+        }
+
+        private bool PartResearched(AvailablePart p)
+        {
+            return ResearchAndDevelopment.PartTechAvailable(p) && ResearchAndDevelopment.PartModelPurchased(p);
         }
 
         private void LoadMaxVolume()

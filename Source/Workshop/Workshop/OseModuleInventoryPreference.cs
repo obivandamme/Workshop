@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 namespace Workshop
 {
     public class OseModuleInventoryPreference : PartModule
     {
-        [KSPField(guiActive = true, guiName = "OSE Debug", isPersistant = true)]
+        [KSPField(isPersistant = true)]
         public bool isFavored = false;
 
         [KSPEvent(guiActive = false, guiName = "Favor Inventory")]
@@ -40,14 +37,7 @@ namespace Workshop
 
         private bool VesselHasWorkshop()
         {
-            foreach (var part in vessel.Parts)
-            {
-                if (part.GetComponent<OseModuleWorkshop>() != null)
-                {
-                    return true;
-                }
-            }
-            return false;
+            return HighLogic.LoadedSceneIsFlight && this.vessel.Parts.Any(p => p.GetComponent<OseModuleWorkshop>() != null);
         }
     }
 }

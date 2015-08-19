@@ -47,9 +47,6 @@
         public bool Animate = false;
 
         [KSPField]
-        public float ConversionRate = 1f;
-
-        [KSPField]
         public float ProductivityFactor = 0.1f;
 
         [KSPField]
@@ -159,7 +156,7 @@
                     {
                         Debug.LogError("[OSE] - Unable to load work animation");
                     }
-                }   
+                }
             }
         }
 
@@ -363,36 +360,34 @@
 
         private void ApplyFilter()
         {
-            if (_activeFilterId == _selectedFilterId)
+            if (_activeFilterId != _selectedFilterId)
             {
-                return;
-            }
+                foreach (var item in _filteredItems)
+                {
+                    item.DisableIcon();
+                }
 
-            foreach (var item in _filteredItems)
-            {
-                item.DisableIcon();
+                var selectedFilter = _filters[_selectedFilterId];
+                _activePage = 0;
+                _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
+                _activeFilterId = _selectedFilterId;
+                _maxPage = _filteredItems.Count() / 30;
             }
-
-            var selectedFilter = _filters[_selectedFilterId];
-            _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
-            _activeFilterId = _selectedFilterId;
         }
 
         private void ApplyPaging()
         {
-            if (_activePage == _selectedPage)
+            if (_activePage != _selectedPage)
             {
-                return;
-            }
+                foreach (var item in _filteredItems)
+                {
+                    item.DisableIcon();
+                }
 
-            foreach (var item in _filteredItems)
-            {
-                item.DisableIcon();
+                var selectedFilter = _filters[_activeFilterId];
+                _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
+                _activePage = _selectedPage;
             }
-
-            var selectedFilter = _filters[_activeFilterId];
-            _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
-            _activePage = _selectedPage;
         }
 
         private void StartManufacturing()
@@ -404,7 +399,7 @@
 
                 if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
-                    StartCoroutine(StartAnimations());   
+                    StartCoroutine(StartAnimations());
                 }
             }
         }
@@ -439,8 +434,8 @@
                 yield return null;
             }
             _workAnimation.enabled = false;
-            
-            
+
+
             while (_heatAnimation.normalizedTime > 0)
             {
                 yield return null;
@@ -463,7 +458,7 @@
                 _massProcessed += ConsumeInputResource(deltaTime);
             }
 
-            _progress = (float)(_massProcessed / (_processedItem.Part.partPrefab.mass * ConversionRate) * 100);
+            _progress = (float)((_massProcessed / _processedItem.Part.partPrefab.mass) * 100);
         }
 
         private double ConsumeInputResource(double deltaTime)
@@ -696,16 +691,18 @@
                     }
                 }
             }
-            if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
+
+            if (_activePage > 0)
             {
-                if (_activePage > 0)
+                if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
                 {
                     _selectedPage = _activePage - 1;
                 }
             }
-            if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
+
+            if (_activePage < _maxPage)
             {
-                if (_activePage < _maxPage)
+                if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
                 {
                     _selectedPage = _activePage + 1;
                 }
@@ -747,7 +744,7 @@
             {
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetOseStats(InputResource, ConversionRate, ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetWorkshopStats(InputResource, ProductivityFactor), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
             }
 

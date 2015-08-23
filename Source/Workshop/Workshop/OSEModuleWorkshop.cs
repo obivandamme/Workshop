@@ -4,8 +4,9 @@
     using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
-
+    
     using KIS;
+    using Workshop.Recipes;
 
     using UnityEngine;
 
@@ -44,60 +45,11 @@
         private bool _showGui;
 
         // Processing
-        private float _structuralResourcesRequired;
-        private float _functionalResourcesRequired;
-        private float _structuralRatio;
-        private float _functionalRatio;
-        private float _totalRatio;
-        private PartResourceDefinition _structuralResource;
-        private PartResourceDefinition _functionalResource;
-        public string StructuralResource = "MaterialKits";
-        public string FunctionalResource = "SpecializedParts";
+        private Blueprint _processedBlueprint;
 
-        private void LoadResources()
-        {
-            _structuralResource = PartResourceLibrary.Instance.GetDefinition(StructuralResource);
-            _functionalResource = PartResourceLibrary.Instance.GetDefinition(FunctionalResource);
-        }
+        // Testing
 
-        private void PrepareRecipe(WorkshopItem item)
-        {
-            var partMass = item.Part.partPrefab.mass;
-            var partCost = item.Part.cost;
-            var partFundsPerTon = partCost / partMass;
-            var structuralFundsPerTon = _structuralResource.unitCost / _structuralResource.density;
-            var functionalFundsPerTon = _functionalResource.unitCost / _functionalResource.density;
-
-            if (partFundsPerTon < structuralFundsPerTon)
-            {
-                _structuralRatio = 1;
-                _functionalRatio = 0;
-                _totalRatio = 1;
-            }
-            else if (partFundsPerTon > functionalFundsPerTon)
-            {
-                _structuralRatio = 0;
-                _functionalRatio = 1;
-                _totalRatio = 1;
-            }
-            else
-            {
-                _structuralRatio = 1;
-                _functionalRatio = (structuralFundsPerTon - partFundsPerTon) / (partFundsPerTon - functionalFundsPerTon);
-                _totalRatio = _structuralRatio + _functionalRatio;
-            }
-
-            var combinedDensity = (_structuralRatio * _structuralResource.density + _functionalRatio * _functionalResource.density) / _totalRatio;
-            var combinedResourcesRequiredByMass = partMass / combinedDensity;
-
-            var combinedUnitCost = (_structuralRatio * _structuralResource.unitCost + _functionalRatio * _functionalResource.unitCost) / _totalRatio;
-            var combinedResourcesRequiredByCost = partCost / combinedUnitCost;
-
-            var totalCombinedResourcesRequired = Math.Max(combinedResourcesRequiredByMass, combinedResourcesRequiredByCost);
-
-            _structuralResourcesRequired = totalCombinedResourcesRequired * _structuralRatio / _totalRatio;
-            _functionalResourcesRequired = totalCombinedResourcesRequired * _functionalRatio / _totalRatio;
-        }
+        private PartRecipe _defaultRecipe;
 
         // Configuration
 
@@ -152,6 +104,9 @@
         {
             _clock = new Clock();
             _queue = new WorkshopQueue();
+            _defaultRecipe = new PartRecipe();
+            _defaultRecipe.AddIngredient(new Ingredient("MaterialKits", 2));
+            _defaultRecipe.AddIngredient(new Ingredient("SpecializedParts", 1));
         }
 
         public override void OnStart(StartState state)

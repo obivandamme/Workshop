@@ -6,7 +6,6 @@
     using System.Collections.Generic;
     
     using KIS;
-    using Workshop.Recipes;
 
     using UnityEngine;
 
@@ -43,13 +42,6 @@
 
         private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
-
-        // Processing
-        private Blueprint _processedBlueprint;
-
-        // Testing
-
-        private PartRecipe _defaultRecipe;
 
         // Configuration
 
@@ -104,9 +96,6 @@
         {
             _clock = new Clock();
             _queue = new WorkshopQueue();
-            _defaultRecipe = new PartRecipe();
-            _defaultRecipe.AddIngredient(new Ingredient("MaterialKits", 2));
-            _defaultRecipe.AddIngredient(new Ingredient("SpecializedParts", 1));
         }
 
         public override void OnStart(StartState state)

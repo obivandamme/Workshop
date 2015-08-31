@@ -16,40 +16,31 @@ along with Extraplanetary Launchpads.  If not, see
 <http://www.gnu.org/licenses/>.
 */
 using System;
+using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 using KSP.IO;
 
-namespace Workshop.Recipes
+namespace Workshop.Resources
 {
-    public class Ingredient
+    public interface IResourceContainer
     {
-        public string name;
-        public double ratio;
-
-        public Ingredient(string name, double ratio)
+        double maxAmount
         {
-            this.name = name;
-            this.ratio = ratio;
+            get;
+            set;
         }
-        public Ingredient(ConfigNode.Value ingredient)
+        double amount
         {
-            name = ingredient.name;
-            if (!double.TryParse(ingredient.value, out ratio))
-            {
-                ratio = 0;
-            }
+            get;
+            set;
         }
-        public bool isReal
+        Part part
         {
-            get
-            {
-                PartResourceDefinition res_def;
-                res_def = PartResourceLibrary.Instance.GetDefinition(name);
-                return res_def != null;
-            }
+            get;
         }
     }
 }

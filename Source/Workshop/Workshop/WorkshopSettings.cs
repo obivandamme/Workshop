@@ -1,8 +1,9 @@
 ﻿namespace Workshop
 {
     using System;
-    using System.Linq;
     using UnityEngine;
+
+    using Workshop.KIS;
 
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, new [] {
 			GameScenes.SPACECENTER,
@@ -23,7 +24,7 @@
             base.OnAwake();
             try
             {
-                IsKISAvailable = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.Equals("KIS", StringComparison.InvariantCultureIgnoreCase));
+                IsKISAvailable = KISWrapper.Initialize();
             }
             catch (Exception)
             {

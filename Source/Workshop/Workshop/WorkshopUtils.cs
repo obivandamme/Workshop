@@ -3,7 +3,9 @@
     using System;
     using System.Linq;
 
-    using KIS;
+    using global::KIS;
+
+    using UnityEngine;
 
     public class WorkshopUtils
     {
@@ -22,6 +24,22 @@
         public static bool HasFreeSlot(ModuleKISInventory inventory)
         {
             return !inventory.isFull();
+        }
+
+        public static bool PartResearched(AvailablePart p)
+        {
+            return ResearchAndDevelopment.PartTechAvailable(p) && ResearchAndDevelopment.PartModelPurchased(p);
+        }
+
+        public static Texture2D LoadTexture(string path)
+        {
+            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == path);
+            if (textureInfo == null)
+            {
+                Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
+                return new Texture2D(25, 25);
+            }
+            return textureInfo.texture;
         }
     }
 }

@@ -5,8 +5,10 @@
     using System.Linq;
     using System.Collections.Generic;
 
-    using KIS;
+    using global::KIS;
 
+    using KIS;
+    
     using UnityEngine;
 
     public class OseModuleWorkshop : PartModule
@@ -137,10 +139,7 @@
                         animator.Blend("workshop_emissive");
                         break;
                     }
-                    else
-                    {
-                        Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
-                    }
+                    Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
                 }
                 foreach (var animator in part.FindModelAnimators("work"))
                 {
@@ -151,11 +150,9 @@
                         _workAnimation.enabled = true;
                         _workAnimation.wrapMode = WrapMode.ClampForever;
                         animator.Blend("work");
+                        break;
                     }
-                    else
-                    {
-                        Debug.LogError("[OSE] - Unable to load work animation");
-                    }
+                    Debug.LogError("[OSE] - Unable to load work animation");
                 }
             }
         }
@@ -176,28 +173,17 @@
             _filters[10] = new FilterModule("ModuleKISItem");
 
             _filterTextures = new Texture[11];
-            _filterTextures[0] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
-            _filterTextures[1] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
-            _filterTextures[2] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
-            _filterTextures[3] = this.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
-            _filterTextures[4] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
-            _filterTextures[5] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
-            _filterTextures[6] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
-            _filterTextures[7] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
-            _filterTextures[8] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
-            _filterTextures[9] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
-            _filterTextures[10] = this.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
-        }
-
-        private Texture2D LoadTexture(string path)
-        {
-            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == path);
-            if (textureInfo == null)
-            {
-                Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
-                return new Texture2D(25, 25);
-            }
-            return textureInfo.texture;
+            _filterTextures[0] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
+            _filterTextures[1] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
+            _filterTextures[2] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
+            _filterTextures[3] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
+            _filterTextures[4] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
+            _filterTextures[5] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
+            _filterTextures[6] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
+            _filterTextures[7] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
+            _filterTextures[8] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
+            _filterTextures[9] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
+            _filterTextures[10] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -229,13 +215,13 @@
         private void LoadAvailableParts()
         {
             Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count + " loaded parts");
-            Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Where(p => PartResearched(p)).Count() + " unlocked parts");
+            Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
             var items = new List<WorkshopItem>();
             foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
                 try
                 {
-                    if (PartResearched(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
+                    if (WorkshopUtils.PartResearched(loadedPart) && KIS.KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -250,17 +236,12 @@
             _maxPage = _availableItems.Count() / 30;
         }
 
-        private bool PartResearched(AvailablePart p)
-        {
-            return ResearchAndDevelopment.PartTechAvailable(p) && ResearchAndDevelopment.PartModelPurchased(p);
-        }
-
         private void LoadMaxVolume()
         {
             _maxVolume = MaxPartVolume;
             try
             {
-                var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
+                var inventories = KISWrapper.GetInventories(vessel);
                 if (inventories.Count == 0)
                 {
                     Debug.Log("[OSE] - No Inventories found on this vessel!");
@@ -566,7 +547,7 @@
 
         private ModuleKISInventory AddToContainer(WorkshopItem item)
         {
-            var inventories = vessel.FindPartModulesImplementing<ModuleKISInventory>();
+            var inventories = KISWrapper.GetInventories(vessel);
 
             if (inventories == null || inventories.Count == 0)
             {

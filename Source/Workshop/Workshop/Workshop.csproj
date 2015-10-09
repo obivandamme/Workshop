@@ -33,22 +33,25 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="KIS, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\GameData\KIS\Plugins\KIS.dll</HintPath>
+    <Reference Include="KIS">
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\GameData\KIS\Plugins\KIS.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FilterModule.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
+    <Compile Include="KIS\KISWrapper.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="OseModuleInventoryPreference.cs" />
@@ -66,7 +69,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "D:\Kerbal Space Program\WorkshopDev" xcopy "$(TargetPath)" "D:\Kerbal Space Program\WorkshopDev\GameData\Workshop\Plugins\" /Y
-IF EXIST "D:\Development\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "D:\Development\Workshop\GameData\Workshop\Plugins\" /Y</PostBuildEvent>
+IF EXIST "D:\Development\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "D:\Development\Workshop\GameData\Workshop\Plugins\" /Y
+
+IF EXIST  "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" /Y
+IF EXIST "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

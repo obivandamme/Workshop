@@ -1,4 +1,4 @@
-﻿using KIS;
+﻿using global::KIS;
 
 namespace Workshop
 {

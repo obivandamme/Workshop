@@ -3,7 +3,7 @@
     using System.Linq;
     using System.Text;
 
-    using KIS;
+    using global::KIS;
 
     using UnityEngine;
 

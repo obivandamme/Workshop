@@ -4,9 +4,11 @@
     using System.Linq;
     using System.Collections.Generic;
 
-    using KIS;
+    using global::KIS;
 
     using UnityEngine;
+
+    using Workshop.KIS;
 
     public class OseModuleRecycler : PartModule
     {
@@ -51,7 +53,7 @@
         {
             if (_showGui)
             {
-                foreach (var inventory in part.vessel.FindPartModulesImplementing<ModuleKISInventory>().Where(i => i.showGui == false).ToList())
+                foreach (var inventory in KISWrapper.GetInventories(vessel).Where(i => i.showGui == false).ToList())
                 {
                     foreach (var item in inventory.items)
                     {
@@ -450,11 +452,6 @@
             }
             WorkshopGui.ProgressBar(_progress);
             GUILayout.EndHorizontal();
-        }
-
-        public override string GetInfo()
-        {
-            return "Recycler Description for TechTree";
         }
     }
 }

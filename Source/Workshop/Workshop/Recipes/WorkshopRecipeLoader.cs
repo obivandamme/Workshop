@@ -20,7 +20,9 @@ namespace Workshop.Recipes
             var node = this.LoadRecipeNode("OSE_DefaultRecipe");
             if (node != null)
             {
-                WorkshopRecipeDatabase.DefaultRecipe = new Recipe(node);
+                var recipe = new Recipe(node);
+                print("[OSE] - DefaultRecipe");
+                WorkshopRecipeDatabase.DefaultRecipe = recipe;
             }
         }
 
@@ -31,7 +33,7 @@ namespace Workshop.Recipes
             foreach (var configNode in nodes)
             {
                 var resourceName = configNode.GetValue("name");
-                var recipeNode = configNode.GetNode("Resources");
+                var recipeNode = configNode.GetNode("RESOURCES");
                 var recipe = new Recipe(recipeNode);
                 print("[OSE] - ResourceRecipe " + resourceName);
                 WorkshopRecipeDatabase.ResourceRecipes[resourceName] = recipe;

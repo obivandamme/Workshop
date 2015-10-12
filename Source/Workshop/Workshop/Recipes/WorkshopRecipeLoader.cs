@@ -64,8 +64,8 @@ namespace Workshop.Recipes
         private IEnumerator LoadRecipes()
         {
             this.LoadDefaultRecipe();
-            yield return this.LoadResourceRecipes();
-            yield return this.LoadPartRecipes();
+            yield return StartCoroutine(this.LoadResourceRecipes());
+            yield return StartCoroutine(this.LoadPartRecipes());
         }
 
         public override bool IsReady()

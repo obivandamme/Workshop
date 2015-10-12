@@ -64,8 +64,8 @@
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
-        [KSPEvent(guiActive = true, guiName = "Open Workbench")]
-        public void ContextMenuOnOpenWorkbench()
+        [KSPEvent(guiName = "Open Workbench", guiActive = true)]
+        public void ContextMenuOpenWorkbench()
         {
             if (_showGui)
             {
@@ -100,6 +100,7 @@
         {
             if (WorkshopSettings.IsKISAvailable)
             {
+                Debug.Log("[OSE] - KIS is available - Initialize Workshop");
                 SetupAnimations();
                 LoadMaxVolume();
                 LoadFilters();
@@ -293,7 +294,8 @@
             }
             catch (Exception ex)
             {
-                Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate - " + ex.Message);
+                Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate");
+                Debug.LogException(ex);
             }
             base.OnUpdate();
         }
@@ -509,7 +511,7 @@
         {
             if (_showGui)
             {
-                ContextMenuOnOpenWorkbench();
+                this.ContextMenuOpenWorkbench();
             }
             base.OnInactive();
         }
@@ -518,7 +520,7 @@
         {
             if (_showGui)
             {
-                ContextMenuOnOpenWorkbench();
+                this.ContextMenuOpenWorkbench();
             }
         }
 
@@ -543,7 +545,7 @@
             return "Ok";
         }
 
-        private KIS.ModuleKISInventory AddToContainer(WorkshopItem item)
+        private ModuleKISInventory AddToContainer(WorkshopItem item)
         {
             var inventories = KISWrapper.GetInventories(vessel);
 
@@ -754,7 +756,7 @@
 
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
-                ContextMenuOnOpenWorkbench();
+                this.ContextMenuOpenWorkbench();
             }
 
             GUI.DragWindow();

@@ -26,10 +26,11 @@
             {
                 IsKISAvailable = KISWrapper.Initialize();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 IsKISAvailable = false;
-                Debug.LogError("Error while checking for KIS. Workshop will be disabled");
+                Debug.LogError("[OSE] - Error while checking for KIS. Workshop will be disabled");
+                Debug.LogException(ex);
             }
         }
     }

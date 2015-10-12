@@ -82,11 +82,13 @@ namespace Workshop.Recipes
                     var loadingSystem = loaders[i];
                     if (loadingSystem is WorkshopRecipeLoader)
                     {
+                        print("[OSE] found WorkshopRecipeLoader: " + i);
                         (loadingSystem as WorkshopRecipeLoader).Done = false;
                         break;
                     }
                     if (loadingSystem is PartLoader)
                     {
+                        print("[OSE] found PartLoader: " + i);
                         var go = new GameObject();
                         var recipeLoader = go.AddComponent<WorkshopRecipeLoader>();
                         loaders.Insert(i, recipeLoader);

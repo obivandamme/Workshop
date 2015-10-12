@@ -47,7 +47,7 @@
         public string Status = "Online";
 
         [KSPEvent(guiActive = true, guiName = "Open Recycler")]
-        public void ContextMenuOnOpenWorkbench()
+        public void ContextMenuOnOpenRecycler()
         {
             if (_showGui)
             {
@@ -89,7 +89,7 @@
             else
             {
                 this.Fields["Status"].guiActive = false;
-                this.Events["ContextMenuOnOpenWorkbench"].guiActive = false;
+                this.Events["ContextMenuOnOpenRecycler"].guiActive = false;
             }
             base.OnStart(state);
         }
@@ -308,7 +308,7 @@
         {
             if (_showGui)
             {
-                ContextMenuOnOpenWorkbench();
+                this.ContextMenuOnOpenRecycler();
             }
             base.OnInactive();
         }
@@ -317,7 +317,7 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOnOpenWorkbench();
+                this.ContextMenuOnOpenRecycler();
             }
         }
 
@@ -376,7 +376,7 @@
 
             if (GUI.Button(new Rect(_windowPos.width - 24, 4, 20, 20), "X"))
             {
-                ContextMenuOnOpenWorkbench();
+                this.ContextMenuOnOpenRecycler();
             }
 
             GUI.DragWindow();

@@ -1,10 +1,11 @@
 ﻿namespace Workshop.KIS
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    
+
     using UnityEngine;
 
     public class KIS_Shared
@@ -100,8 +101,15 @@
         {
             get
             {
-                var dict = (Dictionary<int, object>)kis_items.GetValue(this.obj);
-                return dict.ToDictionary(i => i.Key, i => new KIS_Item(i.Value));
+                var dict = new Dictionary<int, KIS_Item>();
+                var inventoryItems = (IDictionary)kis_items.GetValue(this.obj);
+
+                foreach (DictionaryEntry entry in inventoryItems)
+                {
+                    dict.Add((int)entry.Key, new KIS_Item(entry.Value));
+                }
+
+                return dict;
             }
         }
 
@@ -117,7 +125,8 @@
 
         public KIS_Item AddItem(Part partPrefab)
         {
-            return (KIS_Item)kis_AddItem.Invoke(this.obj, new object[] { partPrefab });
+            var obj = kis_AddItem.Invoke(this.obj, new object[] { partPrefab, 1f, -1 });
+            return new KIS_Item(obj);
         }
 
         public void DeleteItem(int slot)
@@ -131,9 +140,10 @@
             kis_invType = ModuleKISInventory_class.GetField("invType");
             kis_podSeat = ModuleKISInventory_class.GetField("podSeat");
             kis_maxVolume = ModuleKISInventory_class.GetField("maxVolume");
-            kis_showGui = ModuleKISInventory_class.GetField("showGUI");
+            kis_showGui = ModuleKISInventory_class.GetField("showGui");
             kis_items = ModuleKISInventory_class.GetField("items");
-            kis_AddItem = ModuleKISInventory_class.GetMethod("AddItem");
+            kis_AddItem = ModuleKISInventory_class.GetMethod("AddItem", new[] { typeof(Part), typeof(float), typeof(int) });
+            kis_DeleteItem = ModuleKISInventory_class.GetMethod("DeleteItem");
             kis_GetContentVolume = ModuleKISInventory_class.GetMethod("GetContentVolume");
             kis_isFull = ModuleKISInventory_class.GetMethod("isFull");
         }
@@ -216,7 +226,12 @@
         {
             get
             {
-                return new KIS_IconViewer(kis_icon.GetValue(this.obj));
+                var kisIcon = kis_icon.GetValue(this.obj);
+                if (kisIcon == null)
+                {
+                    return null;
+                }
+                return new KIS_IconViewer(kisIcon);
             }
         }
 
@@ -230,8 +245,8 @@
 
         public List<ResourceInfo> GetResources()
         {
-            var list = (List<object>)kis_GetResources.Invoke(this.obj, null);
-            return list.Select(o => new ResourceInfo(o)).ToList();
+            var list = (IList)kis_GetResources.Invoke(this.obj, null);
+            return list.Cast<object>().Select(o => new ResourceInfo(o)).ToList();
         }
 
         public void SetResource(string name, int amount)
@@ -263,7 +278,7 @@
 
     public class KIS_IconViewer
     {
-        private static Type KIS_IconViewser_class;
+        private static Type KIS_IconViewer_class;
 
         private static FieldInfo kis_texture;
 
@@ -282,14 +297,14 @@
             this.obj = obj;
         }
 
-        public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewser_class, new object[] { p, resolution }))
+        public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewer_class, new object[] { p, resolution }))
         {
         }
 
         internal static void Initialize(Assembly kisAssembly)
         {
-            KIS_IconViewser_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_IconViewer"));
-            kis_texture = KIS_IconViewser_class.GetField("texture");
+            KIS_IconViewer_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_IconViewer"));
+            kis_texture = KIS_IconViewer_class.GetField("texture");
         }
     }
 

@@ -4,8 +4,6 @@
     using System.Linq;
     using System.Collections.Generic;
 
-    using global::KIS;
-
     using UnityEngine;
 
     using Workshop.KIS;
@@ -16,7 +14,7 @@
         private WorkshopItem _canceledItem;
         private WorkshopItem _addedItem;
         private int _addedItemKey;
-        private ModuleKISInventory _addedItemInventory;
+        private KIS.ModuleKISInventory _addedItemInventory;
 
         private double _massProcessed;
         private float _progress;
@@ -388,7 +386,7 @@
         {
             GUILayout.BeginVertical();
             _scrollPosItems = GUILayout.BeginScrollView(_scrollPosItems, WorkshopStyles.Databox(), GUILayout.Width(400f), GUILayout.Height(250f));
-            foreach (var inventory in part.vessel.FindPartModulesImplementing<ModuleKISInventory>())
+            foreach (var inventory in KISWrapper.GetInventories(vessel))
             {
                 foreach (var item in inventory.items)
                 {
@@ -397,7 +395,7 @@
                         item.Value.EnableIcon(128);
                     }
                     GUILayout.BeginHorizontal();
-                    WorkshopGui.ItemThumbnail(item.Value.icon);
+                    WorkshopGui.ItemThumbnail(item.Value.icon.texture);
                     WorkshopGui.ItemDescription(item.Value.availablePart, this.OutputResource, this.ConversionRate);
                     if (GUILayout.Button("Queue", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                     {
@@ -423,7 +421,7 @@
                 {
                     item.EnableIcon(128);
                 }
-                WorkshopGui.ItemThumbnail(item.Icon);
+                WorkshopGui.ItemThumbnail(item.Icon.texture);
                 WorkshopGui.ItemDescription(item.Part, this.OutputResource, this.ConversionRate);
                 if (GUILayout.Button("Remove", WorkshopStyles.Button(), GUILayout.Width(60f), GUILayout.Height(40f)))
                 {
@@ -444,7 +442,7 @@
                 {
                     this._processedItem.EnableIcon(128);
                 }
-                WorkshopGui.ItemThumbnail(this._processedItem.Icon);
+                WorkshopGui.ItemThumbnail(this._processedItem.Icon.texture);
             }
             else
             {

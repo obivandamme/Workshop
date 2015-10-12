@@ -1,8 +1,10 @@
-﻿using global::KIS;
+﻿
 
 namespace Workshop
 {
     using System.Text;
+
+    using KIS;
 
     public class WorkshopItem
     {

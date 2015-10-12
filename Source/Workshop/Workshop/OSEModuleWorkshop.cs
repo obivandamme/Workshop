@@ -5,8 +5,6 @@
     using System.Linq;
     using System.Collections.Generic;
 
-    using global::KIS;
-
     using KIS;
     
     using UnityEngine;
@@ -545,7 +543,7 @@
             return "Ok";
         }
 
-        private ModuleKISInventory AddToContainer(WorkshopItem item)
+        private KIS.ModuleKISInventory AddToContainer(WorkshopItem item)
         {
             var inventories = KISWrapper.GetInventories(vessel);
 

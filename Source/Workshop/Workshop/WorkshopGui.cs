@@ -1,10 +1,7 @@
 ﻿namespace Workshop
 {
-    using System.Linq;
     using System.Text;
-
-    using global::KIS;
-
+    
     using UnityEngine;
 
     public class WorkshopGui
@@ -23,12 +20,12 @@
             GUI.Label(boxRect, " " + progress.ToString("0.0") + " / 100", WorkshopStyles.Center());
         }
 
-        public static void ItemThumbnail(KIS_IconViewer icon)
+        public static void ItemThumbnail(Texture texture)
         {
             GUILayout.BeginVertical();
             GUILayout.Box("", GUILayout.Width(50), GUILayout.Height(50));
             var textureRect = GUILayoutUtility.GetLastRect();
-            GUI.DrawTexture(textureRect, icon.texture, ScaleMode.ScaleToFit);
+            GUI.DrawTexture(textureRect, texture, ScaleMode.ScaleToFit);
             GUILayout.EndVertical();
         }
 

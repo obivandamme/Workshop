@@ -1,11 +1,10 @@
 ﻿namespace Workshop
 {
-    using System;
     using System.Linq;
 
-    using global::KIS;
-
     using UnityEngine;
+
+    using Workshop.KIS;
 
     public class WorkshopUtils
     {

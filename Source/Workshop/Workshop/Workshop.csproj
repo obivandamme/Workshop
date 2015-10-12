@@ -52,6 +52,7 @@
     <Compile Include="Clock.cs" />
     <Compile Include="OseModuleInventoryPreference.cs" />
     <Compile Include="OseModuleRecycler.cs" />
+    <Compile Include="Recipes\Blueprint.cs" />
     <Compile Include="Recipes\Ingredient.cs" />
     <Compile Include="Recipes\Recipe.cs" />
     <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />

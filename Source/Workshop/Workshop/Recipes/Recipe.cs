@@ -27,10 +27,10 @@ namespace Workshop.Recipes
             }
         }
 
-        public List<WorkshopResource> Prepare(double mass)
+        public Blueprint Prepare(double mass)
         {
             var total = this.Ingredients.Sum(i => i.Value.Ratio);
-            var resources = new List<WorkshopResource>();
+            var resources = new Blueprint();
             foreach (var ingredient in this.Ingredients.Values)
             {
                 var amount = mass * ingredient.Ratio / total;

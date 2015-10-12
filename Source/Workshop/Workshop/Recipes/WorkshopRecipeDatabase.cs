@@ -8,6 +8,8 @@ namespace Workshop.Recipes
     [KSPAddon(KSPAddon.Startup.Instantly, false)]
     public class WorkshopRecipeDatabase : MonoBehaviour
     {
+        public static Recipe DefaultRecipe;
+
         public static Dictionary<string, Recipe> PartRecipes;
 
         public static Dictionary<string, Recipe> ResourceRecipes;

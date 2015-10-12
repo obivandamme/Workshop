@@ -19,8 +19,22 @@ namespace Workshop.Recipes
             var resources = new Dictionary<string, WorkshopResource>();
             if (PartRecipes.ContainsKey(part.name))
             {
-                var recipe = PartRecipes[part.name];
+                var recipe = PartRecipes.ContainsKey(part.name) ? PartRecipes[part.name] : DefaultRecipe;
                 foreach (var workshopResource in recipe.Prepare(part.mass))
+                {
+                    if (resources.ContainsKey(workshopResource.Name))
+                    {
+                        resources[workshopResource.Name].Merge(workshopResource);
+                    }
+                    else
+                    {
+                        resources[workshopResource.Name] = workshopResource;
+                    }
+                }
+            }
+            else
+            {
+                foreach (var workshopResource in DefaultRecipe.Prepare(part.mass))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {

@@ -9,6 +9,8 @@
     
     using UnityEngine;
 
+    using Workshop.Recipes;
+
     public class OseModuleWorkshop : PartModule
     {
         private WorkshopItem[] _availableItems;
@@ -435,6 +437,35 @@
             }
 
             _progress = (float)((_massProcessed / _processedItem.Part.partPrefab.mass) * 100);
+        }
+
+        private void ExecuteManufacturingWithBluePrint(double deltaTime)
+        {
+            var blueprint = new Blueprint();
+            var resourceToConsume = blueprint.First(r => r.Processed < r.Units);
+            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, deltaTime * ProductivityFactor);
+
+            if (part.protoModuleCrew.Count < MinimumCrew)
+            {
+                Status = "Not enough Crew to operate";
+            }
+
+            else if (AmountAvailable(UpkeepResource) < deltaTime)
+            {
+                Status = "Not enough " + this.UpkeepResource;
+            }
+
+            else if (AmountAvailable(resourceToConsume.Name) < unitsToConsume)
+            {
+                Status = "Not enough " + resourceToConsume.Name;
+            }
+            else
+            {
+                Status = "Printing " + _processedItem.Part.title;
+                this.RequestResource(UpkeepResource, deltaTime);
+                resourceToConsume.Processed += this.RequestResource(resourceToConsume.Name, unitsToConsume);
+                _progress = (float)(blueprint.GetProgress() * 100);
+            }
         }
 
         private double ConsumeInputResource(double deltaTime)

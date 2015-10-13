@@ -16,7 +16,7 @@
         public Ingredient(ConfigNode.Value ingredient)
         {
             this.Name = ingredient.name;
-            if (double.TryParse(ingredient.value, out this.Ratio))
+            if (double.TryParse(ingredient.value, out this.Ratio) == false)
             {
                 this.Ratio = 0;
             }

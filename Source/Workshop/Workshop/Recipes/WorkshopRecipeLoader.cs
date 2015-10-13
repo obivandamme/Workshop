@@ -21,7 +21,7 @@ namespace Workshop.Recipes
             if (node != null)
             {
                 var recipe = new Recipe(node);
-                print("[OSE] - DefaultRecipe");
+                print("[OSE] - Loading DefaultRecipe");
                 WorkshopRecipeDatabase.DefaultRecipe = recipe;
             }
         }
@@ -35,7 +35,7 @@ namespace Workshop.Recipes
                 var resourceName = configNode.GetValue("name");
                 var recipeNode = configNode.GetNode("RESOURCES");
                 var recipe = new Recipe(recipeNode);
-                print("[OSE] - ResourceRecipe " + resourceName);
+                print("[OSE] - Loading ResourceRecipe " + resourceName);
                 WorkshopRecipeDatabase.ResourceRecipes[resourceName] = recipe;
                 yield return null;
             }
@@ -53,7 +53,7 @@ namespace Workshop.Recipes
                 {
                     var recipeNode = partNode.GetNode("OSE_PartRecipe");
                     var recipe = new Recipe(recipeNode);
-                    print("[OSE] - PartRecipe " + partName);
+                    print("[OSE] - Loading PartRecipe for " + partName);
                     WorkshopRecipeDatabase.PartRecipes[partName] = recipe;
                 }
                 yield return null;

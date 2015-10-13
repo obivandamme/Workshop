@@ -16,11 +16,11 @@
         private WorkshopItem[] _availableItems;
         private WorkshopItem[] _filteredItems;
 
+        private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
         private WorkshopItem _canceledItem;
         private WorkshopItem _addedItem;
 
-        private double _massProcessed;
         private float _progress;
         private float _maxVolume;
 
@@ -191,18 +191,15 @@
         {
             foreach (ConfigNode cn in node.nodes)
             {
-                if (cn.name == "BUILTPART" && cn.HasValue("Name") && cn.HasValue("MassProcessed"))
+                if (cn.name == "ProcessedItem")
                 {
-                    var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
-                    if (availablePart != null)
-                    {
-                        _processedItem = new WorkshopItem(availablePart);
-                        _massProcessed = double.Parse(cn.GetValue("MassProcessed"));
-                        if (Animate && _heatAnimation != null && _workAnimation != null)
-                        {
-                            StartCoroutine(StartAnimations());
-                        }
-                    }
+                    _processedItem = new WorkshopItem();
+                    _processedItem.Load(cn);
+                }
+                if (cn.name == "ProcessedBlueprint")
+                {
+                    _processedBlueprint = new Blueprint();
+                    _processedBlueprint.Load(cn);
                 }
                 if (cn.name == "Queue")
                 {
@@ -265,11 +262,13 @@
 
         public override void OnSave(ConfigNode node)
         {
-            if (this._processedItem != null)
+            if (_processedItem != null)
             {
-                var builtPartNode = node.AddNode("BUILTPART");
-                builtPartNode.AddValue("Name", _processedItem.Part.name);
-                builtPartNode.AddValue("MassProcessed", _massProcessed);
+                var itemNode = node.AddNode("ProcessedItem");
+                _processedItem.Save(itemNode);
+
+                var blueprintNode = node.AddNode("ProcessedBlueprint");
+                _processedBlueprint.Save(blueprintNode);
             }
 
             var queueNode = node.AddNode("Queue");
@@ -303,9 +302,9 @@
             {
                 FinishManufacturing();
             }
-            else if (this._processedItem != null)
+            else if (_processedItem != null)
             {
-                ExecuteManufacturing(deltaTime);
+                this.ExecuteManufacturingWithBluePrint(deltaTime);
             }
             else
             {
@@ -374,6 +373,7 @@
             if (nextQueuedPart != null)
             {
                 _processedItem = nextQueuedPart;
+                _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part.partPrefab);
 
                 if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
@@ -420,25 +420,7 @@
             }
             _heatAnimation.enabled = false;
         }
-
-        private void ExecuteManufacturing(double deltaTime)
-        {
-            var preRequisitesMessage = CheckPrerequisites(deltaTime);
-
-            if (preRequisitesMessage != "Ok")
-            {
-                Status = preRequisitesMessage;
-            }
-            else
-            {
-                Status = "Building " + _processedItem.Part.title;
-                RequestResource(UpkeepResource, deltaTime);
-                _massProcessed += ConsumeInputResource(deltaTime);
-            }
-
-            _progress = (float)((_massProcessed / _processedItem.Part.partPrefab.mass) * 100);
-        }
-
+        
         private void ExecuteManufacturingWithBluePrint(double deltaTime)
         {
             var blueprint = new Blueprint();
@@ -466,14 +448,7 @@
                 resourceToConsume.Processed += this.RequestResource(resourceToConsume.Name, unitsToConsume);
                 _progress = (float)(blueprint.GetProgress() * 100);
             }
-        }
-
-        private double ConsumeInputResource(double deltaTime)
-        {
-            var density = PartResourceLibrary.Instance.GetDefinition(InputResource).density;
-            var resourcesUsed = RequestResource(InputResource, deltaTime * ProductivityFactor);
-            return resourcesUsed * density;
-        }
+        }     
 
         private double AmountAvailable(string resource)
         {
@@ -518,7 +493,7 @@
                 ScreenMessages.PostScreenMessage("3D Printing of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
                 _processedItem.DisableIcon();
                 _processedItem = null;
-                _massProcessed = 0;
+                _processedBlueprint = null;
                 _progress = 0;
                 Status = "Online";
 
@@ -549,28 +524,7 @@
                 this.ContextMenuOpenWorkbench();
             }
         }
-
-        private string CheckPrerequisites(double deltaTime)
-        {
-            if (part.protoModuleCrew.Count < MinimumCrew)
-            {
-                return "Not enough Crew to operate";
-            }
-
-            if (AmountAvailable(UpkeepResource) < deltaTime)
-            {
-                return "Not enough " + this.UpkeepResource;
-            }
-
-            if (AmountAvailable(InputResource) < deltaTime * ProductivityFactor)
-            {
-                return "Not enough " + InputResource;
-            }
-
-
-            return "Ok";
-        }
-
+        
         private ModuleKISInventory AddToContainer(WorkshopItem item)
         {
             var inventories = KISWrapper.GetInventories(vessel);
@@ -749,9 +703,10 @@
             GUI.Box(new Rect(190, 70, 440, 270), "");
             if (mouseOverItem != null)
             {
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part.partPrefab);
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), mouseOverItem.GetWorkshopStats(InputResource, ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
             }
 

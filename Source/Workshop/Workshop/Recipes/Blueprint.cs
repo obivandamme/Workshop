@@ -19,11 +19,11 @@ namespace Workshop.Recipes
             var sb = new StringBuilder();
             foreach (var res in this)
             {
-                sb.AppendLine(res.Name + " : " + res.Units);
+                sb.AppendLine(res.Name + " : " + res.Units.ToString("N1"));
             }
 
             var costs = this.Sum(r => r.Costs());
-            sb.AppendLine("Resource costs: " + costs);
+            sb.AppendLine("Resource costs: " + costs.ToString("N1"));
 
             var duration = this.Sum(r => r.Units) / productivity;
             sb.AppendFormat("Duration: {0:00}h {1:00}m {2:00}s", duration / 3600, (duration / 60) % 60, duration % 60);

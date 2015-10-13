@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Workshop.Recipes
 {
@@ -14,7 +13,7 @@ namespace Workshop.Recipes
 
         public static Dictionary<string, Recipe> ResourceRecipes;
 
-        public static List<WorkshopResource> ProcessPart(Part part)
+        public static Blueprint ProcessPart(Part part)
         {
             var resources = new Dictionary<string, WorkshopResource>();
             if (PartRecipes.ContainsKey(part.name))
@@ -65,8 +64,10 @@ namespace Workshop.Recipes
                     }
                 }
             }
-            
-            return resources.Values.ToList();
+
+            var blueprint = new Blueprint();
+            blueprint.AddRange(resources.Values);
+            return blueprint;
         }
 
         void Awake()

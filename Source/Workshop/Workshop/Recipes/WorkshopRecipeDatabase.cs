@@ -13,6 +13,11 @@ namespace Workshop.Recipes
 
         public static Dictionary<string, Recipe> ResourceRecipes;
 
+        public static bool HasResourceRecipe(string name)
+        {
+            return ResourceRecipes.ContainsKey(name);
+        }
+
         public static Blueprint ProcessPart(Part part)
         {
             var resources = new Dictionary<string, WorkshopResource>();
@@ -50,8 +55,9 @@ namespace Workshop.Recipes
             {
                 if (ResourceRecipes.ContainsKey(partResource.resourceName))
                 {
+                    var definition = PartResourceLibrary.Instance.GetDefinition(partResource.resourceName);
                     var recipe = ResourceRecipes[partResource.resourceName];
-                    foreach (var workshopResource in recipe.Prepare(part.mass))
+                    foreach (var workshopResource in recipe.Prepare(partResource.maxAmount * definition.density))
                     {
                         if (resources.ContainsKey(workshopResource.Name))
                         {

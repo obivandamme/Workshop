@@ -6,6 +6,8 @@ namespace Workshop
 
     using KIS;
 
+    using Workshop.Recipes;
+
     public class WorkshopItem : IConfigNode
     {
         public AvailablePart Part;
@@ -41,7 +43,14 @@ namespace Workshop
 
             foreach (var resourceInfo in this.Part.partPrefab.Resources.list)
             {
-                sb.AppendLine(resourceInfo.resourceName + ": 0 / " + resourceInfo.maxAmount);
+                if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
+                {
+                    sb.AppendLine(resourceInfo.resourceName + ": " + resourceInfo.maxAmount + " / " + resourceInfo.maxAmount);
+                }
+                else
+                {
+                    sb.AppendLine(resourceInfo.resourceName + ": 0 / " + resourceInfo.maxAmount);
+                }
             }
             return sb.ToString();
         }

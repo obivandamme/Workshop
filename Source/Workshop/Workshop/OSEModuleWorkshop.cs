@@ -441,8 +441,7 @@
         
         private void ExecuteManufacturingWithBluePrint(double deltaTime)
         {
-            var blueprint = new Blueprint();
-            var resourceToConsume = blueprint.First(r => r.Processed < r.Units);
+            var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
             var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, deltaTime * ProductivityFactor);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
@@ -464,7 +463,7 @@
                 Status = "Printing " + _processedItem.Part.title;
                 this.RequestResource(UpkeepResource, deltaTime);
                 resourceToConsume.Processed += this.RequestResource(resourceToConsume.Name, unitsToConsume);
-                _progress = (float)(blueprint.GetProgress() * 100);
+                _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }     
 
@@ -574,7 +573,14 @@
                     }
                     foreach (var resourceInfo in kisItem.GetResources())
                     {
-                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                        if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
+                        {
+                            kisItem.SetResource(resourceInfo.resourceName, (int)resourceInfo.maxAmount);
+                        }
+                        else
+                        {
+                            kisItem.SetResource(resourceInfo.resourceName, 0);
+                        }
                     }
                     return inventory;
                 }
@@ -589,7 +595,14 @@
                     }
                     foreach (var resourceInfo in kisItem.GetResources())
                     {
-                        kisItem.SetResource(resourceInfo.resourceName, 0);
+                        if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
+                        {
+                            kisItem.SetResource(resourceInfo.resourceName, (int)resourceInfo.maxAmount);
+                        }
+                        else
+                        {
+                            kisItem.SetResource(resourceInfo.resourceName, 0);
+                        }
                     }
                     return inventory;
                 }

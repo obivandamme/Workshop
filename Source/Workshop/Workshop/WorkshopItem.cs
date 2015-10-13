@@ -6,11 +6,16 @@ namespace Workshop
 
     using KIS;
 
-    public class WorkshopItem
+    public class WorkshopItem : IConfigNode
     {
         public AvailablePart Part;
 
         public KIS_IconViewer Icon;
+
+        public WorkshopItem()
+        {
+            
+        }
 
         public WorkshopItem(AvailablePart part)
         {
@@ -83,6 +88,20 @@ namespace Workshop
             sb.AppendLine(this.Part.title);
             sb.AppendLine(this.Part.description);
             return sb.ToString();
+        }
+
+        public void Load(ConfigNode node)
+        {
+            if (node.HasValue("Name"))
+            {
+                var partName = node.GetValue("Name");
+                this.Part = PartLoader.getPartInfoByName(partName);
+            }
+        }
+
+        public void Save(ConfigNode node)
+        {
+            node.AddValue("Name", this.Part.name);
         }
     }
 }

@@ -202,11 +202,9 @@
                         }
                     }
                 }
-                if (cn.name == "QUEUEDPART" && cn.HasValue("Name"))
+                if (cn.name == "Queue")
                 {
-                    var availablePart = PartLoader.getPartInfoByName(cn.GetValue("Name"));
-                    var item = new WorkshopItem(availablePart);
-                    _queue.Add(item);
+                    _queue.Load(cn);
                 }
             }
         }
@@ -272,11 +270,8 @@
                 builtPartNode.AddValue("MassProcessed", _massProcessed);
             }
 
-            foreach (var queuedPart in _queue)
-            {
-                var queuedPartNode = node.AddNode("QUEUEDPART");
-                queuedPartNode.AddValue("Name", queuedPart.Part.name);
-            }
+            var queueNode = node.AddNode("Queue");
+            _queue.Save(queueNode);
 
             base.OnSave(node);
         }

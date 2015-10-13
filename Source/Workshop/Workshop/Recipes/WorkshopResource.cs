@@ -20,6 +20,12 @@
             this.Processed = 0;
         }
 
+        public double Costs()
+        {
+            var definition = PartResourceLibrary.Instance.GetDefinition(this.Name);
+            return definition.unitCost * this.Units;
+        }
+
         public void Merge(WorkshopResource res)
         {
             this.Units += res.Units;

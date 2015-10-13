@@ -4,6 +4,7 @@
     using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
+    using System.Text;
 
     using KIS;
     
@@ -212,12 +213,13 @@
         {
             Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count + " loaded parts");
             Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
+
             var items = new List<WorkshopItem>();
             foreach (var loadedPart in PartLoader.LoadedPartsList)
             {
                 try
                 {
-                    if (WorkshopUtils.PartResearched(loadedPart) && KIS.KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
+                    if (WorkshopUtils.PartResearched(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -230,6 +232,22 @@
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
             _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
             _maxPage = _availableItems.Count() / 30;
+
+#if DEBUG
+            Debug.Log("[OSE] - PartCosts");
+            foreach (var item in _availableItems)
+            {
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(item.Part.partPrefab);
+                Debug.Log("[OSE] " + item.Part.title + " - " + item.Part.name);
+
+                var sb = new StringBuilder();
+                sb.AppendLine("PartCosts: " + item.Part.cost);
+                sb.AppendLine("PartMass: " + item.Part.partPrefab.mass);
+                sb.AppendLine("CostPerTon: " + (item.Part.cost / item.Part.partPrefab.mass).ToString("N1"));
+                Debug.Log(sb.ToString());
+                Debug.Log(blueprint.Print(1));
+            }
+#endif
         }
 
         private void LoadMaxVolume()

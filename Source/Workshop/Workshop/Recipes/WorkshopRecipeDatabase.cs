@@ -15,11 +15,9 @@ namespace Workshop.Recipes
 
         public static Blueprint ProcessPart(Part part)
         {
-            print("[OSE] Processing " + part.name);
             var resources = new Dictionary<string, WorkshopResource>();
             if (PartRecipes.ContainsKey(part.name))
             {
-                print("[OSE] Recipe found");
                 var recipe = PartRecipes[part.name];
                 foreach (var workshopResource in recipe.Prepare(part.mass))
                 {
@@ -35,7 +33,6 @@ namespace Workshop.Recipes
             }
             else
             {
-                print("[OSE] No recipe found, using default!");
                 foreach (var workshopResource in DefaultRecipe.Prepare(part.mass))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
@@ -53,7 +50,6 @@ namespace Workshop.Recipes
             {
                 if (ResourceRecipes.ContainsKey(partResource.resourceName))
                 {
-                    print("[OSE] Resource recipe found");
                     var recipe = ResourceRecipes[partResource.resourceName];
                     foreach (var workshopResource in recipe.Prepare(part.mass))
                     {

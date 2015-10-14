@@ -14,7 +14,7 @@
         private WorkshopItem _canceledItem;
         private WorkshopItem _addedItem;
         private int _addedItemKey;
-        private KIS.ModuleKISInventory _addedItemInventory;
+        private ModuleKISInventory _addedItemInventory;
 
         private double _massProcessed;
         private float _progress;

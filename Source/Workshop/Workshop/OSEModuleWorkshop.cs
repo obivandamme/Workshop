@@ -4,10 +4,9 @@
     using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
-    using System.Text;
 
     using KIS;
-    
+
     using UnityEngine;
 
     using Workshop.Recipes;
@@ -19,8 +18,6 @@
 
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
-        private WorkshopItem _canceledItem;
-        private WorkshopItem _addedItem;
 
         private float _progress;
         private float _maxVolume;
@@ -54,9 +51,6 @@
 
         [KSPField]
         public string UpkeepResource = "ElectricCharge";
-
-        [KSPField]
-        public string InputResource = "MaterialKits";
 
         [KSPField]
         public int MinimumCrew = 2;
@@ -302,8 +296,6 @@
             {
                 ApplyFilter();
                 ApplyPaging();
-                RemoveCanceledItemFromQueue();
-                AddNewItemToQueue();
                 ProcessItem(deltaTime);
             }
             catch (Exception ex)
@@ -328,29 +320,6 @@
             {
                 StartManufacturing();
             }
-        }
-
-        private void RemoveCanceledItemFromQueue()
-        {
-            if (_canceledItem == null)
-            {
-                return;
-            }
-
-            _canceledItem.DisableIcon();
-            _queue.Remove(this._canceledItem);
-            _canceledItem = null;
-        }
-
-        private void AddNewItemToQueue()
-        {
-            if (_addedItem == null)
-            {
-                return;
-            }
-
-            _queue.Add(_addedItem);
-            _addedItem = null;
         }
 
         private void ApplyFilter()
@@ -438,7 +407,7 @@
             }
             _heatAnimation.enabled = false;
         }
-        
+
         private void ExecuteManufacturingWithBluePrint(double deltaTime)
         {
             var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
@@ -465,7 +434,7 @@
                 resourceToConsume.Processed += this.RequestResource(resourceToConsume.Name, unitsToConsume);
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
-        }     
+        }
 
         private double AmountAvailable(string resource)
         {
@@ -541,7 +510,7 @@
                 this.ContextMenuOpenWorkbench();
             }
         }
-        
+
         private ModuleKISInventory AddToContainer(WorkshopItem item)
         {
             var inventories = KISWrapper.GetInventories(vessel);
@@ -626,11 +595,7 @@
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUI.Window(
-                   GetInstanceID(),
-                   _windowPos,
-                   DrawWindowContents,
-                   "Workbench (" + _maxVolume + " litres)");
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres)");
         }
 
         private void DrawWindowContents(int windowId)
@@ -674,7 +639,7 @@
                         }
                         if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
                         {
-                            _addedItem = new WorkshopItem(item.Part);
+                            _queue.Add(new WorkshopItem(item.Part));
                         }
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {
@@ -720,7 +685,7 @@
                         }
                         if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
                         {
-                            _canceledItem = item;
+                            _queue.Remove(item);
                         }
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {

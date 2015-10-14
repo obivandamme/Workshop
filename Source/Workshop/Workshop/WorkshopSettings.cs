@@ -4,7 +4,6 @@
     using UnityEngine;
 
     using Workshop.KIS;
-    using Workshop.Recipes;
 
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, new [] {
 			GameScenes.SPACECENTER,
@@ -26,7 +25,6 @@
             try
             {
                 IsKISAvailable = KISWrapper.Initialize();
-
             }
             catch (Exception ex)
             {

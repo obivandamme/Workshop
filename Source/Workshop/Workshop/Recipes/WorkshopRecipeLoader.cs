@@ -48,7 +48,7 @@ namespace Workshop.Recipes
             var nodes = db.GetConfigNodes("PART");
             foreach (var partNode in nodes)
             {
-                var partName = partNode.GetValue("name");
+                var partName = partNode.GetValue("name").Replace('_', '.');
                 if (partNode.HasNode("OSE_PartRecipe"))
                 {
                     var recipeNode = partNode.GetNode("OSE_PartRecipe");

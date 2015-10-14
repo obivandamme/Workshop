@@ -8,16 +8,10 @@ namespace Workshop.Recipes
     {
         public bool Done;
 
-        private ConfigNode LoadRecipeNode(string nodeName)
-        {
-            var db = GameDatabase.Instance;
-            var nodes = db.GetConfigNodes(nodeName);
-            return nodes.LastOrDefault();
-        }
-
         private void LoadDefaultRecipe()
         {
-            var node = this.LoadRecipeNode("OSE_DefaultRecipe");
+            var db = GameDatabase.Instance;
+            var node = db.GetConfigNodes("OSE_DefaultRecipe").LastOrDefault();
             if (node != null)
             {
                 var recipe = new Recipe(node);

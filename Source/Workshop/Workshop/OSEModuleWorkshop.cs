@@ -165,7 +165,7 @@
             _filters[6] = new FilterCategory(PartCategories.Aero);
             _filters[7] = new FilterCategory(PartCategories.Utility);
             _filters[8] = new FilterCategory(PartCategories.Science);
-            _filters[9] = new FilterCategory(PartCategories.none);
+            _filters[9] = new FilterCustom();
             _filters[10] = new FilterModule("ModuleKISItem");
 
             _filterTextures = new Texture[11];

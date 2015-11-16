@@ -32,15 +32,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -55,6 +55,7 @@
     <Compile Include="OseModuleRecycler.cs" />
     <Compile Include="Recipes\Blueprint.cs" />
     <Compile Include="Recipes\Ingredient.cs" />
+    <Compile Include="Recipes\PartRecipe.cs" />
     <Compile Include="Recipes\Recipe.cs" />
     <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />
     <Compile Include="Recipes\WorkshopRecipeLoader.cs" />

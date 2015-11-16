@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace Workshop.Recipes
+{
+    public class PartRecipe : Recipe
+    {
+        public PartRecipe():base()
+        {
+
+        }
+
+        public PartRecipe(ConfigNode node):base(node)
+        {
+
+        }
+
+        public List<WorkshopResource> Prepare(double partMass, double partCost)
+        {
+            var resources = this.Prepare(partMass);
+            var totalResourceCosts = resources.Sum(r => r.Costs());
+            if(partCost > totalResourceCosts)
+            {
+                var scale = partCost / totalResourceCosts;
+                foreach (var resource in resources)
+                {
+                    resource.Units *= scale;
+                }
+            }
+            return resources;
+        }
+    }
+}

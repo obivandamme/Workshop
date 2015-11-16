@@ -7,9 +7,9 @@ namespace Workshop.Recipes
     [KSPAddon(KSPAddon.Startup.Instantly, false)]
     public class WorkshopRecipeDatabase : MonoBehaviour
     {
-        public static Recipe DefaultRecipe;
+        public static PartRecipe DefaultPartRecipe;
 
-        public static Dictionary<string, Recipe> PartRecipes;
+        public static Dictionary<string, PartRecipe> PartRecipes;
 
         public static Dictionary<string, Recipe> ResourceRecipes;
 
@@ -18,13 +18,13 @@ namespace Workshop.Recipes
             return ResourceRecipes.ContainsKey(name);
         }
 
-        public static Blueprint ProcessPart(Part part)
+        public static Blueprint ProcessPart(AvailablePart part)
         {
             var resources = new Dictionary<string, WorkshopResource>();
             if (PartRecipes.ContainsKey(part.name))
             {
                 var recipe = PartRecipes[part.name];
-                foreach (var workshopResource in recipe.Prepare(part.mass))
+                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass, part.cost))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {
@@ -38,7 +38,7 @@ namespace Workshop.Recipes
             }
             else
             {
-                foreach (var workshopResource in DefaultRecipe.Prepare(part.mass))
+                foreach (var workshopResource in DefaultPartRecipe.Prepare(part.partPrefab.mass, part.cost))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {
@@ -51,7 +51,7 @@ namespace Workshop.Recipes
                 }
             }
 
-            foreach (PartResource partResource in part.Resources)
+            foreach (PartResource partResource in part.partPrefab.Resources)
             {
                 if (ResourceRecipes.ContainsKey(partResource.resourceName))
                 {
@@ -78,7 +78,7 @@ namespace Workshop.Recipes
 
         void Awake()
         {
-            PartRecipes = new Dictionary<string, Recipe>();
+            PartRecipes = new Dictionary<string, PartRecipe>();
             ResourceRecipes = new Dictionary<string, Recipe>();
 
             var loaders = LoadingScreen.Instance.loaders;

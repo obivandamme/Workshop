@@ -14,9 +14,9 @@ namespace Workshop.Recipes
             var node = db.GetConfigNodes("OSE_DefaultRecipe").LastOrDefault();
             if (node != null)
             {
-                var recipe = new Recipe(node);
+                var recipe = new PartRecipe(node);
                 print("[OSE] - Loading DefaultRecipe");
-                WorkshopRecipeDatabase.DefaultRecipe = recipe;
+                WorkshopRecipeDatabase.DefaultPartRecipe = recipe;
             }
         }
 
@@ -46,7 +46,7 @@ namespace Workshop.Recipes
                 if (partNode.HasNode("OSE_PartRecipe"))
                 {
                     var recipeNode = partNode.GetNode("OSE_PartRecipe");
-                    var recipe = new Recipe(recipeNode);
+                    var recipe = new PartRecipe(recipeNode);
                     print("[OSE] - Loading PartRecipe for " + partName);
                     WorkshopRecipeDatabase.PartRecipes[partName] = recipe;
                 }

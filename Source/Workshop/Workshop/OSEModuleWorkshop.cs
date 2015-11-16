@@ -360,7 +360,7 @@
             if (nextQueuedPart != null)
             {
                 _processedItem = nextQueuedPart;
-                _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part.partPrefab);
+                _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part);
 
                 if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
@@ -699,7 +699,7 @@
             GUI.Box(new Rect(190, 70, 440, 270), "");
             if (mouseOverItem != null)
             {
-                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part.partPrefab);
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
                 GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);

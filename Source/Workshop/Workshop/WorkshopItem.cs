@@ -6,6 +6,8 @@ namespace Workshop
 
     using KIS;
 
+    using UnityEngine;
+
     using Workshop.Recipes;
 
     public class WorkshopItem : IConfigNode
@@ -26,6 +28,7 @@ namespace Workshop
 
         public void EnableIcon(int resultion)
         {
+            Debug.Log("[OSE] - EnableIcon for " + this.Part.name);
             this.Icon = new KIS_IconViewer(this.Part.partPrefab, resultion);
         }
 

@@ -11,10 +11,11 @@ namespace Workshop.Recipes
         private void LoadDefaultRecipe()
         {
             var db = GameDatabase.Instance;
-            var node = db.GetConfigNodes("OSE_DefaultRecipe").LastOrDefault();
-            if (node != null)
+            var configNode = db.GetConfigNodes("OSE_DefaultRecipe").LastOrDefault();
+            if (configNode != null)
             {
-                var recipe = new PartRecipe(node);
+                var recipeNode = configNode.GetNode("RESOURCES");
+                var recipe = new PartRecipe(recipeNode);
                 print("[OSE] - Loading DefaultRecipe");
                 WorkshopRecipeDatabase.DefaultPartRecipe = recipe;
             }

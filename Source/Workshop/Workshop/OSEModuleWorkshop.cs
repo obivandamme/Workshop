@@ -113,11 +113,11 @@
 
         public override void OnLoad(ConfigNode node)
         {
-            base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
                 LoadModuleState(node);
             }
+            base.OnLoad(node);
         }
 
         private void SetupAnimations()

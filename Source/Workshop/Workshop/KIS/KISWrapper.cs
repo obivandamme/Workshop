@@ -215,6 +215,8 @@
 
         private static MethodInfo kis_DisableIcon;
 
+        private static MethodInfo kis_Delete;
+
         private readonly object obj;
 
         public KIS_Item(object obj)
@@ -264,6 +266,11 @@
             kis_DisableIcon.Invoke(this.obj, null);
         }
 
+        public void Delete()
+        {
+            kis_Delete.Invoke(this.obj, null);
+        }
+
         internal static void Initialize(Assembly kisAssembly)
         {
             KIS_Item_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_Item"));
@@ -273,6 +280,7 @@
             kis_SetResource = KIS_Item_class.GetMethod("SetResource");
             kis_EnableIcon = KIS_Item_class.GetMethod("EnableIcon");
             kis_DisableIcon = KIS_Item_class.GetMethod("DisableIcon");
+            kis_Delete = KIS_Item_class.GetMethod("Delete");
         }
     }
 

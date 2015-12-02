@@ -12,11 +12,11 @@ The Ose Workshop mods adds a Workshop Part to the game, that allows the creation
 
 ### Required Mods
 (OSE Workshop will not work without these mods)
-* [KIS](http://forum.kerbalspaceprogram.com/threads/113111)
+* [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/101928-105-kerbal-inventory-system-kis-123/)
 * [Module Manager](http://forum.kerbalspaceprogram.com/threads/55219), which is included in the download.
 
 ### Installation Instructions
-* Download and Install [KIS](http://forum.kerbalspaceprogram.com/threads/113111)
+* Download and Install [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/101928-105-kerbal-inventory-system-kis-123/)
 * Download the file from [GitHub](https://github.com/obivandamme/Workshop/releases)
 * Unzip the file and copy the content of the GameData folder to the GameData folder in your KSP Installation
 

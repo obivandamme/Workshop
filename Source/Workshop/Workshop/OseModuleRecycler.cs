@@ -19,7 +19,7 @@
         
         private float _progress;
 
-        private readonly Clock _clock;
+        private readonly ResourceBroker _broker;
         private readonly WorkshopQueue _queue;
 
         // GUI Properties
@@ -74,7 +74,6 @@
 
         public OseModuleRecycler()
         {
-            _clock = new Clock();
             _queue = new WorkshopQueue();
         }
 
@@ -141,11 +140,10 @@
 
         public override void OnUpdate()
         {
-            var deltaTime = _clock.GetDeltaTime();
             try
             {
                 ApplyPaging();
-                ProcessItem(deltaTime);
+                ProcessItem();
             }
             catch (Exception ex)
             {
@@ -155,7 +153,7 @@
             base.OnUpdate();
         }
         
-        private void ProcessItem(double deltaTime)
+        private void ProcessItem()
         {
             if (_progress >= 100)
             {
@@ -163,7 +161,7 @@
             }
             else if (this._processedItem != null)
             {
-                ExecuteManufacturing(deltaTime);
+                ExecuteManufacturing();
             }
             else
             {
@@ -192,94 +190,36 @@
             if (nextQueuedPart != null)
             {
                 _processedItem = nextQueuedPart;
+                _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part);
+                foreach (var resource in _processedBlueprint)
+                {
+                    resource.Units *= ConversionRate;
+                }
             }
         }
 
-        private void ExecuteManufacturing(double deltaTime)
+        private void ExecuteManufacturing()
         {
             var resourceToProduce = _processedBlueprint.First(r => r.Processed < r.Units);
-            var unitsToProduce = Math.Min(resourceToProduce.Units - resourceToProduce.Processed, deltaTime * ProductivityFactor);
+            var unitsToProduce = Math.Min(resourceToProduce.Units - resourceToProduce.Processed, TimeWarp.deltaTime * ProductivityFactor);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 Status = "Not enough Crew to operate";
             }
-            else if (this.AmountAvailable(UpkeepResource) < deltaTime)
+            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "Both") < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + UpkeepResource;
             }
             else
             {
                 Status = "Recycling " + _processedItem.Part.title;
-                this.RequestResource(UpkeepResource, deltaTime);
-                resourceToProduce.Processed += this.StoreResource(resourceToProduce.Name, unitsToProduce);
+                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "Both");
+                resourceToProduce.Processed += _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "Both");
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
-
-        public double AmountAvailable(string resource)
-        {
-            var res = PartResourceLibrary.Instance.GetDefinition(resource);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            return resList.Sum(r => r.amount);
-        }
-
-        public double StoreResource(string resource, double amount)
-        {
-            var res = PartResourceLibrary.Instance.GetDefinition(resource);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            var demandLeft = amount;
-            var amountStored = 0d;
-
-            foreach (var r in resList)
-            {
-                if (r.maxAmount - r.amount > demandLeft)
-                {
-                    r.amount += demandLeft;
-                    amountStored += demandLeft;
-                    demandLeft = 0;
-                }
-                else
-                {
-                    var amountToStore = r.maxAmount - r.amount;
-                    r.amount += amountToStore;
-                    demandLeft -= amountToStore;
-                    amountStored += amountToStore;
-                }
-            }
-
-            return amountStored;
-        }
-
-        public double RequestResource(string resource, double amount)
-        {
-            var res = PartResourceLibrary.Instance.GetDefinition(resource);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            var demandLeft = amount;
-            var amountTaken = 0d;
-
-            foreach (var r in resList)
-            {
-                if (r.amount >= demandLeft)
-                {
-                    amountTaken += demandLeft;
-                    r.amount -= demandLeft;
-                    demandLeft = 0;
-                }
-                else
-                {
-                    amountTaken += r.amount;
-                    demandLeft -= r.amount;
-                    r.amount = 0;
-                }
-            }
-
-            return amountTaken;
-        }
-
+        
         private void FinishManufacturing()
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
@@ -430,6 +370,10 @@
             if (mouseOverItem != null)
             {
                 var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
+                foreach (var resource in blueprint)
+                {
+                    resource.Units *= ConversionRate;
+                }
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
                 GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
@@ -467,6 +411,12 @@
             }
 
             GUI.DragWindow();
+        }
+
+        private void Test()
+        {
+            var broker = new ResourceBroker();
+            var res = broker.RequestResource(part, "", 5, TimeWarp.deltaTime, "None");
         }
     }
 }

@@ -58,14 +58,14 @@ namespace Workshop.Recipes
 
         private IEnumerator LoadRecipes()
         {
-            this.LoadDefaultRecipe();
-            yield return StartCoroutine(this.LoadResourceRecipes());
-            yield return StartCoroutine(this.LoadPartRecipes());
+            LoadDefaultRecipe();
+            yield return StartCoroutine(LoadResourceRecipes());
+            yield return StartCoroutine(LoadPartRecipes());
         }
 
         public override bool IsReady()
         {
-            return this.Done;
+            return Done;
         }
 
         public override float ProgressFraction()
@@ -81,7 +81,7 @@ namespace Workshop.Recipes
         public override void StartLoad()
         {
             Done = false;
-            StartCoroutine(this.LoadRecipes());
+            StartCoroutine(LoadRecipes());
         }
     }
 }

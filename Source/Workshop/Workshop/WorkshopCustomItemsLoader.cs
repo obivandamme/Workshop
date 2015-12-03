@@ -25,7 +25,7 @@
 
         public override bool IsReady()
         {
-            return this.Done;
+            return Done;
         }
 
         public override float ProgressFraction()

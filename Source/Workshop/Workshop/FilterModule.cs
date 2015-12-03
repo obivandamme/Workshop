@@ -9,7 +9,7 @@
 
         public FilterModule(string module)
         {
-            this.Module = module;
+            Module = module;
         }
 
         public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)

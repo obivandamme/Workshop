@@ -8,17 +8,16 @@
 
         public Ingredient(string name, double ratio)
         {
-            this.Name = name;
-
-            this.Ratio = ratio;
+            Name = name;
+            Ratio = ratio;
         }
 
         public Ingredient(ConfigNode.Value ingredient)
         {
-            this.Name = ingredient.name;
-            if (double.TryParse(ingredient.value, out this.Ratio) == false)
+            Name = ingredient.name;
+            if (double.TryParse(ingredient.value, out Ratio) == false)
             {
-                this.Ratio = 0;
+                Ratio = 0;
             }
         }
     }

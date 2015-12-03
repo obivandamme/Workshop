@@ -2,7 +2,6 @@
 {
     using System;
     using System.Linq;
-    using System.Collections.Generic;
 
     using UnityEngine;
 
@@ -13,9 +12,6 @@
     {
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
-        
-        private int _addedItemKey;
-        private ModuleKISInventory _addedItemInventory;
         
         private float _progress;
 
@@ -59,9 +55,9 @@
                     {
                         item.DisableIcon();
                     }
-                    if (this._processedItem != null)
+                    if (_processedItem != null)
                     {
-                        this._processedItem.DisableIcon();
+                        _processedItem.DisableIcon();
                     }
                 }
                 _showGui = false;
@@ -75,18 +71,19 @@
         public OseModuleRecycler()
         {
             _queue = new WorkshopQueue();
+            _broker = new ResourceBroker();
         }
 
         public override void OnStart(StartState state)
         {
             if (WorkshopSettings.IsKISAvailable)
             {
-                GameEvents.onVesselChange.Add(this.OnVesselChange);
+                GameEvents.onVesselChange.Add(OnVesselChange);
             }
             else
             {
-                this.Fields["Status"].guiActive = false;
-                this.Events["ContextMenuOnOpenRecycler"].guiActive = false;
+                Fields["Status"].guiActive = false;
+                Events["ContextMenuOnOpenRecycler"].guiActive = false;
             }
             base.OnStart(state);
         }
@@ -159,7 +156,7 @@
             {
                 FinishManufacturing();
             }
-            else if (this._processedItem != null)
+            else if (_processedItem != null)
             {
                 ExecuteManufacturing();
             }
@@ -234,7 +231,7 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOnOpenRecycler();
+                ContextMenuOnOpenRecycler();
             }
             base.OnInactive();
         }
@@ -243,7 +240,7 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOnOpenRecycler();
+                ContextMenuOnOpenRecycler();
             }
         }
 
@@ -335,7 +332,6 @@
             }
             
             // Queued Items
-            // Queued Items
             const int QueueRows = 4;
             const int QueueColumns = 7;
             GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
@@ -407,16 +403,10 @@
 
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
-                this.ContextMenuOnOpenRecycler();
+                ContextMenuOnOpenRecycler();
             }
 
             GUI.DragWindow();
-        }
-
-        private void Test()
-        {
-            var broker = new ResourceBroker();
-            var res = broker.RequestResource(part, "", 5, TimeWarp.deltaTime, "None");
         }
     }
 }

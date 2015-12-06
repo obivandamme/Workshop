@@ -266,6 +266,7 @@
         private void DrawWindowContents(int windowId)
         {
             WorkshopItem mouseOverItem = null;
+            KIS_Item mouseOverItemKIS = null;
 
             // styles 
             var statsStyle = new GUIStyle(GUI.skin.box);
@@ -298,18 +299,18 @@
                     if (availableItems.Length > itemIndex)
                     {
                         var item = availableItems[itemIndex];
-                        if (item.Value.icon == null)
+                        if (item.Value.Icon == null)
                         {
                             item.Value.EnableIcon(64);
                         }
-                        if (GUI.Button(new Rect(left, top, 50, 50), item.Value.icon.texture))
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Value.Icon.texture))
                         {
                             _queue.Add(new WorkshopItem(item.Value.availablePart));
                             item.Value.Delete();
                         }
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {
-                            mouseOverItem = new WorkshopItem(item.Value.availablePart);
+                            mouseOverItemKIS = item.Value;
                         }
                     }
                 }
@@ -371,9 +372,21 @@
                     resource.Units *= ConversionRate;
                 }
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
-                GUI.Box(new Rect(310, 80, 150, 100), mouseOverItem.GetKisStats(), statsStyle);
+                GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
                 GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
-                GUI.Box(new Rect(200, 190, 420, 140), mouseOverItem.GetDescription(), tooltipDescriptionStyle);
+                GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
+            }
+            else if (mouseOverItemKIS != null)
+            {
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItemKIS.availablePart);
+                foreach (var resource in blueprint)
+                {
+                    resource.Units *= ConversionRate;
+                }
+                GUI.Box(new Rect(200, 80, 100, 100), mouseOverItemKIS.Icon.texture);
+                GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItemKIS.availablePart), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItemKIS.availablePart), tooltipDescriptionStyle);
             }
 
             // Currently build item

@@ -224,7 +224,7 @@
             _obj = obj;
         }
 
-        public KIS_IconViewer icon
+        public KIS_IconViewer Icon
         {
             get
             {

@@ -1,10 +1,14 @@
-﻿namespace Workshop
+﻿using System.Runtime.CompilerServices;
+using System.Text;
+using Workshop.Recipes;
+
+namespace Workshop
 {
     using System.Linq;
 
     using UnityEngine;
 
-    using Workshop.KIS;
+    using KIS;
 
     public class WorkshopUtils
     {
@@ -39,6 +43,35 @@
                 return new Texture2D(25, 25);
             }
             return textureInfo.texture;
+        }
+
+        public static string GetKisStats(AvailablePart part)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Mass: " + part.partPrefab.mass + " tons");
+            sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(part.partPrefab).ToString("0.0") + " litres");
+            sb.AppendLine("Costs: " + part.cost + "$");
+
+            foreach (var resourceInfo in part.partPrefab.Resources.list)
+            {
+                if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
+                {
+                    sb.AppendLine(resourceInfo.resourceName + ": " + resourceInfo.maxAmount + " / " + resourceInfo.maxAmount);
+                }
+                else
+                {
+                    sb.AppendLine(resourceInfo.resourceName + ": 0 / " + resourceInfo.maxAmount);
+                }
+            }
+            return sb.ToString();
+        }
+
+        public static string GetDescription(AvailablePart part)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(part.title);
+            sb.AppendLine(part.description);
+            return sb.ToString();
         }
     }
 }

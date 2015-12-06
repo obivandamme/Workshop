@@ -44,6 +44,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Factory\OseModuleZeroGravityResourceConverter.cs" />
     <Compile Include="FilterCustom.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />

@@ -9,7 +9,7 @@
 
         public FilterCategory(PartCategories category)
         {
-            this.Category = category;
+            Category = category;
         }
 
         public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)

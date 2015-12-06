@@ -23,7 +23,7 @@ namespace Workshop
             {
                 var item = new WorkshopItem();
                 item.Load(partNode);
-                this.Add(item);
+                Add(item);
             }
         }
 

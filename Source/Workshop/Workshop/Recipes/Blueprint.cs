@@ -37,7 +37,7 @@ namespace Workshop.Recipes
             {
                 var resource = new WorkshopResource();
                 resource.Load(configNode);
-                this.Add(resource);
+                Add(resource);
             }
         }
 

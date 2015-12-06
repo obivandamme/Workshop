@@ -7,11 +7,6 @@ namespace Workshop.Recipes
 {
     public class PartRecipe : Recipe
     {
-        public PartRecipe():base()
-        {
-
-        }
-
         public PartRecipe(ConfigNode node):base(node)
         {
 
@@ -19,7 +14,7 @@ namespace Workshop.Recipes
 
         public List<WorkshopResource> Prepare(double partMass, double partCost)
         {
-            var resources = this.Prepare(partMass);
+            var resources = Prepare(partMass);
             var totalResourceCosts = resources.Sum(r => r.Costs());
             if(partCost > totalResourceCosts)
             {

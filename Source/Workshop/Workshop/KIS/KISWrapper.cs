@@ -50,18 +50,18 @@
 
         private static MethodInfo kis_DeleteItem;
 
-        private readonly object obj;
+        private readonly object _obj;
 
         public ModuleKISInventory(object obj)
         {
-            this.obj = obj;
+            _obj = obj;
         }
 
         public InventoryType invType
         {
             get
             {
-                return (InventoryType)Enum.Parse(typeof(InventoryType), kis_invType.GetValue(this.obj).ToString());
+                return (InventoryType)Enum.Parse(typeof(InventoryType), kis_invType.GetValue(_obj).ToString());
             }
         }
 
@@ -69,7 +69,7 @@
         {
             get
             {
-                return (int)kis_podSeat.GetValue(this.obj);
+                return (int)kis_podSeat.GetValue(_obj);
             }
         }
 
@@ -77,7 +77,7 @@
         {
             get
             {
-                return (float)kis_maxVolume.GetValue(this.obj);
+                return (float)kis_maxVolume.GetValue(_obj);
             }
         }
 
@@ -85,7 +85,7 @@
         {
             get
             {
-                return (bool)kis_showGui.GetValue(this.obj);
+                return (bool)kis_showGui.GetValue(_obj);
             }
         }
 
@@ -93,7 +93,7 @@
         {
             get
             {
-                return ((PartModule)this.obj).part;
+                return ((PartModule)_obj).part;
             }
         }
 
@@ -102,7 +102,7 @@
             get
             {
                 var dict = new Dictionary<int, KIS_Item>();
-                var inventoryItems = (IDictionary)kis_items.GetValue(this.obj);
+                var inventoryItems = (IDictionary)kis_items.GetValue(_obj);
 
                 foreach (DictionaryEntry entry in inventoryItems)
                 {
@@ -115,23 +115,23 @@
 
         public float GetContentVolume()
         {
-            return (float)kis_GetContentVolume.Invoke(this.obj, null);
+            return (float)kis_GetContentVolume.Invoke(_obj, null);
         }
 
         public bool isFull()
         {
-            return (bool)kis_isFull.Invoke(this.obj, null);
+            return (bool)kis_isFull.Invoke(_obj, null);
         }
 
         public KIS_Item AddItem(Part partPrefab)
         {
-            var obj = kis_AddItem.Invoke(this.obj, new object[] { partPrefab, 1f, -1 });
+            var obj = kis_AddItem.Invoke(_obj, new object[] { partPrefab, 1f, -1 });
             return new KIS_Item(obj);
         }
 
         public void DeleteItem(int slot)
         {
-            kis_DeleteItem.Invoke(this.obj, new object[] { slot });
+            kis_DeleteItem.Invoke(_obj, new object[] { slot });
         }
 
         internal static void Initialize(Assembly kisAssembly)
@@ -161,13 +161,13 @@
 
             private static FieldInfo kis_maxAmount;
 
-            private readonly object obj;
+            private readonly object _obj;
 
             public string resourceName
             {
                 get
                 {
-                    return (string)kis_resourceName.GetValue(this.obj);
+                    return (string)kis_resourceName.GetValue(_obj);
                 }
             }
 
@@ -175,7 +175,7 @@
             {
                 get
                 {
-                    return (double)kis_amount.GetValue(this.obj);
+                    return (double)kis_amount.GetValue(_obj);
                 }
             }
 
@@ -183,13 +183,13 @@
             {
                 get
                 {
-                    return (double)kis_maxAmount.GetValue(this.obj);
+                    return (double)kis_maxAmount.GetValue(_obj);
                 }
             }
 
             public ResourceInfo(object obj)
             {
-                this.obj = obj;
+                _obj = obj;
             }
 
             public static void Initialize(Assembly kisAssembly)
@@ -215,18 +215,20 @@
 
         private static MethodInfo kis_DisableIcon;
 
-        private readonly object obj;
+        private static MethodInfo kis_Delete;
+
+        private readonly object _obj;
 
         public KIS_Item(object obj)
         {
-            this.obj = obj;
+            _obj = obj;
         }
 
         public KIS_IconViewer icon
         {
             get
             {
-                var kisIcon = kis_icon.GetValue(this.obj);
+                var kisIcon = kis_icon.GetValue(_obj);
                 if (kisIcon == null)
                 {
                     return null;
@@ -239,29 +241,34 @@
         {
             get
             {
-                return (AvailablePart)kis_availablePart.GetValue(this.obj);
+                return (AvailablePart)kis_availablePart.GetValue(_obj);
             }
         }
 
         public List<ResourceInfo> GetResources()
         {
-            var list = (IList)kis_GetResources.Invoke(this.obj, null);
+            var list = (IList)kis_GetResources.Invoke(_obj, null);
             return list.Cast<object>().Select(o => new ResourceInfo(o)).ToList();
         }
 
         public void SetResource(string name, int amount)
         {
-            kis_SetResource.Invoke(this.obj, new object[] { name, amount });
+            kis_SetResource.Invoke(_obj, new object[] { name, amount });
         }
 
         public void EnableIcon(int resolution)
         {
-            kis_EnableIcon.Invoke(this.obj, new object[] { resolution });
+            kis_EnableIcon.Invoke(_obj, new object[] { resolution });
         }
 
         public void DisableIcon()
         {
-            kis_DisableIcon.Invoke(this.obj, null);
+            kis_DisableIcon.Invoke(_obj, null);
+        }
+
+        public void Delete()
+        {
+            kis_Delete.Invoke(_obj, null);
         }
 
         internal static void Initialize(Assembly kisAssembly)
@@ -273,6 +280,7 @@
             kis_SetResource = KIS_Item_class.GetMethod("SetResource");
             kis_EnableIcon = KIS_Item_class.GetMethod("EnableIcon");
             kis_DisableIcon = KIS_Item_class.GetMethod("DisableIcon");
+            kis_Delete = KIS_Item_class.GetMethod("Delete");
         }
     }
 
@@ -282,19 +290,19 @@
 
         private static FieldInfo kis_texture;
 
-        private readonly object obj;
+        private readonly object _obj;
 
         public Texture texture
         {
             get
             {
-                return (Texture)kis_texture.GetValue(this.obj);
+                return (Texture)kis_texture.GetValue(_obj);
             }
         }
 
         public KIS_IconViewer(object obj)
         {
-            this.obj = obj;
+            _obj = obj;
         }
 
         public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewer_class, new object[] { p, resolution }))

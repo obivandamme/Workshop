@@ -15,20 +15,20 @@
 
         public WorkshopResource(string name, double units)
         {
-            this.Name = name;
-            this.Units = units;
-            this.Processed = 0;
+            Name = name;
+            Units = units;
+            Processed = 0;
         }
 
         public double Costs()
         {
-            var definition = PartResourceLibrary.Instance.GetDefinition(this.Name);
-            return definition.unitCost * this.Units;
+            var definition = PartResourceLibrary.Instance.GetDefinition(Name);
+            return definition.unitCost * Units;
         }
 
         public void Merge(WorkshopResource res)
         {
-            this.Units += res.Units;
+            Units += res.Units;
         }
 
         public void Load(ConfigNode node)

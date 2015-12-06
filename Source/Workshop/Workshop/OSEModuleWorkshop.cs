@@ -22,7 +22,6 @@
         private float _progress;
         private float _maxVolume;
 
-        private readonly Clock _clock;
         private readonly WorkshopQueue _queue;
 
         // Animations
@@ -89,7 +88,6 @@
 
         public OseModuleWorkshop()
         {
-            _clock = new Clock();
             _queue = new WorkshopQueue();
         }
 
@@ -113,11 +111,11 @@
 
         public override void OnLoad(ConfigNode node)
         {
-            base.OnLoad(node);
             if (HighLogic.LoadedSceneIsFlight)
             {
                 LoadModuleState(node);
             }
+            base.OnLoad(node);
         }
 
         private void SetupAnimations()
@@ -275,12 +273,11 @@
 
         public override void OnUpdate()
         {
-            var deltaTime = _clock.GetDeltaTime();
             try
             {
                 ApplyFilter();
                 ApplyPaging();
-                ProcessItem(deltaTime);
+                ProcessItem();
             }
             catch (Exception ex)
             {
@@ -290,7 +287,7 @@
             base.OnUpdate();
         }
 
-        private void ProcessItem(double deltaTime)
+        private void ProcessItem()
         {
             if (_progress >= 100)
             {
@@ -298,7 +295,7 @@
             }
             else if (_processedItem != null)
             {
-                this.ExecuteManufacturingWithBluePrint(deltaTime);
+                ExecuteManufacturing();
             }
             else
             {
@@ -392,17 +389,17 @@
             _heatAnimation.enabled = false;
         }
 
-        private void ExecuteManufacturingWithBluePrint(double deltaTime)
+        private void ExecuteManufacturing()
         {
             var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
-            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, deltaTime * ProductivityFactor);
+            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * ProductivityFactor);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 Status = "Not enough Crew to operate";
             }
 
-            else if (AmountAvailable(UpkeepResource) < deltaTime)
+            else if (AmountAvailable(UpkeepResource) < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + this.UpkeepResource;
             }
@@ -414,8 +411,8 @@
             else
             {
                 Status = "Printing " + _processedItem.Part.title;
-                this.RequestResource(UpkeepResource, deltaTime);
-                resourceToConsume.Processed += this.RequestResource(resourceToConsume.Name, unitsToConsume);
+                RequestResource(UpkeepResource, TimeWarp.deltaTime);
+                resourceToConsume.Processed += RequestResource(resourceToConsume.Name, unitsToConsume);
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
@@ -482,7 +479,7 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOpenWorkbench();
+                ContextMenuOpenWorkbench();
             }
             base.OnInactive();
         }
@@ -491,7 +488,7 @@
         {
             if (_showGui)
             {
-                this.ContextMenuOpenWorkbench();
+                ContextMenuOpenWorkbench();
             }
         }
 
@@ -515,7 +512,7 @@
                 // first pass with favored inventories
                 var favoredInventories = freeInventories
                     .Where(i => i.part.GetComponent<OseModuleInventoryPreference>() != null)
-                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>().isFavored).ToArray();
+                    .Where(i => i.part.GetComponent<OseModuleInventoryPreference>().IsFavored).ToArray();
 
                 foreach (var inventory in favoredInventories)
                 {
@@ -717,7 +714,7 @@
 
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
-                this.ContextMenuOpenWorkbench();
+                ContextMenuOpenWorkbench();
             }
 
             GUI.DragWindow();

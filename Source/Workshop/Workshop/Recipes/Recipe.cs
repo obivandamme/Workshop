@@ -3,15 +3,13 @@ using System.Linq;
 
 namespace Workshop.Recipes
 {
-    using UnityEngine;
-
     public class Recipe
     {
         public Dictionary<string, Ingredient> Ingredients;
 
         public Recipe()
         {
-            this.Ingredients = new Dictionary<string, Ingredient>();
+            Ingredients = new Dictionary<string, Ingredient>();
         }
 
         public Recipe(ConfigNode recipe):this()
@@ -31,9 +29,9 @@ namespace Workshop.Recipes
 
         public List<WorkshopResource> Prepare(double mass)
         {
-            var total = this.Ingredients.Sum(i => i.Value.Ratio);
+            var total = Ingredients.Sum(i => i.Value.Ratio);
             var resources = new List<WorkshopResource>();
-            foreach (var ingredient in this.Ingredients.Values)
+            foreach (var ingredient in Ingredients.Values)
             {
                 var amount = mass * ingredient.Ratio / total;
                 var definition = PartResourceLibrary.Instance.GetDefinition(ingredient.Name);

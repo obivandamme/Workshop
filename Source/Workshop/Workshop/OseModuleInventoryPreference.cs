@@ -5,19 +5,19 @@ namespace Workshop
     public class OseModuleInventoryPreference : PartModule
     {
         [KSPField(isPersistant = true)]
-        public bool isFavored = false;
+        public bool IsFavored = false;
 
         [KSPEvent(guiActive = false, guiName = "Favor Inventory")]
         public void ContextMenuOnFavorInventory()
         {
-            if (isFavored)
+            if (IsFavored)
             {
-                isFavored = false;
+                IsFavored = false;
                 Events["ContextMenuOnFavorInventory"].guiName = "Favor Inventory";
             }
             else
             {
-                isFavored = true;
+                IsFavored = true;
                 Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
             }
         }
@@ -29,7 +29,7 @@ namespace Workshop
             {
                 Events["ContextMenuOnFavorInventory"].guiActive = true;
             }
-            if (isFavored)
+            if (IsFavored)
             {
                 Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
             }
@@ -37,7 +37,7 @@ namespace Workshop
 
         private bool VesselHasWorkshop()
         {
-            return HighLogic.LoadedSceneIsFlight && this.vessel.Parts.Any(p => p.GetComponent<OseModuleWorkshop>() != null);
+            return HighLogic.LoadedSceneIsFlight && vessel.Parts.Any(p => p.GetComponent<OseModuleWorkshop>() != null);
         }
     }
 }

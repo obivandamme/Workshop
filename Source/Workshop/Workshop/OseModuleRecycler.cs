@@ -22,7 +22,7 @@
         private int _activePage;
         private int _selectedPage;
 
-        private Rect _windowPos;
+        private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
 
         [KSPField]
@@ -260,7 +260,7 @@
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUILayout.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Recycler Menu");
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Recycler Menu");
         }
 
         private void DrawWindowContents(int windowId)

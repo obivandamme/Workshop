@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Workshop.Recipes
+﻿namespace Workshop.Recipes
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     public class PartRecipe : Recipe
     {
         public PartRecipe(ConfigNode node):base(node)

@@ -294,7 +294,7 @@
                 for (var x = 0; x < ItemColumns; x++)
                 {
                     var left = 15 + x * 55;
-                    var top = 70 + y * ItemColumns + x;
+                    var top = 70 + y * 55;
                     var itemIndex = y * ItemColumns + x;
                     if (availableItems.Length > itemIndex)
                     {

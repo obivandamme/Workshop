@@ -13,6 +13,8 @@ namespace Workshop.Recipes
 
         public static Dictionary<string, Recipe> ResourceRecipes;
 
+        public static Dictionary<string, Recipe> FactoryRecipes; 
+
         public static bool HasResourceRecipe(string name)
         {
             return ResourceRecipes.ContainsKey(name);
@@ -76,10 +78,39 @@ namespace Workshop.Recipes
             return blueprint;
         }
 
+        public static Blueprint ProcessFactoryPart(AvailablePart part)
+        {
+            var resources = new Dictionary<string, WorkshopResource>();
+            if (PartRecipes.ContainsKey(part.name))
+            {
+                var recipe = PartRecipes[part.name];
+                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass, part.cost))
+                {
+                    if (resources.ContainsKey(workshopResource.Name))
+                    {
+                        resources[workshopResource.Name].Merge(workshopResource);
+                    }
+                    else
+                    {
+                        resources[workshopResource.Name] = workshopResource;
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[OSE] - No FactoryRecipeFound for " + part.title);
+                return null;
+            }
+            var blueprint = new Blueprint();
+            blueprint.AddRange(resources.Values);
+            return blueprint;
+        }
+
         void Awake()
         {
             PartRecipes = new Dictionary<string, PartRecipe>();
             ResourceRecipes = new Dictionary<string, Recipe>();
+            FactoryRecipes = new Dictionary<string, Recipe>();
 
             var loaders = LoadingScreen.Instance.loaders;
             if (loaders != null)

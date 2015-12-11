@@ -53,6 +53,24 @@ namespace Workshop.Recipes
                 }
                 yield return null;
             }
+        }
+
+        private IEnumerator LoadFactoryRecipes()
+        {
+            var db = GameDatabase.Instance;
+            var nodes = db.GetConfigNodes("PART");
+            foreach (var partNode in nodes)
+            {
+                var partName = partNode.GetValue("name").Replace('_', '.');
+                if (partNode.HasNode("OSE_FactoryRecipe"))
+                {
+                    var recipeNode = partNode.GetNode("OSE_FactoryRecipe");
+                    var recipe = new PartRecipe(recipeNode);
+                    print("[OSE] - Loading FactoryRecipe for " + partName);
+                    WorkshopRecipeDatabase.FactoryRecipes[partName] = recipe;
+                }
+                yield return null;
+            }
             Done = true;
         }
 
@@ -61,6 +79,7 @@ namespace Workshop.Recipes
             LoadDefaultRecipe();
             yield return StartCoroutine(LoadResourceRecipes());
             yield return StartCoroutine(LoadPartRecipes());
+            yield return StartCoroutine(LoadFactoryRecipes());
         }
 
         public override bool IsReady()

@@ -49,6 +49,7 @@
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
     <Compile Include="FilterModule.cs" />
+    <Compile Include="FilterResult.cs" />
     <Compile Include="KIS\KISWrapper.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />

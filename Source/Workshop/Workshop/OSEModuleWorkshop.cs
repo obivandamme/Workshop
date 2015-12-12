@@ -14,7 +14,7 @@
     public class OseModuleWorkshop : PartModule
     {
         private WorkshopItem[] _availableItems;
-        private WorkshopItem[] _filteredItems;
+        private FilterResult _filteredItems;
 
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
@@ -37,7 +37,6 @@
 
         private int _activePage;
         private int _selectedPage;
-        private int _maxPage;
 
         private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
@@ -65,7 +64,7 @@
         {
             if (_showGui)
             {
-                foreach (var item in _filteredItems)
+                foreach (var item in _filteredItems.Items)
                 {
                     item.DisableIcon();
                 }
@@ -222,8 +221,7 @@
                 }
             }
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
-            _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
-            _maxPage = _availableItems.Length / 30;
+            _filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
         }
 
         private void LoadMaxVolume()
@@ -307,7 +305,7 @@
         {
             if (_activeFilterId != _selectedFilterId)
             {
-                foreach (var item in _filteredItems)
+                foreach (var item in _filteredItems.Items)
                 {
                     item.DisableIcon();
                 }
@@ -316,7 +314,6 @@
                 _activePage = 0;
                 _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
                 _activeFilterId = _selectedFilterId;
-                _maxPage = _filteredItems.Length / 30;
             }
         }
 
@@ -324,7 +321,7 @@
         {
             if (_activePage != _selectedPage)
             {
-                foreach (var item in _filteredItems)
+                foreach (var item in _filteredItems.Items)
                 {
                     item.DisableIcon();
                 }
@@ -611,9 +608,9 @@
                     var left = 15 + x * 55;
                     var top = 70 + y * 55;
                     var itemIndex = y * itemColumns + x;
-                    if (_filteredItems.Length > itemIndex)
+                    if (_filteredItems.Items.Length > itemIndex)
                     {
-                        var item = _filteredItems[itemIndex];
+                        var item = _filteredItems.Items[itemIndex];
                         if (item.Icon == null)
                         {
                             item.EnableIcon(64);
@@ -638,7 +635,7 @@
                 }
             }
 
-            if (_activePage < _maxPage)
+            if (_activePage < _filteredItems.MaxPages)
             {
                 if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
                 {

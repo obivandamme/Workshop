@@ -1,17 +1,17 @@
 ﻿namespace Workshop
 {
-    using System.Collections.Generic;
     using System.Linq;
 
     public class FilterCustom : FilterBase
     {
-        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)
+        public override FilterResult Filter(WorkshopItem[] items, int skip)
         {
-            return items.Where(i => WorkshopCustomItemsDatabase.CustomItems.Contains(i.Part.name))
-                .OrderBy(i => i.Part.title)
-                .Skip(skip)
-                .Take(30)
-                .ToArray();
+            var filteredItems = items.Where(i => WorkshopCustomItemsDatabase.CustomItems.Contains(i.Part.name)).ToArray();
+            return new FilterResult
+            {
+                Items = filteredItems.OrderBy(i => i.Part.title).Skip(skip).Take(30).ToArray(),
+                MaxPages = filteredItems.Length/30
+            };
         }
     }
 }

@@ -28,6 +28,7 @@
 
         public void DisableIcon()
         {
+            Debug.Log("[OSE] - DisableIcon for " + Part.name);
             Icon = null;
         }
 

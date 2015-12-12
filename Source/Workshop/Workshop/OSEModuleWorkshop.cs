@@ -312,6 +312,7 @@
 
                 var selectedFilter = _filters[_selectedFilterId];
                 _activePage = 0;
+                _selectedPage = 0;
                 _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
                 _activeFilterId = _selectedFilterId;
             }

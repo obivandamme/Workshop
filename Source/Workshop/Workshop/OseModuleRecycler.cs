@@ -306,7 +306,7 @@
                         if (GUI.Button(new Rect(left, top, 50, 50), item.Value.Icon.texture))
                         {
                             _queue.Add(new WorkshopItem(item.Value.availablePart));
-                            item.Value.Delete();
+                            item.Value.StackRemove(1);
                         }
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {

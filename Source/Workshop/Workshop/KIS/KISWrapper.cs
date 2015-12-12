@@ -48,8 +48,6 @@
 
         private static MethodInfo kis_AddItem;
 
-        private static MethodInfo kis_DeleteItem;
-
         private readonly object _obj;
 
         public ModuleKISInventory(object obj)
@@ -129,11 +127,6 @@
             return new KIS_Item(obj);
         }
 
-        public void DeleteItem(int slot)
-        {
-            kis_DeleteItem.Invoke(_obj, new object[] { slot });
-        }
-
         internal static void Initialize(Assembly kisAssembly)
         {
             ModuleKISInventory_class = kisAssembly.GetTypes().First(t => t.Name.Equals("ModuleKISInventory"));
@@ -143,7 +136,6 @@
             kis_showGui = ModuleKISInventory_class.GetField("showGui");
             kis_items = ModuleKISInventory_class.GetField("items");
             kis_AddItem = ModuleKISInventory_class.GetMethod("AddItem", new[] { typeof(Part), typeof(float), typeof(int) });
-            kis_DeleteItem = ModuleKISInventory_class.GetMethod("DeleteItem");
             kis_GetContentVolume = ModuleKISInventory_class.GetMethod("GetContentVolume");
             kis_isFull = ModuleKISInventory_class.GetMethod("isFull");
         }
@@ -215,7 +207,7 @@
 
         private static MethodInfo kis_DisableIcon;
 
-        private static MethodInfo kis_Delete;
+        private static MethodInfo kis_StackRemove;
 
         private readonly object _obj;
 
@@ -266,9 +258,9 @@
             kis_DisableIcon.Invoke(_obj, null);
         }
 
-        public void Delete()
+        public void StackRemove(float quantity)
         {
-            kis_Delete.Invoke(_obj, null);
+            kis_StackRemove.Invoke(_obj, new object[] { quantity });
         }
 
         internal static void Initialize(Assembly kisAssembly)
@@ -280,7 +272,7 @@
             kis_SetResource = KIS_Item_class.GetMethod("SetResource");
             kis_EnableIcon = KIS_Item_class.GetMethod("EnableIcon");
             kis_DisableIcon = KIS_Item_class.GetMethod("DisableIcon");
-            kis_Delete = KIS_Item_class.GetMethod("Delete");
+            kis_StackRemove = KIS_Item_class.GetMethod("StackRemove");
         }
     }
 
@@ -305,7 +297,8 @@
             _obj = obj;
         }
 
-        public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewer_class, new object[] { p, resolution }))
+        public KIS_IconViewer(Part p, int resolution)
+            : this(Activator.CreateInstance(KIS_IconViewer_class, new object[] { p, resolution }))
         {
         }
 

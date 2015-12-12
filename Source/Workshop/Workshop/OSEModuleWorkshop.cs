@@ -9,7 +9,7 @@
 
     using UnityEngine;
 
-    using Workshop.Recipes;
+    using Recipes;
 
     public class OseModuleWorkshop : PartModule
     {
@@ -223,7 +223,7 @@
             }
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
             _filteredItems = items.OrderBy(i => i.Part.title).Take(30).ToArray();
-            _maxPage = _availableItems.Count() / 30;
+            _maxPage = _availableItems.Length / 30;
         }
 
         private void LoadMaxVolume()
@@ -316,7 +316,7 @@
                 _activePage = 0;
                 _filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
                 _activeFilterId = _selectedFilterId;
-                _maxPage = _filteredItems.Count() / 30;
+                _maxPage = _filteredItems.Length / 30;
             }
         }
 
@@ -401,7 +401,7 @@
 
             else if (AmountAvailable(UpkeepResource) < TimeWarp.deltaTime)
             {
-                Status = "Not enough " + this.UpkeepResource;
+                Status = "Not enough " + UpkeepResource;
             }
 
             else if (AmountAvailable(resourceToConsume.Name) < unitsToConsume)
@@ -602,15 +602,15 @@
             _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
             // Available Items
-            const int ItemRows = 10;
-            const int ItemColumns = 3;
-            for (var y = 0; y < ItemRows; y++)
+            const int itemRows = 10;
+            const int itemColumns = 3;
+            for (var y = 0; y < itemRows; y++)
             {
-                for (var x = 0; x < ItemColumns; x++)
+                for (var x = 0; x < itemColumns; x++)
                 {
                     var left = 15 + x * 55;
                     var top = 70 + y * 55;
-                    var itemIndex = y * ItemColumns + x;
+                    var itemIndex = y * itemColumns + x;
                     if (_filteredItems.Length > itemIndex)
                     {
                         var item = _filteredItems[itemIndex];
@@ -647,16 +647,16 @@
             }
 
             // Queued Items
-            const int QueueRows = 4;
-            const int QueueColumns = 7;
+            const int queueRows = 4;
+            const int queueColumns = 7;
             GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
-            for (var y = 0; y < QueueRows; y++)
+            for (var y = 0; y < queueRows; y++)
             {
-                for (var x = 0; x < QueueColumns; x++)
+                for (var x = 0; x < queueColumns; x++)
                 {
                     var left = 205 + x * 60;
                     var top = 370 + y * 60;
-                    var itemIndex = y * QueueColumns + x;
+                    var itemIndex = y * queueColumns + x;
                     if (_queue.Count > itemIndex)
                     {
                         var item = _queue[itemIndex];

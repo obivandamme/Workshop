@@ -12,7 +12,7 @@
     {
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
-        
+
         private float _progress;
 
         private readonly ResourceBroker _broker;
@@ -149,7 +149,7 @@
             }
             base.OnUpdate();
         }
-        
+
         private void ProcessItem()
         {
             if (_progress >= 100)
@@ -175,12 +175,12 @@
                     foreach (var item in inventory.items)
                     {
                         item.Value.DisableIcon();
-                    }   
+                    }
                 }
                 _activePage = _selectedPage;
             }
         }
-        
+
         private void StartManufacturing()
         {
             var nextQueuedPart = _queue.Pop();
@@ -216,7 +216,7 @@
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
-        
+
         private void FinishManufacturing()
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
@@ -314,7 +314,10 @@
                             _queue.Add(new WorkshopItem(item.Value.availablePart));
                             item.Value.StackRemove(1);
                         }
-                        GUI.Label(new Rect(left, top, 50, 50), item.Value.quantity.ToString("x#"), lowerRightStyle);
+                        if (item.Value.stackable)
+                        {
+                            GUI.Label(new Rect(left, top, 50, 50), item.Value.quantity.ToString("x#"), lowerRightStyle);
+                        }
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {
                             mouseOverItemKIS = item.Value;
@@ -338,7 +341,7 @@
                     _selectedPage = _activePage + 1;
                 }
             }
-            
+
             // Queued Items
             const int QueueRows = 4;
             const int QueueColumns = 7;

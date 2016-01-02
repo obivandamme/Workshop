@@ -201,6 +201,8 @@
 
         private static FieldInfo kis_quantity;
 
+        private static FieldInfo kis_stackable;
+
         private static MethodInfo kis_GetResources;
 
         private static MethodInfo kis_SetResource;
@@ -244,6 +246,11 @@
             get { return (float) kis_quantity.GetValue(_obj); }
         }
 
+        public bool stackable
+        {
+            get { return (bool) kis_stackable.GetValue(_obj); }
+        }
+
         public List<ResourceInfo> GetResources()
         {
             var list = (IList)kis_GetResources.Invoke(_obj, null);
@@ -276,6 +283,7 @@
             kis_icon = KIS_Item_class.GetField("icon");
             kis_availablePart = KIS_Item_class.GetField("availablePart");
             kis_quantity = KIS_Item_class.GetField("quantity");
+            kis_stackable = KIS_Item_class.GetField("stackable");
             kis_GetResources = KIS_Item_class.GetMethod("GetResources");
             kis_SetResource = KIS_Item_class.GetMethod("SetResource");
             kis_EnableIcon = KIS_Item_class.GetMethod("EnableIcon");

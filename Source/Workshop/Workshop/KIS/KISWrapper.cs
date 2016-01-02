@@ -199,6 +199,8 @@
 
         private static FieldInfo kis_availablePart;
 
+        private static FieldInfo kis_quantity;
+
         private static MethodInfo kis_GetResources;
 
         private static MethodInfo kis_SetResource;
@@ -237,6 +239,11 @@
             }
         }
 
+        public float quantity
+        {
+            get { return (float) kis_quantity.GetValue(_obj); }
+        }
+
         public List<ResourceInfo> GetResources()
         {
             var list = (IList)kis_GetResources.Invoke(_obj, null);
@@ -268,6 +275,7 @@
             KIS_Item_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_Item"));
             kis_icon = KIS_Item_class.GetField("icon");
             kis_availablePart = KIS_Item_class.GetField("availablePart");
+            kis_quantity = KIS_Item_class.GetField("quantity");
             kis_GetResources = KIS_Item_class.GetMethod("GetResources");
             kis_SetResource = KIS_Item_class.GetMethod("SetResource");
             kis_EnableIcon = KIS_Item_class.GetMethod("EnableIcon");

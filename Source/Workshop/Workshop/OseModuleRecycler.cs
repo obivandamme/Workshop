@@ -283,6 +283,12 @@
             queueSkin.alignment = TextAnchor.UpperCenter;
             queueSkin.padding.top = 5;
 
+            var lowerRightStyle = new GUIStyle(GUI.skin.label);
+            lowerRightStyle.alignment = TextAnchor.LowerRight;
+            lowerRightStyle.fontSize = 10;
+            lowerRightStyle.padding = new RectOffset(4, 4, 4, 4);
+            lowerRightStyle.normal.textColor = Color.white;
+
             // AvailableItems
             const int ItemRows = 10;
             const int ItemColumns = 3;
@@ -308,6 +314,7 @@
                             _queue.Add(new WorkshopItem(item.Value.availablePart));
                             item.Value.StackRemove(1);
                         }
+                        GUI.Label(new Rect(left, top, 50, 50), item.Value.quantity.ToString("x#"), lowerRightStyle);
                         if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
                         {
                             mouseOverItemKIS = item.Value;

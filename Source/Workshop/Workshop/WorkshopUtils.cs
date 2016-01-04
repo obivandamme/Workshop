@@ -35,13 +35,13 @@ namespace Workshop
 
         public static Texture2D LoadTexture(string path)
         {
-            var textureInfo = GameDatabase.Instance.databaseTexture.FirstOrDefault(t => t.name == path);
-            if (textureInfo == null)
+            var texture = GameDatabase.Instance.GetTexture(path, false);
+            if (texture == null)
             {
                 Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
                 return new Texture2D(25, 25);
             }
-            return textureInfo.texture;
+            return texture;
         }
 
         public static string GetKisStats(AvailablePart part)

@@ -14,6 +14,7 @@
         private WorkshopItem _processedItem;
 
         private float _progress;
+        private bool _isPaused;
 
         private readonly ResourceBroker _broker;
         private readonly WorkshopQueue _queue;
@@ -24,6 +25,11 @@
 
         private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
+
+        private Texture2D _pauseTexture;
+        private Texture2D _playTexture;
+        private Texture2D _binTexture;
+
 
         [KSPField]
         public float ConversionRate = 0.25f;
@@ -72,6 +78,9 @@
         {
             _queue = new WorkshopQueue();
             _broker = new ResourceBroker();
+            _pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_pause");
+            _playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_play");
+            _binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_bin");
         }
 
         public override void OnStart(StartState state)
@@ -152,7 +161,11 @@
 
         private void ProcessItem()
         {
-            if (_progress >= 100)
+            if (_isPaused)
+            {
+                Status = "Paused";
+            }
+            else if (_progress >= 100)
             {
                 FinishManufacturing();
             }
@@ -220,6 +233,17 @@
         private void FinishManufacturing()
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
+            this.CleanupRecycler();
+        }
+
+        private void CancelManufacturing()
+        {
+            ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " canceled.", 5, ScreenMessageStyle.UPPER_CENTER);
+            this.CleanupRecycler();
+        }
+
+        private void CleanupRecycler()
+        {
             _processedItem.DisableIcon();
             _processedItem = null;
             _processedBlueprint = null;
@@ -414,19 +438,40 @@
             }
 
             // Progressbar
-            GUI.Box(new Rect(250, 620, 380, 50), "");
+            GUI.Box(new Rect(250, 620, 260, 50), "");
             if (_progress >= 1)
             {
                 var color = GUI.color;
                 GUI.color = new Color(0, 1, 0, 1);
-                GUI.Box(new Rect(250, 620, 380 * _progress / 100, 50), "");
+                GUI.Box(new Rect(250, 620, 260 * _progress / 100, 50), "");
                 GUI.color = color;
             }
-            GUI.Label(new Rect(250, 620, 380, 50), " " + _progress.ToString("0.0") + " / 100");
+            GUI.Label(new Rect(250, 620, 260, 50), " " + _progress.ToString("0.0") + " / 100");
+
+            // Toolbar
+            if (_isPaused)
+            {
+                if (GUI.Button(new Rect(520, 620, 50, 50), _playTexture))
+                {
+                    _isPaused = false;
+                }
+            }
+            else
+            {
+                if (GUI.Button(new Rect(520, 620, 50, 50), _pauseTexture))
+                {
+                    _isPaused = true;
+                }   
+            }
+
+            if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
+            {
+                this.CancelManufacturing();
+            }
 
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
-                ContextMenuOnOpenRecycler();
+                this.ContextMenuOnOpenRecycler();
             }
 
             GUI.DragWindow();

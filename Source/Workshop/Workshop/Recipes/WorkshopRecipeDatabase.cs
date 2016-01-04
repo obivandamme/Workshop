@@ -83,8 +83,8 @@ namespace Workshop.Recipes
             var resources = new Dictionary<string, WorkshopResource>();
             if (PartRecipes.ContainsKey(part.name))
             {
-                var recipe = PartRecipes[part.name];
-                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass, part.cost))
+                var recipe = FactoryRecipes[part.name];
+                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {

@@ -8,6 +8,7 @@ UP NEXT
 
 
 WANT TO DO
+- Account for VolumeOverride in ModuleKISItem if available
 - Addon Module for part categories
 - Change CustomItems category from whitelist to use category.none and a blacklist
 - Create ItemProcessor base class for workshop and recycler

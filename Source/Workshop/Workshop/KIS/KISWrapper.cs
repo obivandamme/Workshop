@@ -26,6 +26,34 @@
         }
     }
 
+    public class ModuleKISItem
+    {
+        private static Type ModuleKISItem_class;
+
+        private static FieldInfo kis_volumeOverride;
+
+        private readonly object _obj;
+
+        public float volumeOverride
+        {
+            get
+            {
+                return (float)kis_volumeOverride.GetValue(_obj);
+            }
+        }
+
+        public ModuleKISItem(object obj)
+        {
+            _obj = obj;
+        }
+
+        internal static void Initialize(Assembly kisAssembly)
+        {
+            ModuleKISItem_class = kisAssembly.GetTypes().First(t => t.Name.Equals("ModuleKISItem"));
+            kis_volumeOverride = ModuleKISItem_class.GetField("volumeOverride");
+        }
+    }
+
     public class ModuleKISInventory
     {
         public enum InventoryType { Container, Pod, Eva }
@@ -337,6 +365,7 @@
 
             KIS_Shared.Initialize(kisAssembly.assembly);
             ModuleKISInventory.Initialize(kisAssembly.assembly);
+            ModuleKISItem.Initialize(kisAssembly.assembly);
             KIS_Item.Initialize(kisAssembly.assembly);
             KIS_IconViewer.Initialize(kisAssembly.assembly);
             KIS_Item.ResourceInfo.Initialize(kisAssembly.assembly);
@@ -357,6 +386,19 @@
                 }
             }
             return inventories;
+        }
+
+        public static ModuleKISItem GetKisItem(Part part)
+        {
+            ModuleKISItem item = null;
+            foreach (PartModule module in part.Modules)
+            {
+                if (module.moduleName == "ModuleKISItem")
+                {
+                    item = new ModuleKISItem(module);
+                }
+            }
+            return item;
         }
     }
 }

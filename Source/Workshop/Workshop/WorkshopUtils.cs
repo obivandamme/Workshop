@@ -11,6 +11,12 @@ namespace Workshop
 
     public class WorkshopUtils
     {
+        public static float GetPackedPartVolume(Part part)
+        {
+            var moduleKisItem = KISWrapper.GetKisItem(part);
+            return moduleKisItem != null ? moduleKisItem.volumeOverride : KIS_Shared.GetPartVolume(part);
+        }
+
         public static bool IsOccupied(ModuleKISInventory inventory)
         {
             return
@@ -20,7 +26,7 @@ namespace Workshop
 
         public static bool HasFreeSpace(ModuleKISInventory inventory, WorkshopItem item)
         {
-            return inventory.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) < inventory.maxVolume;
+            return inventory.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) <= inventory.maxVolume;
         }
 
         public static bool HasFreeSlot(ModuleKISInventory inventory)

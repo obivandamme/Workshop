@@ -210,7 +210,7 @@
             {
                 try
                 {
-                    if (WorkshopUtils.PartResearched(loadedPart) && KIS_Shared.GetPartVolume(loadedPart.partPrefab) <= _maxVolume)
+                    if (IsValid(loadedPart))
                     {
                         items.Add(new WorkshopItem(loadedPart));
                     }
@@ -222,6 +222,11 @@
             }
             _availableItems = items.OrderBy(i => i.Part.title).ToArray();
             _filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
+        }
+
+        private bool IsValid(AvailablePart loadedPart)
+        {
+            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart.partPrefab) <= _maxVolume;
         }
 
         private void LoadMaxVolume()

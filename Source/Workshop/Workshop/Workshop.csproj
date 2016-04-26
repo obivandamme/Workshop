@@ -88,10 +88,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>IF EXIST "D:\Kerbal Space Program\WorkshopDev" xcopy "$(TargetPath)" "D:\Kerbal Space Program\WorkshopDev\GameData\Workshop\Plugins\" /Y
-IF EXIST "D:\Development\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "D:\Development\Workshop\GameData\Workshop\Plugins\" /Y
-
-IF EXIST  "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" /Y
+    <PostBuildEvent>IF EXIST  "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" /Y
 IF EXIST "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -7,6 +7,7 @@ namespace Workshop.Recipes
     public class WorkshopRecipeLoader : LoadingSystem
     {
         public bool Done;
+        public string Status = "OSE Workshop Recipes";
 
         private void LoadDefaultRecipe()
         {
@@ -16,6 +17,7 @@ namespace Workshop.Recipes
             {
                 var recipeNode = configNode.GetNode("RESOURCES");
                 var recipe = new PartRecipe(recipeNode);
+                Status = "Loading DefaultRecipe";
                 print("[OSE] - Loading DefaultRecipe");
                 WorkshopRecipeDatabase.DefaultPartRecipe = recipe;
             }
@@ -30,6 +32,7 @@ namespace Workshop.Recipes
                 var resourceName = configNode.GetValue("name");
                 var recipeNode = configNode.GetNode("RESOURCES");
                 var recipe = new Recipe(recipeNode);
+                Status = "Loading ResourceRecipe " + resourceName;
                 print("[OSE] - Loading ResourceRecipe " + resourceName);
                 WorkshopRecipeDatabase.ResourceRecipes[resourceName] = recipe;
                 yield return null;
@@ -48,6 +51,7 @@ namespace Workshop.Recipes
                 {
                     var recipeNode = partNode.GetNode("OSE_PartRecipe");
                     var recipe = new PartRecipe(recipeNode);
+                    Status = "Loading PartRecipe for " + partName;
                     print("[OSE] - Loading PartRecipe for " + partName);
                     WorkshopRecipeDatabase.PartRecipes[partName] = recipe;
                 }
@@ -66,6 +70,7 @@ namespace Workshop.Recipes
                 {
                     var recipeNode = partNode.GetNode("OSE_FactoryRecipe");
                     var recipe = new PartRecipe(recipeNode);
+                    Status = "Loading FactoryRecipe for " + partName;
                     print("[OSE] - Loading FactoryRecipe for " + partName);
                     WorkshopRecipeDatabase.FactoryRecipes[partName] = recipe;
                 }
@@ -94,7 +99,7 @@ namespace Workshop.Recipes
 
         public override string ProgressTitle()
         {
-            return "OSE Workshop Recipes";
+            return Status;
         }
 
         public override void StartLoad()

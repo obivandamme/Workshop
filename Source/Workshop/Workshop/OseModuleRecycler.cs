@@ -225,7 +225,7 @@
             {
                 Status = "Recycling " + _processedItem.Part.title;
                 _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "Both");
-                resourceToProduce.Processed += _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "Both");
+                resourceToProduce.Processed -= _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "Both");
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }

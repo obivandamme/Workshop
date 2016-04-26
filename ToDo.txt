@@ -1,0 +1,25 @@
+DONE
+- ZGA Converter that only works in Zero-G environment
+
+TESTING
+
+
+UP NEXT
+
+
+WANT TO DO
+- Account for VolumeOverride in ModuleKISItem if available
+- Addon Module for part categories
+- Change CustomItems category from whitelist to use category.none and a blacklist
+- Create ItemProcessor base class for workshop and recycler
+- Remove "All" category and make "utilities" the new standard
+- Scan KIS for blacklist items
+- Balance Science Items Recipes
+- Add Debug Info to display scaling factor for all items tohelp balancing
+- New resource ZGA
+- New Part "Fusion Cell" => 1 Million EC battery
+- New Recipe for "Fusion Cell" using ZGA and Fusion related resources from CRP
+- Add containers for CRP resources used in Fusion Cell recipe
+- Add containers for ZGA
+- Factory Module to produce items without cost adjustment
+- Add ZGA Converter and Factory Module to parts

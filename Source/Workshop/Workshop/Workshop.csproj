@@ -32,27 +32,38 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="KIS, Version=1.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\GameData\KIS\Plugins\KIS.dll</HintPath>
+      <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="UnityEngine">
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\Kerbal Space Program\WorkshopDev\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FilterModule.cs" />
+    <Compile Include="Factory\OseModuleZeroGravityResourceConverter.cs" />
+    <Compile Include="FilterCustom.cs" />
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
+    <Compile Include="FilterModule.cs" />
+    <Compile Include="FilterResult.cs" />
+    <Compile Include="KIS\KISWrapper.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
     <Compile Include="OseModuleInventoryPreference.cs" />
     <Compile Include="OseModuleRecycler.cs" />
+    <Compile Include="Recipes\Blueprint.cs" />
+    <Compile Include="Recipes\Ingredient.cs" />
+    <Compile Include="Recipes\PartRecipe.cs" />
+    <Compile Include="Recipes\Recipe.cs" />
+    <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />
+    <Compile Include="Recipes\WorkshopRecipeLoader.cs" />
+    <Compile Include="Recipes\WorkshopResource.cs" />
+    <Compile Include="WorkshopCustomItemsDatabase.cs" />
+    <Compile Include="WorkshopCustomItemsLoader.cs" />
     <Compile Include="WorkshopSettings.cs" />
     <Compile Include="WorkshopStyles.cs" />
     <Compile Include="OseAddonEditorFilter.cs" />
@@ -66,7 +77,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "D:\Kerbal Space Program\WorkshopDev" xcopy "$(TargetPath)" "D:\Kerbal Space Program\WorkshopDev\GameData\Workshop\Plugins\" /Y
-IF EXIST "D:\Development\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "D:\Development\Workshop\GameData\Workshop\Plugins\" /Y</PostBuildEvent>
+IF EXIST "D:\Development\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "D:\Development\Workshop\GameData\Workshop\Plugins\" /Y
+
+IF EXIST  "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Users\MartinP\Documents\Visual Studio 2013\Projects\Workshop\GameData\Workshop\Plugins" /Y
+IF EXIST "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

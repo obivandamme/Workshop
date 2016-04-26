@@ -12,11 +12,13 @@ The Ose Workshop mods adds a Workshop Part to the game, that allows the creation
 
 ### Required Mods
 (OSE Workshop will not work without these mods)
-* [KIS](http://forum.kerbalspaceprogram.com/threads/113111)
+* [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/101928-105-kerbal-inventory-system-kis-123/)
 * [Module Manager](http://forum.kerbalspaceprogram.com/threads/55219), which is included in the download.
+* [CommunityResourcePack](http://forum.kerbalspaceprogram.com/index.php?/topic/83007-11), which is included in the download
+* [Firespitter](http://forum.kerbalspaceprogram.com/index.php?/topic/22583-firespitter-propeller-plane-and-helicopter-parts-v71-may-5th-for-ksp-10/), which is included in the download
 
 ### Installation Instructions
-* Download and Install [KIS](http://forum.kerbalspaceprogram.com/threads/113111)
+* Download and Install [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/101928-105-kerbal-inventory-system-kis-123/)
 * Download the file from [GitHub](https://github.com/obivandamme/Workshop/releases)
 * Unzip the file and copy the content of the GameData folder to the GameData folder in your KSP Installation
 
@@ -32,5 +34,5 @@ OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-Shar
 
 ### Credits and Thanks!
 
-* The included plugin Module Manager (by ialdabaoth & sarbian) is distributed under it's own license.
+* The included plugin Module Manager, CommunityResourcePack and Firespitter are distributed under it's own license.
 * KAS and KIS is the original work of KospY! - Thank you for creating this awesome mods.

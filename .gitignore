@@ -188,3 +188,8 @@ FakesAssemblies/
 GameData/ModuleManager.2.6.5.dll
 GameData/ModuleManager.2.6.6.dll
 GameData/ModuleManager.2.6.7.dll
+GameData/Firespitter/Firespitter.version
+GameData/Firespitter/Plugins/Firespitter.dll
+GameData/Firespitter/Plugins/FSfuelSwitchTweakscale.cfg
+*.zip
+GameData/ModuleManager.2.6.13.dll

@@ -1,8 +1,9 @@
 ﻿namespace Workshop
 {
     using System;
-    using System.Linq;
     using UnityEngine;
+
+    using KIS;
 
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, new [] {
 			GameScenes.SPACECENTER,
@@ -23,12 +24,13 @@
             base.OnAwake();
             try
             {
-                IsKISAvailable = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name.Equals("KIS", StringComparison.InvariantCultureIgnoreCase));
+                IsKISAvailable = KISWrapper.Initialize();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 IsKISAvailable = false;
-                Debug.LogError("Error while checking for KIS. Workshop will be disabled");
+                Debug.LogError("[OSE] - Error while checking for KIS. Workshop will be disabled");
+                Debug.LogException(ex);
             }
         }
     }

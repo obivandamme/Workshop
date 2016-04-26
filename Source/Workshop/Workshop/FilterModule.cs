@@ -1,6 +1,5 @@
 ﻿namespace Workshop
 {
-    using System.Collections.Generic;
     using System.Linq;
 
     public class FilterModule : FilterBase
@@ -9,12 +8,17 @@
 
         public FilterModule(string module)
         {
-            this.Module = module;
+            Module = module;
         }
 
-        public override WorkshopItem[] Filter(IEnumerable<WorkshopItem> items, int skip)
+        public override FilterResult Filter(WorkshopItem[] items, int skip)
         {
-            return items.Where(i => i.Part.partPrefab.GetComponent(Module) != null).OrderBy(i => i.Part.title).Skip(skip).Take(30).ToArray();
+            var filteredItems = items.Where(i => i.Part.partPrefab.GetComponent(Module) != null).ToArray();
+            return new FilterResult
+            {
+                Items = filteredItems.OrderBy(i => i.Part.title).Skip(skip).Take(30).ToArray(),
+                MaxPages = filteredItems.Length/30
+            };
         }
     }
 }

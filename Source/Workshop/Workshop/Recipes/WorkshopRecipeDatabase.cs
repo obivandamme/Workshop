@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Workshop.Recipes
 {
@@ -7,9 +9,9 @@ namespace Workshop.Recipes
     [KSPAddon(KSPAddon.Startup.Instantly, false)]
     public class WorkshopRecipeDatabase : MonoBehaviour
     {
-        public static PartRecipe DefaultPartRecipe;
+        public static Recipe DefaultPartRecipe;
 
-        public static Dictionary<string, PartRecipe> PartRecipes;
+        public static Dictionary<string, Recipe> PartRecipes;
 
         public static Dictionary<string, Recipe> ResourceRecipes;
 
@@ -26,7 +28,7 @@ namespace Workshop.Recipes
             if (PartRecipes.ContainsKey(part.name))
             {
                 var recipe = PartRecipes[part.name];
-                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass, part.cost))
+                foreach (var workshopResource in recipe.Prepare(part.partPrefab.mass))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {
@@ -40,7 +42,7 @@ namespace Workshop.Recipes
             }
             else
             {
-                foreach (var workshopResource in DefaultPartRecipe.Prepare(part.partPrefab.mass, part.cost))
+                foreach (var workshopResource in DefaultPartRecipe.Prepare(part.partPrefab.mass))
                 {
                     if (resources.ContainsKey(workshopResource.Name))
                     {
@@ -75,6 +77,7 @@ namespace Workshop.Recipes
 
             var blueprint = new Blueprint();
             blueprint.AddRange(resources.Values);
+            blueprint.Funds = Mathf.Max(0, part.cost - (float)blueprint.ResourceCosts());
             return blueprint;
         }
 
@@ -103,12 +106,13 @@ namespace Workshop.Recipes
             }
             var blueprint = new Blueprint();
             blueprint.AddRange(resources.Values);
+            blueprint.Funds = Mathf.Max(part.cost - (float)blueprint.ResourceCosts(), 0); 
             return blueprint;
         }
 
         void Awake()
         {
-            PartRecipes = new Dictionary<string, PartRecipe>();
+            PartRecipes = new Dictionary<string, Recipe>();
             ResourceRecipes = new Dictionary<string, Recipe>();
             FactoryRecipes = new Dictionary<string, Recipe>();
 

@@ -69,7 +69,6 @@
     <Compile Include="OseModuleRecycler.cs" />
     <Compile Include="Recipes\Blueprint.cs" />
     <Compile Include="Recipes\Ingredient.cs" />
-    <Compile Include="Recipes\PartRecipe.cs" />
     <Compile Include="Recipes\Recipe.cs" />
     <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />
     <Compile Include="Recipes\WorkshopRecipeLoader.cs" />

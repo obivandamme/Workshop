@@ -7,11 +7,18 @@ namespace Workshop.Recipes
 
     public class Blueprint : List<WorkshopResource>, IConfigNode
     {
+        public float Funds { get; set; }
+
         public double GetProgress()
         {
             var totalAmount = this.Sum(r => r.Units);
             var totalProcessed = this.Sum(r => r.Processed);
             return totalProcessed / totalAmount;
+        }
+
+        public double ResourceCosts()
+        {
+            return this.Sum(r => r.Costs());
         }
 
         public string Print(double productivity)
@@ -22,8 +29,11 @@ namespace Workshop.Recipes
                 sb.AppendLine(res.Name + " : " + res.Units.ToString("N1"));
             }
 
-            var costs = this.Sum(r => r.Costs());
-            sb.AppendLine("Resource costs: " + costs.ToString("N1"));
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+            {
+                sb.AppendLine("Resource costs: " + ResourceCosts().ToString("N1"));
+                sb.AppendLine("Funds: " + Funds);
+            }
 
             var duration = this.Sum(r => r.Units) / productivity;
             sb.AppendFormat("Duration: {0:00}h {1:00}m {2:00}s", duration / 3600, (duration / 60) % 60, duration % 60);
@@ -33,6 +43,10 @@ namespace Workshop.Recipes
 
         public void Load(ConfigNode node)
         {
+            if (node.HasValue("Funds"))
+            {
+                Funds = float.Parse(node.GetValue("Funds"));
+            }
             foreach (var configNode in node.GetNodes("WorkshopResource"))
             {
                 var resource = new WorkshopResource();
@@ -43,6 +57,7 @@ namespace Workshop.Recipes
 
         public void Save(ConfigNode node)
         {
+            node.AddValue("Funds", Funds);
             foreach (var resource in this)
             {
                 var n = node.AddNode("WorkshopResource");

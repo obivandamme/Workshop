@@ -345,7 +345,7 @@
             {
                 _processedItem = nextQueuedPart;
                 _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part);
-
+                
                 if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
                     StartCoroutine(StartAnimations());
@@ -407,6 +407,11 @@
                 Status = "Not enough " + UpkeepResource;
             }
 
+            else if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Funding.Instance.Funds < _processedBlueprint.Funds)
+            {
+                Status = "Not enough funds to process";
+            }
+
             else if (AmountAvailable(resourceToConsume.Name) < unitsToConsume)
             {
                 Status = "Not enough " + resourceToConsume.Name;
@@ -414,6 +419,11 @@
             else
             {
                 Status = "Printing " + _processedItem.Part.title;
+                if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && _processedBlueprint.Funds > 0)
+                {
+                    Funding.Instance.AddFunds(-_processedBlueprint.Funds, TransactionReasons.Vessels);
+                    _processedBlueprint.Funds = 0;
+                }
                 RequestResource(UpkeepResource, TimeWarp.deltaTime);
                 resourceToConsume.Processed += RequestResource(resourceToConsume.Name, unitsToConsume);
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
@@ -428,7 +438,7 @@
             return resList.Sum(r => r.amount);
         }
 
-        private double RequestResource(string resource, double amount)
+        private float RequestResource(string resource, double amount)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -452,7 +462,7 @@
                 }
             }
 
-            return amountTaken;
+            return (float)amountTaken;
         }
 
         private void FinishManufacturing()

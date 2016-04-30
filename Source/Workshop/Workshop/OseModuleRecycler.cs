@@ -217,15 +217,15 @@
             {
                 Status = "Not enough Crew to operate";
             }
-            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "Both") < TimeWarp.deltaTime)
+            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "ALL_VESSEL") < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + UpkeepResource;
             }
             else
             {
                 Status = "Recycling " + _processedItem.Part.title;
-                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "Both");
-                resourceToProduce.Processed -= (float)_broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "Both");
+                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "ALL_VESSEL");
+                resourceToProduce.Processed -= (float)_broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "ALL_VESSEL");
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }

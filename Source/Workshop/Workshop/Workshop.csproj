@@ -65,6 +65,8 @@
     <Compile Include="KIS\KISWrapper.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
+    <Compile Include="OseModuleCategoryAddon.cs" />
+    <Compile Include="OseModuleCategoryAddonEqualityComparer.cs" />
     <Compile Include="OseModuleInventoryPreference.cs" />
     <Compile Include="OseModuleRecycler.cs" />
     <Compile Include="Recipes\Blueprint.cs" />

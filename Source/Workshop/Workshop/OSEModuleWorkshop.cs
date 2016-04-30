@@ -152,31 +152,28 @@
 
         private void LoadFilters()
         {
-            _filters = new FilterBase[11];
-            _filters[0] = new FilterBase();
-            _filters[1] = new FilterCategory(PartCategories.Pods);
-            _filters[2] = new FilterCategory(PartCategories.FuelTank);
-            _filters[3] = new FilterCategory(PartCategories.Engine);
-            _filters[4] = new FilterCategory(PartCategories.Control);
-            _filters[5] = new FilterCategory(PartCategories.Structural);
-            _filters[6] = new FilterCategory(PartCategories.Aero);
-            _filters[7] = new FilterCategory(PartCategories.Utility);
-            _filters[8] = new FilterCategory(PartCategories.Science);
-            _filters[9] = new FilterCustom();
-            _filters[10] = new FilterModule("ModuleKISItem");
+            var categoryFilterAddOns = vessel.FindPartModulesImplementing<OseModuleCategoryAddon>().Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray();
 
-            _filterTextures = new Texture[11];
-            _filterTextures[0] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
-            _filterTextures[1] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
-            _filterTextures[2] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
-            _filterTextures[3] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
-            _filterTextures[4] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
-            _filterTextures[5] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
-            _filterTextures[6] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
-            _filterTextures[7] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
-            _filterTextures[8] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
-            _filterTextures[9] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
-            _filterTextures[10] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+            var filters = new List<FilterBase>();
+            filters.Add(new FilterBase());
+            foreach (var addon in categoryFilterAddOns)
+            {
+                filters.Add(new FilterCategory(addon.Category));
+            }
+            filters.Add(new FilterCustom());
+            filters.Add(new FilterModule("ModuleKISItem"));
+
+            var filterTextures = new List<Texture>();
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry"));
+            foreach (var addon in categoryFilterAddOns)
+            {
+                filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
+            }
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics"));
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech"));
+
+            _filters = filters.ToArray();
+            _filterTextures = filterTextures.ToArray();
         }
 
         private void LoadModuleState(ConfigNode node)

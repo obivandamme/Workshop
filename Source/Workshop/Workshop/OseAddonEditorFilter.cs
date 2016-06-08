@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using KSP.UI.Screens;
+using KSP.UI;
 
 namespace Workshop
 {
@@ -32,8 +34,10 @@ namespace Workshop
             PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));
 
             var button = filter.button.activeButton;
-            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
+
+            //button.SetState(true, RUIToggleButtonTyped.ClickType.FORCED, null);
+            //button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
+            //button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
     }
 }

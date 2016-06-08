@@ -226,7 +226,7 @@
 
         private bool IsValid(AvailablePart loadedPart)
         {
-            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart.partPrefab) <= _maxVolume;
+            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume;
         }
 
         private void LoadMaxVolume()

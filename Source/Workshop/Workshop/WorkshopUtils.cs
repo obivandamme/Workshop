@@ -14,9 +14,9 @@ namespace Workshop
 
     public class WorkshopUtils
     {
-        public static float GetPackedPartVolume(Part part)
+        public static float GetPackedPartVolume(AvailablePart part)
         {
-            var moduleKisItem = KISWrapper.GetKisItem(part);
+            var moduleKisItem = KISWrapper.GetKisItem(part.partPrefab);
             return moduleKisItem != null ? moduleKisItem.volumeOverride : KIS_Shared.GetPartVolume(part);
         }
 
@@ -29,7 +29,7 @@ namespace Workshop
 
         public static bool HasFreeSpace(ModuleKISInventory inventory, WorkshopItem item)
         {
-            return inventory.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part.partPrefab) <= inventory.maxVolume;
+            return inventory.GetContentVolume() + KIS_Shared.GetPartVolume(item.Part) <= inventory.maxVolume;
         }
 
         public static bool HasFreeSlot(ModuleKISInventory inventory)
@@ -57,7 +57,7 @@ namespace Workshop
         {
             var sb = new StringBuilder();
             sb.AppendLine("Mass: " + part.partPrefab.mass + " tons");
-            sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(part.partPrefab).ToString("0.0") + " litres");
+            sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(part).ToString("0.0") + " litres");
             sb.AppendLine("Costs: " + part.cost + "$");
 
             foreach (var resourceInfo in part.partPrefab.Resources.list)

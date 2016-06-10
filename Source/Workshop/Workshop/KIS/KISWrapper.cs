@@ -14,9 +14,9 @@
 
         private static MethodInfo kis_GetPartVolume;
 
-        public static float GetPartVolume(Part partPrefab)
+        public static float GetPartVolume(AvailablePart part)
         {
-            return (float)kis_GetPartVolume.Invoke(null, new object[] { partPrefab });
+            return (float)kis_GetPartVolume.Invoke(null, new object[] { part });
         }
 
         internal static void Initialize(Assembly kisAssembly)

@@ -52,10 +52,7 @@
 
         [KSPField]
         public int MinimumCrew = 2;
-
-        [KSPField]
-        public float MaxPartVolume = 300f;
-
+        
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
@@ -152,25 +149,25 @@
 
         private void LoadFilters()
         {
-            var categoryFilterAddOns = vessel.FindPartModulesImplementing<OseModuleCategoryAddon>().Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray();
-
             var filters = new List<FilterBase>();
-            filters.Add(new FilterBase());
-            foreach (var addon in categoryFilterAddOns)
-            {
-                filters.Add(new FilterCategory(addon.Category));
-            }
-            filters.Add(new FilterCustom());
             filters.Add(new FilterModule("ModuleKISItem"));
-
+            filters.Add(new FilterCategory(PartCategories.none));
+            
             var filterTextures = new List<Texture>();
-            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry"));
-            foreach (var addon in categoryFilterAddOns)
-            {
-                filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
-            }
-            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics"));
             filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech"));
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics"));
+            
+            var categoryFilterAddOns = vessel.FindPartModulesImplementing<OseModuleCategoryAddon>();
+            if (categoryFilterAddOns != null)
+            {
+                foreach (var addon in categoryFilterAddOns.Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray())
+                {
+                    Debug.Log("[OSE] - Found addon for category: " + addon.Category);
+                    filters.Add(new FilterCategory(addon.Category));
+                    filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
+                }
+                
+            }
 
             _filters = filters.ToArray();
             _filterTextures = filterTextures.ToArray();
@@ -223,12 +220,11 @@
 
         private bool IsValid(AvailablePart loadedPart)
         {
-            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume;
+            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name) == false;
         }
 
         private void LoadMaxVolume()
         {
-            _maxVolume = MaxPartVolume;
             try
             {
                 var inventories = KISWrapper.GetInventories(vessel);
@@ -241,17 +237,16 @@
                 {
 
                     Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
-                    var maxInventoyVolume = inventories.Max(i => i.maxVolume);
-                    _maxVolume = Math.Min(maxInventoyVolume, MaxPartVolume);
+                    _maxVolume = inventories.Max(i => i.maxVolume);
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError("[OSE] - Error while determing maximum volume of available inventories - using configured value!");
+                Debug.LogError("[OSE] - Error while determing maximum volume of available inventories!");
                 Debug.LogError("[OSE] - " + ex.Message);
                 Debug.LogError("[OSE] - " + ex.StackTrace);
             }
-            Debug.Log("[OSE] - Max volume is: " + _maxVolume + "liters");
+            Debug.Log("[OSE] - Max volume is: " + _maxVolume + " liters");
         }
 
         public override void OnSave(ConfigNode node)

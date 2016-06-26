@@ -52,10 +52,7 @@
 
         [KSPField]
         public int MinimumCrew = 2;
-
-        [KSPField]
-        public float MaxPartVolume = 300f;
-
+        
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
 
@@ -152,31 +149,28 @@
 
         private void LoadFilters()
         {
-            _filters = new FilterBase[11];
-            _filters[0] = new FilterBase();
-            _filters[1] = new FilterCategory(PartCategories.Pods);
-            _filters[2] = new FilterCategory(PartCategories.FuelTank);
-            _filters[3] = new FilterCategory(PartCategories.Engine);
-            _filters[4] = new FilterCategory(PartCategories.Control);
-            _filters[5] = new FilterCategory(PartCategories.Structural);
-            _filters[6] = new FilterCategory(PartCategories.Aero);
-            _filters[7] = new FilterCategory(PartCategories.Utility);
-            _filters[8] = new FilterCategory(PartCategories.Science);
-            _filters[9] = new FilterCustom();
-            _filters[10] = new FilterModule("ModuleKISItem");
+            var filters = new List<FilterBase>();
+            filters.Add(new FilterModule("ModuleKISItem"));
+            filters.Add(new FilterCategory(PartCategories.none));
+            
+            var filterTextures = new List<Texture>();
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech"));
+            filterTextures.Add(WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics"));
+            
+            var categoryFilterAddOns = vessel.FindPartModulesImplementing<OseModuleCategoryAddon>();
+            if (categoryFilterAddOns != null)
+            {
+                foreach (var addon in categoryFilterAddOns.Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray())
+                {
+                    Debug.Log("[OSE] - Found addon for category: " + addon.Category);
+                    filters.Add(new FilterCategory(addon.Category));
+                    filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
+                }
+                
+            }
 
-            _filterTextures = new Texture[11];
-            _filterTextures[0] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_veryheavyrocketry");
-            _filterTextures[1] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_commandmodules");
-            _filterTextures[2] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced");
-            _filterTextures[3] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/RDicon_propulsionSystems");
-            _filterTextures[4] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol");
-            _filterTextures[5] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction");
-            _filterTextures[6] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics");
-            _filterTextures[7] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_generic");
-            _filterTextures[8] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech");
-            _filterTextures[9] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_robotics");
-            _filterTextures[10] = WorkshopUtils.LoadTexture("Squad/PartList/SimpleIcons/R&D_node_icon_evatech");
+            _filters = filters.ToArray();
+            _filterTextures = filterTextures.ToArray();
         }
 
         private void LoadModuleState(ConfigNode node)
@@ -226,12 +220,11 @@
 
         private bool IsValid(AvailablePart loadedPart)
         {
-            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart.partPrefab) <= _maxVolume;
+            return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name) == false;
         }
 
         private void LoadMaxVolume()
         {
-            _maxVolume = MaxPartVolume;
             try
             {
                 var inventories = KISWrapper.GetInventories(vessel);
@@ -244,17 +237,16 @@
                 {
 
                     Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
-                    var maxInventoyVolume = inventories.Max(i => i.maxVolume);
-                    _maxVolume = Math.Min(maxInventoyVolume, MaxPartVolume);
+                    _maxVolume = inventories.Max(i => i.maxVolume);
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError("[OSE] - Error while determing maximum volume of available inventories - using configured value!");
+                Debug.LogError("[OSE] - Error while determing maximum volume of available inventories!");
                 Debug.LogError("[OSE] - " + ex.Message);
                 Debug.LogError("[OSE] - " + ex.StackTrace);
             }
-            Debug.Log("[OSE] - Max volume is: " + _maxVolume + "liters");
+            Debug.Log("[OSE] - Max volume is: " + _maxVolume + " liters");
         }
 
         public override void OnSave(ConfigNode node)
@@ -345,7 +337,7 @@
             {
                 _processedItem = nextQueuedPart;
                 _processedBlueprint = WorkshopRecipeDatabase.ProcessPart(nextQueuedPart.Part);
-
+                
                 if (Animate && _heatAnimation != null && _workAnimation != null)
                 {
                     StartCoroutine(StartAnimations());
@@ -407,6 +399,11 @@
                 Status = "Not enough " + UpkeepResource;
             }
 
+            else if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Funding.Instance.Funds < _processedBlueprint.Funds)
+            {
+                Status = "Not enough funds to process";
+            }
+
             else if (AmountAvailable(resourceToConsume.Name) < unitsToConsume)
             {
                 Status = "Not enough " + resourceToConsume.Name;
@@ -414,6 +411,11 @@
             else
             {
                 Status = "Printing " + _processedItem.Part.title;
+                if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && _processedBlueprint.Funds > 0)
+                {
+                    Funding.Instance.AddFunds(-_processedBlueprint.Funds, TransactionReasons.Vessels);
+                    _processedBlueprint.Funds = 0;
+                }
                 RequestResource(UpkeepResource, TimeWarp.deltaTime);
                 resourceToConsume.Processed += RequestResource(resourceToConsume.Name, unitsToConsume);
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
@@ -428,7 +430,7 @@
             return resList.Sum(r => r.amount);
         }
 
-        private double RequestResource(string resource, double amount)
+        private float RequestResource(string resource, double amount)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
             var resList = new List<PartResource>();
@@ -452,7 +454,7 @@
                 }
             }
 
-            return amountTaken;
+            return (float)amountTaken;
         }
 
         private void FinishManufacturing()

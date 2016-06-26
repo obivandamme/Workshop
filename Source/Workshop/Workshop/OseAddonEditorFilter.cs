@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using KSP.UI.Screens;
 using UnityEngine;
 
 namespace Workshop
@@ -30,10 +31,6 @@ namespace Workshop
             var icon = PartCategorizer.Instance.iconLoader.GetIcon(IconName);
             var filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == Category);
             PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));
-
-            var button = filter.button.activeButton;
-            button.SetFalse(button, RUIToggleButtonTyped.ClickType.FORCED);
-            button.SetTrue(button, RUIToggleButtonTyped.ClickType.FORCED);
         }
     }
 }

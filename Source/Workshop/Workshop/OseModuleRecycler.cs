@@ -217,15 +217,16 @@
             {
                 Status = "Not enough Crew to operate";
             }
-            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "Both") < TimeWarp.deltaTime)
+            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "ALL_VESSEL") < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + UpkeepResource;
             }
             else
             {
                 Status = "Recycling " + _processedItem.Part.title;
-                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "Both");
-                resourceToProduce.Processed += _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "Both");
+                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "ALL_VESSEL");
+                _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "ALL_VESSEL");
+                resourceToProduce.Processed += unitsToProduce;
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
@@ -233,13 +234,13 @@
         private void FinishManufacturing()
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
-            this.CleanupRecycler();
+            CleanupRecycler();
         }
 
         private void CancelManufacturing()
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " canceled.", 5, ScreenMessageStyle.UPPER_CENTER);
-            this.CleanupRecycler();
+            CleanupRecycler();
         }
 
         private void CleanupRecycler()

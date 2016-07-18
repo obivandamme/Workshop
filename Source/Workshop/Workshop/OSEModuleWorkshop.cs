@@ -386,7 +386,12 @@
 
         private void ExecuteManufacturing()
         {
-            var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
+            var resourceToConsume = _processedBlueprint.FirstOrDefault(r => r.Processed < r.Units);
+            if (resourceToConsume == null)
+            {
+                _progress = 100.0f;
+                return;
+            }
             var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * ProductivityFactor);
 
             if (part.protoModuleCrew.Count < MinimumCrew)

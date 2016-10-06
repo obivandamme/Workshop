@@ -16,13 +16,16 @@
 
         public static float GetPartVolume(AvailablePart part)
         {
+            if (kis_GetPartVolume == null)
+                return 0;
             return (float)kis_GetPartVolume.Invoke(null, new object[] { part });
         }
 
         internal static void Initialize(Assembly kisAssembly)
         {
             KIS_Shared_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_Shared"));
-            kis_GetPartVolume = KIS_Shared_class.GetMethod("GetPartVolume");
+            if (KIS_Shared_class != null)
+                kis_GetPartVolume = KIS_Shared_class.GetMethod("GetPartVolume");
         }
     }
 
@@ -38,6 +41,8 @@
         {
             get
             {
+                if (kis_volumeOverride == null)
+                    return 0;
                 return (float)kis_volumeOverride.GetValue(_obj);
             }
         }
@@ -50,7 +55,8 @@
         internal static void Initialize(Assembly kisAssembly)
         {
             ModuleKISItem_class = kisAssembly.GetTypes().First(t => t.Name.Equals("ModuleKISItem"));
-            kis_volumeOverride = ModuleKISItem_class.GetField("volumeOverride");
+            if (ModuleKISItem_class != null)
+                kis_volumeOverride = ModuleKISItem_class.GetField("volumeOverride");
         }
     }
 

@@ -41,6 +41,9 @@
         public string UpkeepResource = "ElectricCharge";
 
         [KSPField]
+        public float UpkeepAmount = 1.0f;
+
+        [KSPField]
         public int MinimumCrew = 2;
 
         [KSPField(guiName = "Recycler Status", guiActive = true)]
@@ -217,15 +220,15 @@
             {
                 Status = "Not enough Crew to operate";
             }
-            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "ALL_VESSEL") < TimeWarp.deltaTime)
+            else if (_broker.AmountAvailable(this.part, UpkeepResource, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL) < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + UpkeepResource;
             }
             else
             {
                 Status = "Recycling " + _processedItem.Part.title;
-                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "ALL_VESSEL");
-                _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "ALL_VESSEL");
+                _broker.RequestResource(this.part, UpkeepResource, UpkeepAmount, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
+                _broker.StoreResource(this.part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
                 resourceToProduce.Processed += unitsToProduce;
                 _progress = (float)(_processedBlueprint.GetProgress() * 100);
             }

@@ -13,6 +13,12 @@ Current Features
     Processing of Ore into MaterialParts
     Pause and cancel current production
 
+Revision History
+
+1.0.0
+- Updated to KSP 1.2
+- The current production can now be paused/resumed and cancelled altogether.
+
 License
 
 OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license, which means

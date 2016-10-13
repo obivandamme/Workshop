@@ -59,9 +59,20 @@
 
         [KSPField]
         public int MinimumCrew = 2;
+
+        [KSPField()]
+        public bool UseSpecializationBonus = true;
+
+        [KSPField()]
+        public string ExperienceEffect = "RepairSkill";
+
+        [KSPField()]
+        public float SpecialistEfficiencyFactor = 0.02f;
         
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
+
+        protected float adjustedProductivity = 1.0f;
 
         [KSPEvent(guiName = "Open Workbench", guiActive = true)]
         public void ContextMenuOpenWorkbench()
@@ -277,6 +288,7 @@
         {
             try
             {
+                UpdateProductivity();
                 ApplyFilter();
                 ApplyPaging();
                 ProcessItem();
@@ -287,6 +299,29 @@
                 Debug.LogException(ex);
             }
             base.OnUpdate();
+        }
+
+        private void UpdateProductivity()
+        {
+            int crewCount = this.part.protoModuleCrew.Count;
+            ProtoCrewMember worker;
+
+            if (_processedItem != null && UseSpecializationBonus)
+            {
+                if (crewCount == 0)
+                    return;
+
+                //Set initial productivity
+                adjustedProductivity = ProductivityFactor;
+
+                //Find all crews with the build skill and adjust productivity based upon their skill
+                for (int index = 0; index < crewCount; index++)
+                {
+                    worker = this.part.protoModuleCrew[index];
+                    if (worker.HasEffect(ExperienceEffect))
+                        adjustedProductivity += worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor * (1 - worker.stupidity);
+                }
+            }
         }
 
         private void ProcessItem()
@@ -397,7 +432,7 @@
         private void ExecuteManufacturing()
         {
             var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
-            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * ProductivityFactor);
+            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * adjustedProductivity);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
@@ -677,7 +712,7 @@
                 var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
             }
 

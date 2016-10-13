@@ -15,6 +15,9 @@ Current Features
 
 Revision History
 
+1.0.5
+- Workshops now support efficiency improvements that reduce the time it takes to make parts. Smart kerbals with high ranks in the RepairSkill (typically Engineers) offer the best improvements.
+
 1.0.0
 - Updated to KSP 1.2
 - The current production can now be paused/resumed and cancelled altogether.

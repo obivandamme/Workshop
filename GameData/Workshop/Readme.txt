@@ -16,7 +16,8 @@ Current Features
 Revision History
 
 1.0.5
-- Workshops now support efficiency improvements that reduce the time it takes to make parts. Smart kerbals with high ranks in the RepairSkill (typically Engineers) offer the best improvements.
+- Fixed ModuleManager patch issues.
+- Smart and experienced engineer types now improve construction and recycling efficiency.
 
 1.0.0
 - Updated to KSP 1.2

@@ -15,6 +15,13 @@ Current Features
 
 Revision History
 
+1.0.7
+- Radial drill fix courtesy of RealGecko.
+- Added Workshop options to KSP's Settings->Game Difficulty screen.
+- You can enable/disable experience-based efficiency bonus (default on).
+- You can enable/disable stupidity effects on experience-based efficiency bonus (default off).
+- Workshop pause/play and trashcan buttons now use the same textures as the recycler.
+
 1.0.5
 - Fixed ModuleManager patch issues.
 - Smart and experienced engineer types now improve construction and recycling efficiency.

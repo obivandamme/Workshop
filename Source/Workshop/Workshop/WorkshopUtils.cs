@@ -14,6 +14,52 @@ namespace Workshop
 
     public class WorkshopUtils
     {
+        public static float GetProductivityBonus(Part part, string ExperienceEffect, float SpecialistEfficiencyFactor, float ProductivityFactor)
+        {
+            float adjustedProductivity = ProductivityFactor;
+
+            try
+            {
+                int crewCount = part.protoModuleCrew.Count;
+                if (crewCount == 0)
+                    return ProductivityFactor;
+
+                ProtoCrewMember worker;
+                GameParameters.AdvancedParams advancedParams = HighLogic.CurrentGame.Parameters.CustomParams<GameParameters.AdvancedParams>();
+                float productivityBonus = 1.0f;
+
+                //Find all crews with the build skill and adjust productivity based upon their skill
+                for (int index = 0; index < crewCount; index++)
+                {
+                    worker = part.protoModuleCrew[index];
+
+                    //Adjust productivity if efficiency is enabled
+                    if (WorkshopOptions.EfficiencyEnabled)
+                    {
+                        if (worker.HasEffect(ExperienceEffect))
+                        {
+                            if (advancedParams.EnableKerbalExperience)
+                                productivityBonus = worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor;
+                            else
+                                productivityBonus = 5.0f * SpecialistEfficiencyFactor;
+                        }
+
+                        //Adjust for stupidity
+                        if (WorkshopOptions.StupidityAffectsEfficiency)
+                            productivityBonus *= (1 - worker.stupidity);
+
+                        adjustedProductivity += productivityBonus;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log("[Workshop] Error encountered while trying to calculate productivity bonus: " + ex);
+            }
+
+            return adjustedProductivity;
+        }
+
         public static float GetPackedPartVolume(AvailablePart part)
         {
             var moduleKisItem = KISWrapper.GetKisItem(part.partPrefab);

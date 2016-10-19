@@ -60,7 +60,7 @@ namespace Workshop
             sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(part).ToString("0.0") + " litres");
             sb.AppendLine("Costs: " + part.cost + "$");
 
-            foreach (var resourceInfo in part.partPrefab.Resources.list)
+            foreach (var resourceInfo in part.partPrefab.Resources)
             {
                 if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
                 {

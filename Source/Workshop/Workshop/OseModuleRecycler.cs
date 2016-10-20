@@ -163,25 +163,8 @@
 
         private void UpdateProductivity()
         {
-            int crewCount = this.part.protoModuleCrew.Count;
-            ProtoCrewMember worker;
-
             if (_processedItem != null && UseSpecializationBonus)
-            {
-                if (crewCount == 0)
-                    return;
-
-                //Set initial productivity
-                adjustedProductivity = ProductivityFactor;
-
-                //Find all crews with the build skill and adjust productivity based upon their skill
-                for (int index = 0; index < crewCount; index++)
-                {
-                    worker = this.part.protoModuleCrew[index];
-                    if (worker.HasEffect(ExperienceEffect))
-                        adjustedProductivity += worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor * (1 - worker.stupidity);
-                }
-            }
+                adjustedProductivity = WorkshopUtils.GetProductivityBonus(this.part, ExperienceEffect, SpecialistEfficiencyFactor, ProductivityFactor);
         }
 
         public override void OnUpdate()

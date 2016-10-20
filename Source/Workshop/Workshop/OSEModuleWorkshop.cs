@@ -4,6 +4,7 @@
     using System.Collections;
     using System.Linq;
     using System.Collections.Generic;
+    using KSP.IO;
 
     using KIS;
 
@@ -74,6 +75,10 @@
 
         protected float adjustedProductivity = 1.0f;
 
+        private Texture2D _pauseTexture;
+        private Texture2D _playTexture;
+        private Texture2D _binTexture;
+
         [KSPEvent(guiName = "Open Workbench", guiActive = true)]
         public void ContextMenuOpenWorkbench()
         {
@@ -103,6 +108,9 @@
         public OseModuleWorkshop()
         {
             _queue = new WorkshopQueue();
+            _pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_pause");
+            _playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_play");
+            _binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_bin");
         }
 
         public override void OnStart(StartState state)
@@ -303,25 +311,8 @@
 
         private void UpdateProductivity()
         {
-            int crewCount = this.part.protoModuleCrew.Count;
-            ProtoCrewMember worker;
-
             if (_processedItem != null && UseSpecializationBonus)
-            {
-                if (crewCount == 0)
-                    return;
-
-                //Set initial productivity
-                adjustedProductivity = ProductivityFactor;
-
-                //Find all crews with the build skill and adjust productivity based upon their skill
-                for (int index = 0; index < crewCount; index++)
-                {
-                    worker = this.part.protoModuleCrew[index];
-                    if (worker.HasEffect(ExperienceEffect))
-                        adjustedProductivity += worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor * (1 - worker.stupidity);
-                }
-            }
+                adjustedProductivity = WorkshopUtils.GetProductivityBonus(this.part, ExperienceEffect, SpecialistEfficiencyFactor, ProductivityFactor);
         }
 
         private void ProcessItem()
@@ -742,16 +733,16 @@
             GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
 
             //Pause/resume production
-            string buttonLabel = "||";
+            Texture2D buttonTexture = _pauseTexture;
             if (manufacturingPaused || _processedItem == null)
-                buttonLabel = ">";
-            if (GUI.Button(new Rect(530, 620, 50, 50), buttonLabel) && _processedItem != null)
+                buttonTexture = _playTexture;
+            if (GUI.Button(new Rect(530, 620, 50, 50), buttonTexture) && _processedItem != null)
             {
                 manufacturingPaused = !manufacturingPaused;
             }
 
             //Cancel production
-            if (GUI.Button(new Rect(580, 620, 50, 50), "X"))
+            if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
             {
                 if (_confirmDelete)
                 {

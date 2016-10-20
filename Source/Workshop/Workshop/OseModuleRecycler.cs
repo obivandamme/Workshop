@@ -13,9 +13,6 @@
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
 
-        private float _progress;
-        private bool _isPaused;
-
         private readonly ResourceBroker _broker;
         private readonly WorkshopQueue _queue;
 
@@ -31,6 +28,12 @@
         private Texture2D _binTexture;
 
 
+        [KSPField(isPersistant = true)]
+        public bool recyclingPaused;
+
+        [KSPField(isPersistant = true)]
+        public float progress;
+
         [KSPField]
         public float ConversionRate = 0.25f;
 
@@ -41,10 +44,24 @@
         public string UpkeepResource = "ElectricCharge";
 
         [KSPField]
+        public float UpkeepAmount = 1.0f;
+
+        [KSPField]
         public int MinimumCrew = 2;
+
+        [KSPField()]
+        public bool UseSpecializationBonus = true;
+
+        [KSPField()]
+        public string ExperienceEffect = "RepairSkill";
+
+        [KSPField()]
+        public float SpecialistEfficiencyFactor = 0.02f;
 
         [KSPField(guiName = "Recycler Status", guiActive = true)]
         public string Status = "Online";
+
+        protected float adjustedProductivity = 1.0f;
 
         [KSPEvent(guiActive = true, guiName = "Open Recycler")]
         public void ContextMenuOnOpenRecycler()
@@ -144,10 +161,34 @@
             base.OnSave(node);
         }
 
+        private void UpdateProductivity()
+        {
+            int crewCount = this.part.protoModuleCrew.Count;
+            ProtoCrewMember worker;
+
+            if (_processedItem != null && UseSpecializationBonus)
+            {
+                if (crewCount == 0)
+                    return;
+
+                //Set initial productivity
+                adjustedProductivity = ProductivityFactor;
+
+                //Find all crews with the build skill and adjust productivity based upon their skill
+                for (int index = 0; index < crewCount; index++)
+                {
+                    worker = this.part.protoModuleCrew[index];
+                    if (worker.HasEffect(ExperienceEffect))
+                        adjustedProductivity += worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor * (1 - worker.stupidity);
+                }
+            }
+        }
+
         public override void OnUpdate()
         {
             try
             {
+                UpdateProductivity();
                 ApplyPaging();
                 ProcessItem();
             }
@@ -161,11 +202,11 @@
 
         private void ProcessItem()
         {
-            if (_isPaused)
+            if (recyclingPaused)
             {
                 Status = "Paused";
             }
-            else if (_progress >= 100)
+            else if (progress >= 100)
             {
                 FinishManufacturing();
             }
@@ -211,23 +252,23 @@
         private void ExecuteManufacturing()
         {
             var resourceToProduce = _processedBlueprint.First(r => r.Processed < r.Units);
-            var unitsToProduce = Math.Min(resourceToProduce.Units - resourceToProduce.Processed, TimeWarp.deltaTime * ProductivityFactor);
+            var unitsToProduce = Math.Min(resourceToProduce.Units - resourceToProduce.Processed, TimeWarp.deltaTime * adjustedProductivity);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
                 Status = "Not enough Crew to operate";
             }
-            else if (_broker.AmountAvailable(part, UpkeepResource, TimeWarp.deltaTime, "ALL_VESSEL") < TimeWarp.deltaTime)
+            else if (_broker.AmountAvailable(this.part, UpkeepResource, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL) < TimeWarp.deltaTime)
             {
                 Status = "Not enough " + UpkeepResource;
             }
             else
             {
                 Status = "Recycling " + _processedItem.Part.title;
-                _broker.RequestResource(part, UpkeepResource, TimeWarp.deltaTime, TimeWarp.deltaTime, "ALL_VESSEL");
-                _broker.StoreResource(part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, "ALL_VESSEL");
+                _broker.RequestResource(this.part, UpkeepResource, UpkeepAmount, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
+                _broker.StoreResource(this.part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
                 resourceToProduce.Processed += unitsToProduce;
-                _progress = (float)(_processedBlueprint.GetProgress() * 100);
+                progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
 
@@ -248,7 +289,7 @@
             _processedItem.DisableIcon();
             _processedItem = null;
             _processedBlueprint = null;
-            _progress = 0;
+            progress = 0;
             Status = "Online";
         }
 
@@ -408,7 +449,7 @@
                 }
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
             }
             else if (mouseOverItemKIS != null)
@@ -420,7 +461,7 @@
                 }
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItemKIS.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItemKIS.availablePart), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItemKIS.availablePart), tooltipDescriptionStyle);
             }
 
@@ -440,28 +481,28 @@
 
             // Progressbar
             GUI.Box(new Rect(250, 620, 260, 50), "");
-            if (_progress >= 1)
+            if (progress >= 1)
             {
                 var color = GUI.color;
                 GUI.color = new Color(0, 1, 0, 1);
-                GUI.Box(new Rect(250, 620, 260 * _progress / 100, 50), "");
+                GUI.Box(new Rect(250, 620, 260 * progress / 100, 50), "");
                 GUI.color = color;
             }
-            GUI.Label(new Rect(250, 620, 260, 50), " " + _progress.ToString("0.0") + " / 100");
+            GUI.Label(new Rect(250, 620, 260, 50), " " + progress.ToString("0.0") + " / 100");
 
             // Toolbar
-            if (_isPaused)
+            if (recyclingPaused)
             {
                 if (GUI.Button(new Rect(520, 620, 50, 50), _playTexture))
                 {
-                    _isPaused = false;
+                    recyclingPaused = false;
                 }
             }
             else
             {
                 if (GUI.Button(new Rect(520, 620, 50, 50), _pauseTexture))
                 {
-                    _isPaused = true;
+                    recyclingPaused = true;
                 }   
             }
 

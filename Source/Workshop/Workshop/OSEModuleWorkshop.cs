@@ -19,7 +19,6 @@
         private Blueprint _processedBlueprint;
         private WorkshopItem _processedItem;
 
-        private float _progress;
         private float _maxVolume;
 
         private readonly WorkshopQueue _queue;
@@ -41,6 +40,14 @@
         private Rect _windowPos = new Rect(50, 50, 640, 680);
         private bool _showGui;
 
+        private bool _confirmDelete;
+
+        [KSPField(isPersistant = true)]
+        public bool manufacturingPaused;
+
+        [KSPField(isPersistant = true)]
+        public float progress;
+
         [KSPField]
         public bool Animate = false;
 
@@ -52,9 +59,20 @@
 
         [KSPField]
         public int MinimumCrew = 2;
+
+        [KSPField()]
+        public bool UseSpecializationBonus = true;
+
+        [KSPField()]
+        public string ExperienceEffect = "RepairSkill";
+
+        [KSPField()]
+        public float SpecialistEfficiencyFactor = 0.02f;
         
         [KSPField(guiName = "Workshop Status", guiActive = true)]
         public string Status = "Online";
+
+        protected float adjustedProductivity = 1.0f;
 
         [KSPEvent(guiName = "Open Workbench", guiActive = true)]
         public void ContextMenuOpenWorkbench()
@@ -270,6 +288,7 @@
         {
             try
             {
+                UpdateProductivity();
                 ApplyFilter();
                 ApplyPaging();
                 ProcessItem();
@@ -282,9 +301,35 @@
             base.OnUpdate();
         }
 
+        private void UpdateProductivity()
+        {
+            int crewCount = this.part.protoModuleCrew.Count;
+            ProtoCrewMember worker;
+
+            if (_processedItem != null && UseSpecializationBonus)
+            {
+                if (crewCount == 0)
+                    return;
+
+                //Set initial productivity
+                adjustedProductivity = ProductivityFactor;
+
+                //Find all crews with the build skill and adjust productivity based upon their skill
+                for (int index = 0; index < crewCount; index++)
+                {
+                    worker = this.part.protoModuleCrew[index];
+                    if (worker.HasEffect(ExperienceEffect))
+                        adjustedProductivity += worker.experienceTrait.CrewMemberExperienceLevel() * SpecialistEfficiencyFactor * (1 - worker.stupidity);
+                }
+            }
+        }
+
         private void ProcessItem()
         {
-            if (_progress >= 100)
+            if (manufacturingPaused)
+                return;
+
+            if (progress >= 100)
             {
                 FinishManufacturing();
             }
@@ -387,7 +432,7 @@
         private void ExecuteManufacturing()
         {
             var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
-            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * ProductivityFactor);
+            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * adjustedProductivity);
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
@@ -418,43 +463,22 @@
                 }
                 RequestResource(UpkeepResource, TimeWarp.deltaTime);
                 resourceToConsume.Processed += RequestResource(resourceToConsume.Name, unitsToConsume);
-                _progress = (float)(_processedBlueprint.GetProgress() * 100);
+                progress = (float)(_processedBlueprint.GetProgress() * 100);
             }
         }
 
         private double AmountAvailable(string resource)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            return resList.Sum(r => r.amount);
+            double amount, maxAmount;
+            part.GetConnectedResourceTotals(res.id, out amount, out maxAmount);
+            return amount;
         }
 
         private float RequestResource(string resource, double amount)
         {
             var res = PartResourceLibrary.Instance.GetDefinition(resource);
-            var resList = new List<PartResource>();
-            part.GetConnectedResources(res.id, res.resourceFlowMode, resList);
-            var demandLeft = amount;
-            var amountTaken = 0d;
-
-            foreach (var r in resList)
-            {
-                if (r.amount >= demandLeft)
-                {
-                    amountTaken += demandLeft;
-                    r.amount -= demandLeft;
-                    demandLeft = 0;
-                }
-                else
-                {
-                    amountTaken += r.amount;
-                    demandLeft -= r.amount;
-                    r.amount = 0;
-                }
-            }
-
-            return (float)amountTaken;
+            return (float)this.part.RequestResource(res.id, amount);
         }
 
         private void FinishManufacturing()
@@ -466,7 +490,7 @@
                 _processedItem.DisableIcon();
                 _processedItem = null;
                 _processedBlueprint = null;
-                _progress = 0;
+                progress = 0;
                 Status = "Online";
 
                 if (Animate && _heatAnimation != null && _workAnimation != null)
@@ -688,7 +712,7 @@
                 var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
-                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(ProductivityFactor), statsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
                 GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
             }
 
@@ -707,15 +731,49 @@
             }
 
             // Progressbar
-            GUI.Box(new Rect(250, 620, 380, 50), "");
-            if (_progress >= 1)
+            GUI.Box(new Rect(250, 620, 280, 50), "");
+            if (progress >= 1)
             {
                 var color = GUI.color;
                 GUI.color = new Color(0, 1, 0, 1);
-                GUI.Box(new Rect(250, 620, 380 * _progress / 100, 50), "");
+                GUI.Box(new Rect(250, 620, 280 * progress / 100, 50), "");
                 GUI.color = color;
             }
-            GUI.Label(new Rect(250, 620, 380, 50), " " + _progress.ToString("0.0") + " / 100");
+            GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
+
+            //Pause/resume production
+            string buttonLabel = "||";
+            if (manufacturingPaused || _processedItem == null)
+                buttonLabel = ">";
+            if (GUI.Button(new Rect(530, 620, 50, 50), buttonLabel) && _processedItem != null)
+            {
+                manufacturingPaused = !manufacturingPaused;
+            }
+
+            //Cancel production
+            if (GUI.Button(new Rect(580, 620, 50, 50), "X"))
+            {
+                if (_confirmDelete)
+                {
+                    _processedItem.DisableIcon();
+                    _processedItem = null;
+                    _processedBlueprint = null;
+                    progress = 0;
+                    Status = "Online";
+
+                    if (Animate && _heatAnimation != null && _workAnimation != null)
+                    {
+                        StartCoroutine(StopAnimations());
+                    }
+                    _confirmDelete = false;
+                }
+
+                else
+                {
+                    _confirmDelete = true;
+                    ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                }
+            }
 
             if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {

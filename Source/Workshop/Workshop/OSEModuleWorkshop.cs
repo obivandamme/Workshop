@@ -318,7 +318,10 @@
         private void ProcessItem()
         {
             if (manufacturingPaused)
+            {
+                Status = "Paused";
                 return;
+            }
 
             if (progress >= 100)
             {
@@ -750,6 +753,7 @@
                     _processedItem = null;
                     _processedBlueprint = null;
                     progress = 0;
+                    manufacturingPaused = false;
                     Status = "Online";
 
                     if (Animate && _heatAnimation != null && _workAnimation != null)

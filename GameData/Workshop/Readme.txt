@@ -15,6 +15,12 @@ Current Features
 
 Revision History
 
+1.0.8
+- Fixed an issue where cancelling production after pausing the workshop will prevent you from producing other items.
+- Drill fixes for real this time...
+- New storage options for the containers- thanks Enceos! :)
+- Updated the workshop and decal artwork- Thanks Enceos! :)
+
 1.0.7
 - Radial drill fix courtesy of RealGecko.
 - Added Workshop options to KSP's Settings->Game Difficulty screen.

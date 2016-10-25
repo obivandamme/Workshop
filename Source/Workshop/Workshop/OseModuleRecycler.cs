@@ -265,6 +265,7 @@
         {
             ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " canceled.", 5, ScreenMessageStyle.UPPER_CENTER);
             CleanupRecycler();
+            recyclingPaused = false;
         }
 
         private void CleanupRecycler()

@@ -102,7 +102,7 @@
 
         public override void OnStart(StartState state)
         {
-            if (WorkshopSettings.IsKISAvailable)
+            if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
             {
                 GameEvents.onVesselChange.Add(OnVesselChange);
             }

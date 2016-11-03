@@ -81,11 +81,9 @@ namespace Workshop
 
         public override bool Enabled(System.Reflection.MemberInfo member, GameParameters parameters)
         {
-            Game.Modes gameMode = HighLogic.CurrentGame.Mode;
-
             if (member.Name == "stupidityAffectsEfficiency" && enableEfficiency)
                 return true;
-            else if (member.Name == "stupidityAffectsEfficiency")
+            if (member.Name == "stupidityAffectsEfficiency")
                 return false;
 
             return base.Enabled(member, parameters);

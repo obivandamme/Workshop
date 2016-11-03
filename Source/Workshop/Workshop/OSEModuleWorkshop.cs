@@ -115,7 +115,7 @@
 
         public override void OnStart(StartState state)
         {
-            if (WorkshopSettings.IsKISAvailable)
+            if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
             {
                 Debug.Log("[OSE] - KIS is available - Initialize Workshop");
                 SetupAnimations();
@@ -599,7 +599,7 @@
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres)");
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ")");
         }
 
         private void DrawWindowContents(int windowId)

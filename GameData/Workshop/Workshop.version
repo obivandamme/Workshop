@@ -1,16 +1,16 @@
 {
      "NAME":"OSE Workshop",
-     "URL":"https://raw.githubusercontent.com/Angel-125/Workshop/master/GameData/Workshop/Workshop.version",
-     "DOWNLOAD":"https://github.com/Angel-125/Workshop/releases",
+     "URL":"https://github.com/obivandamme/Workshop/blob/master/GameData/Workshop/Workshop.version",
+     "DOWNLOAD":"https://github.com/obivandamme/Workshop/releases",
      "GITHUB":{
-         "USERNAME":"Angel-125",
+         "USERNAME":"obivandamme",
          "REPOSITORY":"Workshop",
          "ALLOW_PRE_RELEASE":false
      },
      "VERSION":{
          "MAJOR":1,
-         "MINOR":0,
-         "PATCH":8,
+         "MINOR":1,
+         "PATCH":0,
          "BUILD":0
      },
      "KSP_VERSION":{

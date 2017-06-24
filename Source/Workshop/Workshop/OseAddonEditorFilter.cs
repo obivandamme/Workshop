@@ -11,6 +11,7 @@ namespace Workshop
         internal string Category = "Filter by Function";
         internal string SubCategoryTitle = "Workshop Items";
         internal string IconName = "R&D_node_icon_advmetalworks";
+        const string CategoryButtonLocalizationId = "#autoLOC_453547"; // filter by function
 
         void Awake()
         {
@@ -29,7 +30,13 @@ namespace Workshop
         private void SubCategories()
         {
             var icon = PartCategorizer.Instance.iconLoader.GetIcon(IconName);
-            var filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == Category);
+            var filter = PartCategorizer.Instance.filters.Find(f => f.button.categorydisplayName == CategoryButtonLocalizationId);
+            if (filter == null)
+            {
+                Debug.LogErrorFormat(
+                    "Cannot find 'Filter by function' button for category: {0}", SubCategoryTitle);
+                return;
+            }
             PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));
         }
     }

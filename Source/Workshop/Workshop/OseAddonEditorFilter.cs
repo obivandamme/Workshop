@@ -17,7 +17,7 @@ namespace Workshop
             GameEvents.onGUIEditorToolbarReady.Add(SubCategories);
 
             AvPartItems.Clear();
-            AvPartItems.AddRange(new []
+            AvPartItems.AddRange(new[]
                                  {
                                      "OSE.Workshop",
                                      "OSE.Converter",
@@ -30,7 +30,7 @@ namespace Workshop
         {
             var icon = PartCategorizer.Instance.iconLoader.GetIcon(IconName);
             var filter = PartCategorizer.Instance.filters.Find(f => f.button.categoryName == Category);
-            PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));
+            PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));
         }
     }
 }

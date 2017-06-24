@@ -15,6 +15,8 @@ namespace Workshop
         [GameParameters.CustomParameterUI("Stupidity affects efficiency", toolTip = "If enabled, stupidity affects efficiency; the lower the better.", autoPersistance = true)]
         public bool stupidityAffectsEfficiency = false;
 
+        public override string DisplaySection => Section;
+
         public static bool EfficiencyEnabled
         {
             get

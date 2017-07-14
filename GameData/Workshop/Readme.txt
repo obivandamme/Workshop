@@ -1,6 +1,6 @@
-OSE Workshop by ObiVanDamme
+OSE Workshop Continued by Aelfhe1m - developed from original mod OSE Workshop by ObiVanDamme
 
- What does it do?
+What does it do?
 
 The OSE - Workshop is a new Part that is meant to be used together with Kerbal Inventory System (KIS). It allows you to create parts in flight.
 
@@ -9,32 +9,12 @@ Current Features
     Queueing of items for production
     All Items require MaterialKits, ElectricCharge and a crew of two Kerbals to be created
     The amount of MaterialKits needed is depending on the mass of the created item => To create an item with the mass of one ton you need one ton of MaterialKits (not one unit)
+	Third party mods may add or change required resources to make some parts (recipes)
     Recycling of items stored in your vessels inventory
     Processing of Ore into MaterialParts
     Pause and cancel current production
 
-Revision History
 
-1.0.8
-- Fixed an issue where cancelling production after pausing the workshop will prevent you from producing other items.
-- Drill fixes for real this time...
-- New storage options for the containers- thanks Enceos! :)
-- Updated the workshop and decal artwork- Thanks Enceos! :)
-
-1.0.7
-- Radial drill fix courtesy of RealGecko.
-- Added Workshop options to KSP's Settings->Game Difficulty screen.
-- You can enable/disable experience-based efficiency bonus (default on).
-- You can enable/disable stupidity effects on experience-based efficiency bonus (default off).
-- Workshop pause/play and trashcan buttons now use the same textures as the recycler.
-
-1.0.5
-- Fixed ModuleManager patch issues.
-- Smart and experienced engineer types now improve construction and recycling efficiency.
-
-1.0.0
-- Updated to KSP 1.2
-- The current production can now be paused/resumed and cancelled altogether.
 
 License
 

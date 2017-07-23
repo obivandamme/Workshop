@@ -2,6 +2,7 @@
 
 namespace Workshop.Recipes
 {
+    using KSP.Localization;
     using System.Linq;
     using System.Text;
 
@@ -31,12 +32,12 @@ namespace Workshop.Recipes
 
             if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
             {
-                sb.AppendLine("Resource costs: " + ResourceCosts().ToString("N1"));
-                sb.AppendLine("Funds: " + Funds);
+                sb.AppendLine(Localizer.Format("#LOC_Workshop_Blueprint_ResourceCost", ResourceCosts().ToString("N1"))); // Resource costs: <<1>>
+                sb.AppendLine(Localizer.Format("#LOC_Workshop_Blueprint_FundsCost", Funds)); // Funds: <<1>>
             }
 
             var duration = this.Sum(r => r.Units) / productivity;
-            sb.AppendFormat("Duration: {0:00}h {1:00}m {2:00}s", duration / 3600, (duration / 60) % 60, duration % 60);
+            sb.AppendFormat(Localizer.Format("#LOC_Workshop_Blueprint_Duration", (duration / 3600).ToString("00"), ((duration / 60) % 60).ToString("00"), (duration % 60).ToString("00"))); // "Duration: {0:00}h {1:00}m {2:00}s"
 
             return sb.ToString();
         }

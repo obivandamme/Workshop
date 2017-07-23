@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
-using KSPAchievements;
 using Workshop.Recipes;
 
 namespace Workshop
@@ -11,6 +9,7 @@ namespace Workshop
     using UnityEngine;
 
     using KIS;
+    using KSP.Localization;
 
     public class WorkshopUtils
     {
@@ -102,15 +101,15 @@ namespace Workshop
         public static string GetKisStats(AvailablePart part)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Mass: " + part.partPrefab.mass + " tons");
-            sb.AppendLine("Volume: " + KIS_Shared.GetPartVolume(part).ToString("0.0") + " litres");
-            sb.AppendLine("Costs: " + part.cost + "$");
+            sb.AppendLine(Localizer.Format("#LOC_Workshop_PartMass", part.partPrefab.mass)); // "Mass: " + part.partPrefab.mass + " tons");
+            sb.AppendLine(Localizer.Format("#LOC_Workshop_PartVolume", KIS_Shared.GetPartVolume(part))); //Volume: " + KIS_Shared.GetPartVolume(part).ToString("0.0") + " litres");
+            sb.AppendLine(Localizer.Format("#LOC_Workshop_PartCost", part.cost)); // "Costs: " + part.cost + "$"
 
             foreach (var resourceInfo in part.partPrefab.Resources)
             {
                 if (WorkshopRecipeDatabase.HasResourceRecipe(resourceInfo.resourceName))
                 {
-                    sb.AppendLine(resourceInfo.resourceName + ": " + resourceInfo.maxAmount + " / " + resourceInfo.maxAmount);
+                    sb.AppendLine(resourceInfo.resourceName + ": " + resourceInfo.maxAmount + " / " + resourceInfo.maxAmount); 
                 }
                 else
                 {

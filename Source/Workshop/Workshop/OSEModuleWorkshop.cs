@@ -116,7 +116,7 @@
 
 		public override void OnStart(StartState state)
 		{
-            if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
+			if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
 			{
 				Debug.Log("[OSE] - KIS is available - Initialize Workshop");
 				SetupAnimations();
@@ -423,15 +423,8 @@
 
 		private void ExecuteManufacturing()
 		{
-			//var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
-            var resourceToConsume = _processedBlueprint.FirstOrDefault(r => r.Processed < r.Units);
-            if (resourceToConsume == null)
-            {
-                print("[OSE Workshop]: ExecuteManufacturing found null resourceToConsume");
-                return;
-            } 
-
-            var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * adjustedProductivity);
+			var resourceToConsume = _processedBlueprint.First(r => r.Processed < r.Units);
+			var unitsToConsume = Math.Min(resourceToConsume.Units - resourceToConsume.Processed, TimeWarp.deltaTime * adjustedProductivity);
 
 			if (part.protoModuleCrew.Count < MinimumCrew)
 			{
@@ -660,7 +653,7 @@
 
 			if (_activePage > 0)
 			{
-                if (GUI.Button(new Rect(15, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_PreviousButton"))) // "Prev"
+                if (GUI.Button(new Rect(15, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_PreviousButton"))); // "Prev"
 				{
 					_selectedPage = _activePage - 1;
 				}
@@ -668,7 +661,7 @@
 
 			if (_activePage < _filteredItems.MaxPages)
 			{
-                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton"))) // "Next"
+                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton"))); // "Next"
 				{
 					_selectedPage = _activePage + 1;
 				}

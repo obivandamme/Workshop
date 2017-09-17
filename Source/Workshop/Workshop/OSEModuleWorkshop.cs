@@ -10,10 +10,13 @@
 	using UnityEngine;
 
 	using Recipes;
+    using System.Reflection;
 
-	public class OseModuleWorkshop : PartModule
+    public class OseModuleWorkshop : PartModule
 	{
-		private WorkshopItem[] _availableItems;
+        private static Version modVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+        private WorkshopItem[] _availableItems;
 		private FilterResult _filteredItems;
 
 		private Blueprint _processedBlueprint;
@@ -595,7 +598,7 @@
 			GUI.skin.label.alignment = TextAnchor.MiddleCenter;
 			GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ")");
+			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
 		}
 
 		private void DrawWindowContents(int windowId)

@@ -157,7 +157,7 @@
 
 		public KIS_Item AddItem(Part partPrefab)
 		{
-			var obj = kis_AddItem.Invoke(_obj, new object[] { partPrefab, 1f, -1 });
+			var obj = kis_AddItem.Invoke(_obj, new object[] { partPrefab, 1, -1 });
 			return new KIS_Item(obj);
 		}
 
@@ -169,7 +169,7 @@
 			kis_maxVolume = ModuleKISInventory_class.GetField("maxVolume");
 			kis_showGui = ModuleKISInventory_class.GetField("showGui");
 			kis_items = ModuleKISInventory_class.GetField("items");
-			kis_AddItem = ModuleKISInventory_class.GetMethod("AddItem", new[] { typeof(Part), typeof(float), typeof(int) });
+			kis_AddItem = ModuleKISInventory_class.GetMethod("AddItem", new[] { typeof(Part), typeof(int), typeof(int) });
 			kis_GetContentVolume = ModuleKISInventory_class.GetMethod("GetContentVolume");
 			kis_isFull = ModuleKISInventory_class.GetMethod("isFull");
 		}
@@ -275,9 +275,9 @@
 			}
 		}
 
-		public float quantity
+		public int quantity
 		{
-			get { return (float) kis_quantity.GetValue(_obj); }
+			get { return (int) kis_quantity.GetValue(_obj); }
 		}
 
 		public bool stackable
@@ -306,7 +306,7 @@
 			kis_DisableIcon.Invoke(_obj, null);
 		}
 
-		public void StackRemove(float quantity)
+		public void StackRemove(int quantity)
 		{
 			kis_StackRemove.Invoke(_obj, new object[] { quantity });
 		}

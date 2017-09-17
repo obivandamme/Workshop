@@ -1,6 +1,4 @@
-﻿using KSP.Localization;
-
-namespace Workshop
+﻿namespace Workshop
 {
     using System;
     using System.Linq;
@@ -60,12 +58,12 @@ namespace Workshop
         [KSPField()]
         public float SpecialistEfficiencyFactor = 0.02f;
 
-        [KSPField(guiName = "#LOC_Workshop_Recycler_PAW_StatusLabel", guiActive = true)] // Recycler Status
-        public string Status = Localizer.GetStringByTag("#LOC_Workshop_Recycler_Online"); // Online 
+        [KSPField(guiName = "Recycler Status", guiActive = true)]
+        public string Status = "Online";
 
         protected float adjustedProductivity = 1.0f;
 
-        [KSPEvent(guiActive = true, guiName = "#LOC_Workshop_Recycler_PAW_OpenCommand")] // Open Recycler
+        [KSPEvent(guiActive = true, guiName = "Open Recycler")]
         public void ContextMenuOnOpenRecycler()
         {
             if (_showGui)
@@ -189,7 +187,7 @@ namespace Workshop
         {
             if (recyclingPaused)
             {
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Paused"); // "Paused";
+                Status = "Paused";
             }
             else if (progress >= 100)
             {
@@ -241,15 +239,15 @@ namespace Workshop
 
             if (part.protoModuleCrew.Count < MinimumCrew)
             {
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_NotEnoughCrew"); // "Not enough Crew to operate"
+                Status = "Not enough Crew to operate";
             }
             else if (_broker.AmountAvailable(this.part, UpkeepResource, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL) < TimeWarp.deltaTime)
             {
-                Status = Localizer.Format("#LOC_Workshop_Status_NotEnoughResource", UpkeepResource); // "Not enough " + UpkeepResource;
+                Status = "Not enough " + UpkeepResource;
             }
             else
             {
-                Status = Localizer.Format("#LOC_Workshop_Status_RecyclingPart", _processedItem.Part.title); // "Recycling " + _processedItem.Part.title;
+                Status = "Recycling " + _processedItem.Part.title;
                 _broker.RequestResource(this.part, UpkeepResource, UpkeepAmount, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
                 _broker.StoreResource(this.part, resourceToProduce.Name, unitsToProduce, TimeWarp.deltaTime, ResourceFlowMode.ALL_VESSEL);
                 resourceToProduce.Processed += unitsToProduce;
@@ -259,13 +257,13 @@ namespace Workshop
 
         private void FinishManufacturing()
         {
-            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_Workshop_Message_RecyclingPartComplete", _processedItem.Part.title) , 5, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
             CleanupRecycler();
         }
 
         private void CancelManufacturing()
         {
-            ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_Workshop_Message_RecyclingPartCancelled", _processedItem.Part.title), 5, ScreenMessageStyle.UPPER_CENTER);
+            ScreenMessages.PostScreenMessage("Recycling of " + _processedItem.Part.title + " canceled.", 5, ScreenMessageStyle.UPPER_CENTER);
             CleanupRecycler();
             recyclingPaused = false;
         }
@@ -276,7 +274,7 @@ namespace Workshop
             _processedItem = null;
             _processedBlueprint = null;
             progress = 0;
-            Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Online"); // "Online";
+            Status = "Online";
         }
 
         public override void OnInactive()
@@ -312,7 +310,7 @@ namespace Workshop
             GUI.skin.label.alignment = TextAnchor.MiddleCenter;
             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, Localizer.GetStringByTag("#LOC_Workshop_Recycler_WindowTitle")); // "Recycler Menu"
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Recycler Menu");
         }
 
         private void DrawWindowContents(int windowId)
@@ -380,7 +378,7 @@ namespace Workshop
 
             if (_activePage > 0)
             {
-                if (GUI.Button(new Rect(15, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_PreviousButton"))) // Prev
+                if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
                 {
                     _selectedPage = _activePage - 1;
                 }
@@ -388,7 +386,7 @@ namespace Workshop
 
             if (_activePage < maxPage)
             {
-                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton"))) ; // Next
+                if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
                 {
                     _selectedPage = _activePage + 1;
                 }
@@ -397,7 +395,7 @@ namespace Workshop
             // Queued Items
             const int QueueRows = 4;
             const int QueueColumns = 7;
-            GUI.Box(new Rect(190, 345, 440, 270), Localizer.GetStringByTag("#LOC_Workshop_QueueTitle"), queueSkin); // "Queue"
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
             for (var y = 0; y < QueueRows; y++)
             {
                 for (var x = 0; x < QueueColumns; x++)

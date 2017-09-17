@@ -1,5 +1,4 @@
-﻿using KSP.Localization;
-using System.Linq;
+﻿using System.Linq;
 
 namespace Workshop
 {
@@ -8,18 +7,18 @@ namespace Workshop
         [KSPField(isPersistant = true)]
         public bool IsFavored = false;
 
-        [KSPEvent(guiActive = false, guiName = "#LOC_Workshop_InventoryModule_FavorInventory")] // Favor Inventory
+        [KSPEvent(guiActive = false, guiName = "Favor Inventory")]
         public void ContextMenuOnFavorInventory()
         {
             if (IsFavored)
             {
                 IsFavored = false;
-                Events["ContextMenuOnFavorInventory"].guiName = Localizer.GetStringByTag("LOC_Workshop_InventoryModule_FavorInventory"); //"Favor Inventory";
+                Events["ContextMenuOnFavorInventory"].guiName = "Favor Inventory";
             }
             else
             {
                 IsFavored = true;
-                Events["ContextMenuOnFavorInventory"].guiName = Localizer.GetStringByTag("LOC_Workshop_InventoryModule_UnfavorInventory");  //"Unfavor Inventory";
+                Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
             }
         }
 
@@ -32,7 +31,7 @@ namespace Workshop
             }
             if (IsFavored)
             {
-                Events["ContextMenuOnFavorInventory"].guiName = Localizer.GetStringByTag("LOC_Workshop_InventoryModule_UnfavorInventory"); //"Unfavor Inventory";
+                Events["ContextMenuOnFavorInventory"].guiName = "Unfavor Inventory";
             }
         }
 

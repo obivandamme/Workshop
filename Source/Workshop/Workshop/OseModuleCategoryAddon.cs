@@ -1,4 +1,6 @@
-﻿namespace Workshop
+﻿using System.Collections.Generic;
+
+namespace Workshop
 {
     public class OseModuleCategoryAddon : PartModule
     {

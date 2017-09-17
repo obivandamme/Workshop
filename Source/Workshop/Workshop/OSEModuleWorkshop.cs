@@ -10,9 +10,8 @@
 	using UnityEngine;
 
 	using Recipes;
-    using KSP.Localization;
 
-    public class OseModuleWorkshop : PartModule
+	public class OseModuleWorkshop : PartModule
 	{
 		private WorkshopItem[] _availableItems;
 		private FilterResult _filteredItems;
@@ -70,18 +69,17 @@
 		[KSPField]
 		public float SpecialistEfficiencyFactor = 0.02f;
 		
-		[KSPField(guiName = "#LOC_Workshop_PAW_StatusLabel", guiActive = true)] // Workshop Status
-		public string Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Online"); // Online
+		[KSPField(guiName = "Workshop Status", guiActive = true)]
+		public string Status = "Online";
 
-
-        protected float adjustedProductivity = 1.0f;
+		protected float adjustedProductivity = 1.0f;
 
 		private readonly Texture2D _pauseTexture;
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
 
-		[KSPEvent(guiName = "#LOC_Workshop_PAW_OpenCommand", guiActive = true)] // Open Workbench
-        public void ContextMenuOpenWorkbench()
+		[KSPEvent(guiName = "Open Workbench", guiActive = true)]
+		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
 			{
@@ -317,7 +315,7 @@
 		{
 			if (manufacturingPaused)
 			{
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Paused"); // "Paused";
+				Status = "Paused";
 				return;
 			}
 
@@ -428,26 +426,26 @@
 
 			if (part.protoModuleCrew.Count < MinimumCrew)
 			{
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_NotEnoughCrew"); // "Not enough Crew to operate";
+				Status = "Not enough Crew to operate";
 			}
 
 			else if (AmountAvailable(UpkeepResource) < TimeWarp.deltaTime)
 			{
-                Status = Localizer.Format("#LOC_Workshop_Status_NotEnoughResource", UpkeepResource); // "Not enough " + UpkeepResource;
+				Status = "Not enough " + UpkeepResource;
 			}
 
 			else if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && Funding.Instance.Funds < _processedBlueprint.Funds)
 			{
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_NotEnoughFunds"); // "Not enough funds to process";
+				Status = "Not enough funds to process";
 			}
 
 			else if (AmountAvailable(resourceToConsume.Name) < unitsToConsume)
 			{
-                Status = Localizer.Format("#LOC_Workshop_Status_NotEnoughResource", resourceToConsume.Name); // "Not enough " + resourceToConsume.Name;
+				Status = "Not enough " + resourceToConsume.Name;
 			}
 			else
 			{
-                Status = Localizer.Format("#LOC_Workshop_Status_PrintingPart", _processedItem.Part.title); // "Printing " + _processedItem.Part.title;
+				Status = "Printing " + _processedItem.Part.title;
 				if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER && _processedBlueprint.Funds > 0)
 				{
 					Funding.Instance.AddFunds(-_processedBlueprint.Funds, TransactionReasons.Vessels);
@@ -478,12 +476,12 @@
 			var destinationInventory = AddToContainer(_processedItem);
 			if (destinationInventory != null)
 			{
-				ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_WOrkshop_Message_PrintingPartComplete", _processedItem.Part.title), 5, ScreenMessageStyle.UPPER_CENTER); // "3D Printing of " + _processedItem.Part.title + " finished."
-                _processedItem.DisableIcon();
+				ScreenMessages.PostScreenMessage("3D Printing of " + _processedItem.Part.title + " finished.", 5, ScreenMessageStyle.UPPER_CENTER);
+				_processedItem.DisableIcon();
 				_processedItem = null;
 				_processedBlueprint = null;
 				progress = 0;
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Online"); // "Online";
+				Status = "Online";
 
 				if (Animate && _heatAnimation != null && _workAnimation != null)
 				{
@@ -492,7 +490,7 @@
 			}
 			else
 			{
-                Status = Localizer.GetStringByTag("#LOC_Workshop_Status_NotEnoughSpace"); // "Not enough free space";
+				Status = "Not enough free space";
 			}
 		}
 
@@ -597,7 +595,7 @@
 			GUI.skin.label.alignment = TextAnchor.MiddleCenter;
 			GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, Localizer.Format("#LOC_Workshop_WindowTitle", _maxVolume, _filters[_activeFilterId]) ); // "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ")");
+			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ")");
 		}
 
 		private void DrawWindowContents(int windowId)
@@ -653,7 +651,7 @@
 
 			if (_activePage > 0)
 			{
-                if (GUI.Button(new Rect(15, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_PreviousButton"))); // "Prev"
+				if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
 				{
 					_selectedPage = _activePage - 1;
 				}
@@ -661,7 +659,7 @@
 
 			if (_activePage < _filteredItems.MaxPages)
 			{
-                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton"))); // "Next"
+				if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
 				{
 					_selectedPage = _activePage + 1;
 				}
@@ -670,8 +668,8 @@
 			// Queued Items
 			const int queueRows = 4;
 			const int queueColumns = 7;
-			GUI.Box(new Rect(190, 345, 440, 270), Localizer.GetStringByTag("#LOC_Workshop_QueueTitle"), queueSkin); //  "Queue"
-            for (var y = 0; y < queueRows; y++)
+			GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
+			for (var y = 0; y < queueRows; y++)
 			{
 				for (var x = 0; x < queueColumns; x++)
 				{
@@ -752,7 +750,7 @@
 					_processedBlueprint = null;
 					progress = 0;
 					manufacturingPaused = false;
-                    Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Online"); // "Online"
+					Status = "Online";
 
 					if (Animate && _heatAnimation != null && _workAnimation != null)
 					{
@@ -764,8 +762,8 @@
 				else
 				{
 					_confirmDelete = true;
-					ScreenMessages.PostScreenMessage(Localizer.GetStringByTag("#LOC_Workshop_Message_ConfirmCancel"), 5.0f, ScreenMessageStyle.UPPER_CENTER); // Click the cancel button again to confirm cancelling current production
-                }
+					ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+				}
 			}
 
 			if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))

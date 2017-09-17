@@ -61,7 +61,7 @@ namespace Workshop
         public float SpecialistEfficiencyFactor = 0.02f;
 
         [KSPField(guiName = "#LOC_Workshop_Recycler_PAW_StatusLabel", guiActive = true)] // Recycler Status
-        public string Status = Localizer.GetStringByTag("#LOC_Workshop_Recycler_Online"); // Online 
+        public string Status = Localizer.GetStringByTag("#LOC_Workshop_Status_Online"); // Online 
 
         protected float adjustedProductivity = 1.0f;
 
@@ -388,7 +388,7 @@ namespace Workshop
 
             if (_activePage < maxPage)
             {
-                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton"))) ; // Next
+                if (GUI.Button(new Rect(100, 645, 75, 25), Localizer.GetStringByTag("#LOC_Workshop_NextButton")))  // Next
                 {
                     _selectedPage = _activePage + 1;
                 }

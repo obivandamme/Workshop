@@ -47,12 +47,9 @@
 			}
 		}
 
-		public ModuleKISItem(object obj)
-		{
-			_obj = obj;
-		}
+        public ModuleKISItem(object obj) => _obj = obj;
 
-		internal static void Initialize(Assembly kisAssembly)
+        internal static void Initialize(Assembly kisAssembly)
 		{
 			ModuleKISItem_class = kisAssembly.GetTypes().First(t => t.Name.Equals("ModuleKISItem"));
 			if (ModuleKISItem_class != null)
@@ -84,52 +81,19 @@
 
 		private readonly object _obj;
 
-		public ModuleKISInventory(object obj)
-		{
-			_obj = obj;
-		}
+        public ModuleKISInventory(object obj) => _obj = obj;
 
-		public InventoryType invType
-		{
-			get
-			{
-				return (InventoryType)Enum.Parse(typeof(InventoryType), kis_invType.GetValue(_obj).ToString());
-			}
-		}
+        public InventoryType invType => (InventoryType)Enum.Parse(typeof(InventoryType), kis_invType.GetValue(_obj).ToString());
 
-		public int podSeat
-		{
-			get
-			{
-				return (int)kis_podSeat.GetValue(_obj);
-			}
-		}
+        public int podSeat => (int)kis_podSeat.GetValue(_obj);
 
-		public float maxVolume
-		{
-			get
-			{
-				return (float)kis_maxVolume.GetValue(_obj);
-			}
-		}
+        public float maxVolume => (float)kis_maxVolume.GetValue(_obj);
 
-		public bool showGui
-		{
-			get
-			{
-				return (bool)kis_showGui.GetValue(_obj);
-			}
-		}
+        public bool showGui => (bool)kis_showGui.GetValue(_obj);
 
-		public Part part
-		{
-			get
-			{
-				return ((PartModule)_obj).part;
-			}
-		}
+        public Part part => ((PartModule)_obj).part;
 
-		public Dictionary<int, KIS_Item> items
+        public Dictionary<int, KIS_Item> items
 		{
 			get
 			{
@@ -145,19 +109,13 @@
 			}
 		}
 
-		public float GetContentVolume()
-		{
-			return (float)kis_GetContentVolume.Invoke(_obj, null);
-		}
+        public float GetContentVolume() => (float)kis_GetContentVolume.Invoke(_obj, null);
 
-		public bool isFull()
-		{
-			return (bool)kis_isFull.Invoke(_obj, null);
-		}
+        public bool isFull() => (bool)kis_isFull.Invoke(_obj, null);
 
-		public KIS_Item AddItem(Part partPrefab)
+        public KIS_Item AddItem(Part partPrefab)
 		{
-			var obj = kis_AddItem.Invoke(_obj, new object[] { partPrefab, 1f, -1 });
+			var obj = kis_AddItem.Invoke(_obj, new object[] { partPrefab, 1, -1 });
 			return new KIS_Item(obj);
 		}
 
@@ -249,12 +207,9 @@
 
 		private readonly object _obj;
 
-		public KIS_Item(object obj)
-		{
-			_obj = obj;
-		}
+        public KIS_Item(object obj) => _obj = obj;
 
-		public KIS_IconViewer Icon
+        public KIS_IconViewer Icon
 		{
 			get
 			{
@@ -267,51 +222,27 @@
 			}
 		}
 
-		public AvailablePart availablePart
-		{
-			get
-			{
-				return (AvailablePart)kis_availablePart.GetValue(_obj);
-			}
-		}
+        public AvailablePart availablePart => (AvailablePart)kis_availablePart.GetValue(_obj);
 
-		public float quantity
-		{
-			get { return (float) kis_quantity.GetValue(_obj); }
-		}
+        public float quantity => (float)kis_quantity.GetValue(_obj);
 
-		public bool stackable
-		{
-			get { return (bool) kis_stackable.GetValue(_obj); }
-		}
+        public bool stackable => (bool)kis_stackable.GetValue(_obj);
 
-		public List<ResourceInfo> GetResources()
+        public List<ResourceInfo> GetResources()
 		{
 			var list = (IList)kis_GetResources.Invoke(_obj, null);
 			return list.Cast<object>().Select(o => new ResourceInfo(o)).ToList();
 		}
 
-		public void SetResource(string name, int amount)
-		{
-			kis_SetResource.Invoke(_obj, new object[] { name, amount });
-		}
+        public void SetResource(string name, int amount) => kis_SetResource.Invoke(_obj, new object[] { name, amount });
 
-		public void EnableIcon(int resolution)
-		{
-			kis_EnableIcon.Invoke(_obj, new object[] { resolution });
-		}
+        public void EnableIcon(int resolution) => kis_EnableIcon.Invoke(_obj, new object[] { resolution });
 
-		public void DisableIcon()
-		{
-			kis_DisableIcon.Invoke(_obj, null);
-		}
+        public void DisableIcon() => kis_DisableIcon.Invoke(_obj, null);
 
-		public void StackRemove(float quantity)
-		{
-			kis_StackRemove.Invoke(_obj, new object[] { quantity });
-		}
+        public void StackRemove(float quantity) => kis_StackRemove.Invoke(_obj, new object[] { quantity });
 
-		internal static void Initialize(Assembly kisAssembly)
+        internal static void Initialize(Assembly kisAssembly)
 		{
 			KIS_Item_class = kisAssembly.GetTypes().First(t => t.Name.Equals("KIS_Item"));
 			kis_icon = KIS_Item_class.GetField("icon");
@@ -336,25 +267,13 @@
 
 		private readonly object _obj;
 
-		public Texture texture
-		{
-			get
-			{
-				return (Texture)kis_texture.GetValue(_obj);
-			}
-		}
+        public Texture texture => (Texture)kis_texture.GetValue(_obj);
 
-		public void Dispose()
-		{
-			kis_dispose.Invoke(_obj, null);
-		}
+        public void Dispose() => kis_dispose.Invoke(_obj, null);
 
-		public KIS_IconViewer(object obj)
-		{
-			_obj = obj;
-		}
+        public KIS_IconViewer(object obj) => _obj = obj;
 
-		public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewer_class, new object [] { p, resolution }))
+        public KIS_IconViewer(Part p, int resolution) : this(Activator.CreateInstance(KIS_IconViewer_class, new object [] { p, resolution }))
 		{
 		}
 

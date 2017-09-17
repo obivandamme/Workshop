@@ -20,6 +20,11 @@ namespace Workshop.Factory
             {
                 base.OnUpdate();
             }
+            var part = new Part();
+            if (part.FindModuleImplementing<KerbalSeat>())
+            {
+
+            }
         }
 
         private bool HasGeeForce()

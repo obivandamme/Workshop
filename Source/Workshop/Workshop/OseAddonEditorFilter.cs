@@ -23,7 +23,10 @@ namespace Workshop
                                      "OSE.Workshop",
                                      "OSE.Converter",
                                      "ose3000",
-                                     "ose6000"
+                                     "ose6000",
+                                     "OSE.Workshop2",
+                                     "OSE.WorkshopAiCore",
+                                     "OSE.WorkshopChemical"
                                  });
         }
 
@@ -33,8 +36,7 @@ namespace Workshop
             var filter = PartCategorizer.Instance.filters.Find(f => f.button.categorydisplayName == CategoryButtonLocalizationId);
             if (filter == null)
             {
-                Debug.LogErrorFormat(
-                    "Cannot find 'Filter by function' button for category: {0}", SubCategoryTitle);
+                WorkshopUtils.LogError($"Cannot find 'Filter by function' button for category: {SubCategoryTitle}");
                 return;
             }
             PartCategorizer.AddCustomSubcategoryFilter(filter, SubCategoryTitle, SubCategoryTitle, icon, p => AvPartItems.Contains(p.name));

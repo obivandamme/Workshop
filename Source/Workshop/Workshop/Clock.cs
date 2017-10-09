@@ -30,7 +30,7 @@ namespace Workshop
             }
             catch (Exception e)
             {
-                Debug.LogError("[OSE] - OseClock_GetDeltaTime - " + e.Message);
+                WorkshopUtils.LogError("OseClock_GetDeltaTime - ", e);
                 return 0;
             }
         }

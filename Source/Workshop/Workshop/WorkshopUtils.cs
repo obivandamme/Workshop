@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
-using KSPAchievements;
 using Workshop.Recipes;
 
 namespace Workshop
@@ -54,7 +52,7 @@ namespace Workshop
             }
             catch (Exception ex)
             {
-                Debug.Log("[Workshop] Error encountered while trying to calculate productivity bonus: " + ex);
+                LogError("Error encountered while trying to calculate productivity bonus", ex);
             }
 
             return adjustedProductivity;
@@ -93,7 +91,7 @@ namespace Workshop
             var texture = GameDatabase.Instance.GetTexture(path, false);
             if (texture == null)
             {
-                Debug.LogError("[OSE] - Filter - Unable to load texture file " + path);
+                LogError($"Filter - Unable to load texture file {path}");
                 return new Texture2D(25, 25);
             }
             return texture;
@@ -120,12 +118,25 @@ namespace Workshop
             return sb.ToString();
         }
 
-        public static string GetDescription(AvailablePart part)
+        public static void Log(string message)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine(part.title);
-            sb.AppendLine(part.description);
-            return sb.ToString();
+            Debug.Log($"[OSE] - {message}");
+        }
+
+        public static void LogError(string message)
+        {
+            Debug.LogError($"[OSE] - {message}");
+        }
+        public static void LogError(string message, Exception ex)
+        {
+            Debug.LogError($"[OSE] - {message}");
+            Debug.LogException(ex);
+        }
+
+        public static void LogVerbose(string message)
+        {
+            if (GameSettings.VERBOSE_DEBUG_LOG)
+                Log(message);
         }
     }
 }

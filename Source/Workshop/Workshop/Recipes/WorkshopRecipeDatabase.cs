@@ -101,7 +101,7 @@ namespace Workshop.Recipes
             }
             else
             {
-                Debug.LogWarning("[OSE] - No FactoryRecipeFound for " + part.title);
+                WorkshopUtils.LogError($"No FactoryRecipeFound for {part.title}");
                 return null;
             }
             var blueprint = new Blueprint();

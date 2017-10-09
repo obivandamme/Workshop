@@ -29,8 +29,7 @@
             catch (Exception ex)
             {
                 IsKISAvailable = false;
-                Debug.LogError("[OSE] - Error while checking for KIS. Workshop will be disabled");
-                Debug.LogException(ex);
+                WorkshopUtils.LogError("Error while checking for KIS. Workshop will be disabled", ex);
             }
         }
     }

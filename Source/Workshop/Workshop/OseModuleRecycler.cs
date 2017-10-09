@@ -95,9 +95,9 @@
         {
             _queue = new WorkshopQueue();
             _broker = new ResourceBroker();
-            _pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_pause");
-            _playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_play");
-            _binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_bin");
+            _pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_pause");
+            _playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_play");
+            _binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
         }
 
         public override void OnStart(StartState state)
@@ -177,8 +177,7 @@
             }
             catch (Exception ex)
             {
-                Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate");
-                Debug.LogException(ex);
+                WorkshopUtils.LogError("OseModuleWorkshop_OnUpdate", ex);
             }
             base.OnUpdate();
         }
@@ -326,7 +325,12 @@
 
             var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
             tooltipDescriptionStyle.fontSize = 11;
-            tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
+            tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
+            tooltipDescriptionStyle.padding.top = 5;
+
+            var titleDescriptionStyle = new GUIStyle(GUI.skin.box);
+            tooltipDescriptionStyle.fontSize = 13;
+            tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
             tooltipDescriptionStyle.padding.top = 5;
 
             var queueSkin = new GUIStyle(GUI.skin.box);
@@ -434,7 +438,8 @@
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
                 GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
-                GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
+                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, titleDescriptionStyle);
+                GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, tooltipDescriptionStyle);
             }
             else if (mouseOverItemKIS != null)
             {
@@ -446,7 +451,8 @@
                 GUI.Box(new Rect(200, 80, 100, 100), mouseOverItemKIS.Icon.texture);
                 GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItemKIS.availablePart), statsStyle);
                 GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
-                GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItemKIS.availablePart), tooltipDescriptionStyle);
+                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, titleDescriptionStyle);
+                GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, tooltipDescriptionStyle);
             }
 
             // Currently build item

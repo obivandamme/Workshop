@@ -22,14 +22,14 @@
 
 		public void EnableIcon(int resultion)
 		{
-			Debug.Log("[OSE] - EnableIcon for " + Part.name);
+            WorkshopUtils.LogVerbose("EnableIcon for " + Part.name);
 			DisableIcon();
 			Icon = new KIS_IconViewer(Part.partPrefab, resultion);
 		}
 
 		public void DisableIcon()
 		{
-			Debug.Log("[OSE] - DisableIcon for " + Part.name);
+            WorkshopUtils.LogVerbose("DisableIcon for " + Part.name);
 			if (Icon != null)
 			{
 				Icon.Dispose();

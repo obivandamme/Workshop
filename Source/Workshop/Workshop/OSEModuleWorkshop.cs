@@ -86,7 +86,6 @@
 		private readonly Texture2D _pauseTexture;
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
-        private readonly Texture2D _searchTexture;
 
         [KSPEvent(guiName = "Open Workbench", guiActive = true)]
 		public void ContextMenuOpenWorkbench()
@@ -120,7 +119,6 @@
 			_pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_pause");
 			_playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_play");
 			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
-            _searchTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_search");
 		}
 
 		public override void OnStart(StartState state)
@@ -680,7 +678,7 @@
 
             // search box
             _oldSsearchText = _searchFilter.FilterText;
-            GUI.Label(new Rect(15, 645, 70, 25), "Find: ", statsStyle);
+            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", statsStyle);
             _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
 
             // Queued Items

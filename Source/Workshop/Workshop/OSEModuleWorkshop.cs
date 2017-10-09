@@ -32,6 +32,7 @@
 
 		// GUI Properties
 		private FilterBase[] _filters;
+        private FilterSearch _searchFilter  = new FilterSearch();
 		private Texture[] _filterTextures;
 
 		private int _activeFilterId;
@@ -39,6 +40,8 @@
 
 		private int _activePage;
 		private int _selectedPage;
+
+        private string _oldSsearchText = "";
 
 		private Rect _windowPos = new Rect(50, 50, 640, 680);
 		private bool _showGui;
@@ -75,13 +78,17 @@
 		[KSPField(guiName = "Workshop Status", guiActive = true)]
 		public string Status = "Online";
 
+        [KSPField]
+        public string WorkAnimationName = "work";
+
 		protected float adjustedProductivity = 1.0f;
 
 		private readonly Texture2D _pauseTexture;
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
+        private readonly Texture2D _searchTexture;
 
-		[KSPEvent(guiName = "Open Workbench", guiActive = true)]
+        [KSPEvent(guiName = "Open Workbench", guiActive = true)]
 		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
@@ -110,16 +117,17 @@
 		public OseModuleWorkshop()
 		{
 			_queue = new WorkshopQueue();
-			_pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_pause");
-			_playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_play");
-			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_bin");
+			_pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_pause");
+			_playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_play");
+			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
+            _searchTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_search");
 		}
 
 		public override void OnStart(StartState state)
 		{
 			if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
 			{
-				Debug.Log("[OSE] - KIS is available - Initialize Workshop");
+                WorkshopUtils.Log("KIS is available - Initialize Workshop");
 				SetupAnimations();
 				LoadMaxVolume();
 				LoadFilters();
@@ -157,20 +165,20 @@
 						animator.Blend("workshop_emissive");
 						break;
 					}
-					Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
+                    WorkshopUtils.LogError("Unable to load workshop_emissive animation");
 				}
-				foreach (var animator in part.FindModelAnimators("work"))
+				foreach (var animator in part.FindModelAnimators(WorkAnimationName))
 				{
-					_workAnimation = animator["work"];
+					_workAnimation = animator[WorkAnimationName];
 					if (_workAnimation != null)
 					{
 						_workAnimation.speed = 0;
 						_workAnimation.enabled = true;
 						_workAnimation.wrapMode = WrapMode.ClampForever;
-						animator.Blend("work");
+						animator.Blend(WorkAnimationName);
 						break;
 					}
-					Debug.LogError("[OSE] - Unable to load work animation");
+                    WorkshopUtils.LogError("Unable to load work animation");
 				}
 			}
 		}
@@ -185,7 +193,7 @@
 			{
 				foreach (var addon in categoryFilterAddOns.Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray())
 				{
-					Debug.Log("[OSE] - Found addon for category: " + addon.Category);
+                    WorkshopUtils.LogVerbose($"Found addon for category: {addon.Category}");
 					filters.Add(new FilterCategory(addon.Category));
 					filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
 				}
@@ -194,6 +202,7 @@
 
 			_filters = filters.ToArray();
 			_filterTextures = filterTextures.ToArray();
+            _searchFilter = new FilterSearch();
 		}
 
 		private void LoadModuleState(ConfigNode node)
@@ -219,8 +228,8 @@
 
 		private void LoadAvailableParts()
 		{
-			Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count + " loaded parts");
-			Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
+            WorkshopUtils.LogVerbose(PartLoader.LoadedPartsList.Count + " loaded parts");
+            WorkshopUtils.LogVerbose(PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
 
 			var items = new List<WorkshopItem>();
 			foreach (var loadedPart in PartLoader.LoadedPartsList.Where(p => p.name != "flag" && p.name != "kerbalEVA" && p.name != "kerbalEVAfemale"))
@@ -232,18 +241,21 @@
 						items.Add(new WorkshopItem(loadedPart));
 					}
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
+                    WorkshopUtils.LogError("Part " + loadedPart.name + " could not be added to available parts list", ex);
 				}
 			}
 			_availableItems = items.OrderBy(i => i.Part.title).ToArray();
-			_filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
+            if (string.IsNullOrEmpty(_searchFilter.FilterText))
+                _filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
+            else
+                _filteredItems = _searchFilter.Filter(_availableItems, 0);
 		}
 
 		private bool IsValid(AvailablePart loadedPart)
 		{
-			return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name) == false;
+			return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && !WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name);
 		}
 
 		private void LoadMaxVolume()
@@ -253,23 +265,21 @@
 				var inventories = KISWrapper.GetInventories(vessel);
 				if (inventories.Count == 0)
 				{
-					Debug.Log("[OSE] - No Inventories found on this vessel!");
+                    WorkshopUtils.LogError("No Inventories found on this vessel!");
 
 				}
 				else
 				{
 
-					Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
+                    WorkshopUtils.Log(inventories.Count + " inventories found on this vessel!");
 					_maxVolume = inventories.Max(i => i.maxVolume);
 				}
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("[OSE] - Error while determing maximum volume of available inventories!");
-				Debug.LogError("[OSE] - " + ex.Message);
-				Debug.LogError("[OSE] - " + ex.StackTrace);
+                WorkshopUtils.LogError("Error while determing maximum volume of available inventories!", ex);
 			}
-			Debug.Log("[OSE] - Max volume is: " + _maxVolume + " liters");
+            WorkshopUtils.Log($"Max volume is: {_maxVolume} liters");
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -295,13 +305,11 @@
 			{
 				UpdateProductivity();
 				ApplyFilter();
-				ApplyPaging();
 				ProcessItem();
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate");
-				Debug.LogException(ex);
+                WorkshopUtils.LogError("OseModuleWorkshop_OnUpdate", ex);
 			}
 			base.OnUpdate();
 		}
@@ -338,34 +346,27 @@
 
 		private void ApplyFilter()
 		{
-			if (_activeFilterId != _selectedFilterId)
+			if (_activeFilterId != _selectedFilterId || _activePage != _selectedPage || _oldSsearchText != _searchFilter.FilterText)
 			{
 				foreach (var item in _filteredItems.Items)
 				{
 					item.DisableIcon();
 				}
+
+                if (_activeFilterId != _selectedFilterId)
+                {
+                    _activePage = 0;
+                    _selectedPage = 0;
+                }
 
 				var selectedFilter = _filters[_selectedFilterId];
-				_activePage = 0;
-				_selectedPage = 0;
-				_filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
-				_activeFilterId = _selectedFilterId;
-			}
-		}
-
-		private void ApplyPaging()
-		{
-			if (_activePage != _selectedPage)
-			{
-				foreach (var item in _filteredItems.Items)
-				{
-					item.DisableIcon();
-				}
-
-				var selectedFilter = _filters[_activeFilterId];
-				_filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
-				_activePage = _selectedPage;
-			}
+                if (string.IsNullOrEmpty(_searchFilter.FilterText))
+                    _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
+                else
+                    _filteredItems = _searchFilter.Filter(_availableItems, _selectedPage * 30);
+                _activeFilterId = _selectedFilterId;
+                _activePage = _selectedPage;
+            }
 		}
 
 		private void StartManufacturing()
@@ -512,7 +513,8 @@
 			{
 				ContextMenuOpenWorkbench();
 			}
-		}
+            LoadMaxVolume();
+        }
 
 		private ModuleKISInventory AddToContainer(WorkshopItem item)
 		{
@@ -613,10 +615,16 @@
 
 			var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
 			tooltipDescriptionStyle.fontSize = 11;
-			tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
+			tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
 			tooltipDescriptionStyle.padding.top = 5;
 
-			var queueSkin = new GUIStyle(GUI.skin.box);
+            var titleDescriptionStyle = new GUIStyle(GUI.skin.box);
+            tooltipDescriptionStyle.fontSize = 13;
+            tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
+            tooltipDescriptionStyle.padding.top = 5;
+
+
+            var queueSkin = new GUIStyle(GUI.skin.box);
 			queueSkin.alignment = TextAnchor.UpperCenter;
 			queueSkin.padding.top = 5;
 
@@ -654,22 +662,29 @@
 
 			if (_activePage > 0)
 			{
-				if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
+				if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
 				{
 					_selectedPage = _activePage - 1;
 				}
 			}
 
+            // GUI.Label(new Rect(90, 615, 10, 25), _selectedPage.ToString());
+
 			if (_activePage < _filteredItems.MaxPages)
 			{
-				if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
+				if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
 				{
 					_selectedPage = _activePage + 1;
 				}
 			}
 
-			// Queued Items
-			const int queueRows = 4;
+            // search box
+            _oldSsearchText = _searchFilter.FilterText;
+            GUI.Label(new Rect(15, 645, 70, 25), "Find: ", statsStyle);
+            _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
+
+            // Queued Items
+            const int queueRows = 4;
 			const int queueColumns = 7;
 			GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
 			for (var y = 0; y < queueRows; y++)
@@ -706,7 +721,8 @@
 				GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
 				GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
 				GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
-				GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
+                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, titleDescriptionStyle);
+				GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, tooltipDescriptionStyle);
 			}
 
 			// Currently build item

@@ -1,12 +1,9 @@
 PART
 {
-	name = OSE_Workshop2
+	name = OSE_Workshop
 	module = Part
 	author = Enceos
-	MODEL
-	{
-		model = Workshop/Assets/Workshop
-	}
+	mesh = workshop.mu
 	rescaleFactor = 1
 	node_stack_top = 0.0, 1.102, 0.0, 0.0, 1.0, 0.0, 2
 	node_stack_bottom = 0.0, -1.102, 0.0, 0.0, -1.0, 0.0, 2
@@ -16,7 +13,7 @@ PART
 	cost = 75000
 	category = none
 	subcategory = 0
-	title = 3D Printing Lab v2
+	title = 3D Printing Lab
 	manufacturer = ObiVanDamme Space Engineering
 	description = No longer are you limited to construction facilities only on Kerbin! With the OSE 3D Printing Lab, you can construct a limited number of parts during your mission using the new MaterialKits resource. Be sure you provide RareMetals and ExoticMinerals to be able to construct more complex parts like engines, command modules or science experiments.
 	attachRules = 1,0,1,1,0
@@ -47,7 +44,6 @@ PART
 		UseSpecializationBonus = true
 		ExperienceEffect = RepairSkill
 		SpecialistEfficiencyFactor = 0.02
-		WorkAnimationName = workshop_emissive
 	}
 
 	MODULE
@@ -62,102 +58,102 @@ PART
 		SpecialistEfficiencyFactor = 0.02
 	}
   
-  MODULE
+  	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Aero
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_advaerodynamics
+		IconPath = Workshop/Assets/Icons/Aero
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Communication
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_advunmanned
+		IconPath = Workshop/Assets/Icons/Communication
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Control
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_largecontrol
+		IconPath = Workshop/Assets/Icons/Control
 	}
 	
 	MODULE
-  {
-    name = OseModuleCategoryAddon
-    Category = Coupling
-    IconPath = Squad/PartList/SimpleIcons/cs_size3
-  }
+	{
+		name = OseModuleCategoryAddon
+		Category = Coupling
+		IconPath = Workshop/Assets/Icons/Coupling
+	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Electrical
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_electrics
+		IconPath = Workshop/Assets/Icons/Electrical
 	}
 
-  MODULE
+	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Engine
-		IconPath = Squad/PartList/SimpleIcons/RDicon_propulsionSystems
+		IconPath = Workshop/Assets/Icons/Engine
 	}
 
-  MODULE
+	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = FuelTank
-		IconPath = Squad/PartList/SimpleIcons/RDicon_fuelSystems-advanced
+		IconPath = Workshop/Assets/Icons/FuelTank
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Ground
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_advancedmotors
+		IconPath = Workshop/Assets/Icons/Ground
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Payload
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_composites
+		IconPath = Workshop/Assets/Icons/Payload
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Pods
-		IconPath = Squad/PartList/SimpleIcons/RDicon_commandmodules
+		IconPath = Workshop/Assets/Icons/Pods
 	}
 	
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Science
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_advsciencetech
+		IconPath = Workshop/Assets/Icons/Science
 	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Structural
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_generalconstruction
+		IconPath = Workshop/Assets/Icons/Structural
 	}
 
-  MODULE
-  {
-    name = OseModuleCategoryAddon
-    Category = Thermal
-    IconPath = Squad/PartList/SimpleIcons/fuels_monopropellant
-  }
+	MODULE
+	{
+		name = OseModuleCategoryAddon
+		Category = Thermal
+		IconPath = Workshop/Assets/Icons/Thermal
+	}
 
 	MODULE
 	{
 		name = OseModuleCategoryAddon
 		Category = Utility
-		IconPath = Squad/PartList/SimpleIcons/R&D_node_icon_generic
+		IconPath = Workshop/Assets/Icons/Utility
 	}
 	
 	MODULE
@@ -184,7 +180,7 @@ PART
 	MODULE
 	{
 		name = ModuleAnimateGeneric
-		animationName = WorkshopLights
+		animationName = workshop_lights
 		actionGUIName = Toggle Lights
 		defaultActionGroup = Light
 		startEventGUIName = Lights On

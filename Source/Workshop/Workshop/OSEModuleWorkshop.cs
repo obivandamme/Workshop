@@ -88,7 +88,7 @@
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
 
-        [KSPEvent(guiName = "Open Workbench", guiActive = true, guiActiveEditor = false)]
+        [KSPEvent(guiName = "Open OSE Workbench", guiActive = true, guiActiveEditor = false)]
 		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
@@ -607,77 +607,34 @@
 
 		private void DrawWindow()
 		{
-			GUI.skin = HighLogic.Skin;
-			GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-			GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+			//GUI.skin = HighLogic.Skin;
+			//GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+			//GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
 			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
 		}
 
 		private void DrawWindowContents(int windowId)
         {
-            WorkshopItem mouseOverItem = null;
-
-            // Filters
             _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
-            // Available Items
-            const int itemRows = 10;
-            const int itemColumns = 3;
-            for (var y = 0; y < itemRows; y++)
+            WorkshopItem mouseOverItem = null;
+
+            mouseOverItem = DrawAvailableItems(mouseOverItem);
+            mouseOverItem = DrawQueue(mouseOverItem);
+            DrawMouseOverItem(mouseOverItem);
+
+            DrawPrintProgress();
+
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
             {
-                for (var x = 0; x < itemColumns; x++)
-                {
-                    var left = 15 + x * 55;
-                    var top = 70 + y * 55;
-                    var itemIndex = y * itemColumns + x;
-                    if (_filteredItems.Items.Length > itemIndex)
-                    {
-                        var item = _filteredItems.Items[itemIndex];
-                        if (item.Icon == null)
-                        {
-                            item.EnableIcon(64);
-                        }
-                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
-                        {
-                            _queue.Add(new WorkshopItem(item.Part));
-                        }
-                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
-                        {
-                            mouseOverItem = item;
-                        }
-                    }
-                }
+                ContextMenuOpenWorkbench();
             }
+            GUI.DragWindow();
+        }
 
-            if (_activePage > 0)
-            {
-                if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
-                {
-                    _selectedPage = _activePage - 1;
-                }
-            }
-
-            // GUI.Label(new Rect(90, 615, 10, 25), _selectedPage.ToString());
-
-            if (_activePage < _filteredItems.MaxPages)
-            {
-                if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
-                {
-                    _selectedPage = _activePage + 1;
-                }
-            }
-
-            // search box
-            _oldSsearchText = _searchFilter.FilterText;
-            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", UI.UIStyles.StatsStyle);
-            _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
-
-            // Queued Items
-            const int queueRows = 4;
-            const int queueColumns = 7;
-            DrawQueue(queueRows, queueColumns);
-
+        private void DrawPrintProgress()
+        {
             // Currently build item
             if (_processedItem != null)
             {
@@ -737,18 +694,69 @@
                     ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 }
             }
-
-            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
-            {
-                ContextMenuOpenWorkbench();
-            }
-
-            GUI.DragWindow();
         }
 
-        private void DrawQueue(int queueRows, int queueColumns)
+        private WorkshopItem DrawAvailableItems(WorkshopItem mouseOverItem)
         {
-            WorkshopItem mouseOverItem = null;
+             
+
+            // Available Items
+            const int itemRows = 10;
+            const int itemColumns = 3;
+            for (var y = 0; y < itemRows; y++)
+            {
+                for (var x = 0; x < itemColumns; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    var itemIndex = y * itemColumns + x;
+                    if (_filteredItems.Items.Length > itemIndex)
+                    {
+                        var item = _filteredItems.Items[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _queue.Add(new WorkshopItem(item.Part));
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+
+            if (_activePage > 0)
+            {
+                if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
+                {
+                    _selectedPage = _activePage - 1;
+                }
+            }
+
+            if (_activePage < _filteredItems.MaxPages)
+            {
+                if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
+                {
+                    _selectedPage = _activePage + 1;
+                }
+            }
+
+            // search box
+            _oldSsearchText = _searchFilter.FilterText;
+            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", UI.UIStyles.StatsStyle);
+            _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
+
+            return mouseOverItem;
+        }
+
+        private WorkshopItem DrawQueue(WorkshopItem mouseOverItem)
+        {
+            const int queueRows = 4;
+            const int queueColumns = 7;
 
             GUI.Box(new Rect(190, 345, 440, 270), "Queue", UI.UIStyles.QueueSkin);
             for (var y = 0; y < queueRows; y++)
@@ -777,7 +785,12 @@
                 }
             }
 
+            return mouseOverItem;
             // Tooltip
+        }
+
+        private void DrawMouseOverItem(WorkshopItem mouseOverItem)
+        {
             GUI.Box(new Rect(190, 70, 440, 270), "");
             if (mouseOverItem != null)
             {

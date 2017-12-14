@@ -14,7 +14,14 @@ Current Features
     Processing of Ore into MaterialParts
     Pause and cancel current production
 
+Installation
 
+	Download and install the pre-requisites: Module Manager, Kerbal Inventory System (KIS), Community Resource Pack and FirespitterCore
+	Merge the GameData folder from the OSE Workshop download with your KSP GameData folder.
+	
+Upgrades
+	When upgrading from a previous version of OSE Workshop it is recommended that you delete the old GameData/Workshop folder before installing the new version.
+	Also make sure to check that the pre-requisites are up to date.
 
 License
 
@@ -28,12 +35,6 @@ OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-Shar
 
 Credits and Thanks
 
-The included plugin Community Resource Pack (by RoverDude) is distributed under it's own license.
-
-The included plugin ModuleManager (by ialdabaoth & sarbian) is distributed under it's own license.
-
-The included plugin FirespitterCore (by snjo) is distributed under it's own license.
-
 Portions of this codebase include source by taniwha, used under GNU general public license.
 
 KIS is the original Work of KospY and Winn75 - Thank you for creating this awesome mod.
@@ -45,3 +46,5 @@ ObiVanDamme: mod idea and C# programming
 Enceos: 3D models and textures 
 
 Angel-125: KSP 1.2 update, pause and cancel functionality
+
+Aelfhe1m: maintenance, feature development and additional C# programming from Workshop version 1.2.0

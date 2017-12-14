@@ -7,6 +7,7 @@
 
     using KIS;
     using Recipes;
+    using System.Text;
 
     public class OseModuleRecycler : PartModule
     {
@@ -100,9 +101,27 @@
             _binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
         }
 
+        public override string GetInfo()
+        {
+            StringBuilder sb = new StringBuilder("<color=#8dffec>KIS Part Recycker</color>");
+
+            sb.Append($"\nMinimum Crew: {MinimumCrew}");
+            sb.Append($"\nBase productivity factor: {ProductivityFactor:P0}");
+            sb.Append($"\nUse specialist bonus: ");
+            sb.Append(RUIutils.GetYesNoUIString(UseSpecializationBonus));
+            if (UseSpecializationBonus)
+            {
+                sb.Append($"\nSpecialist skill: {ExperienceEffect}");
+                sb.Append($"\nSpecialist bonus: {SpecialistEfficiencyFactor:P0} per level");
+
+            }
+
+            return sb.ToString();
+        }
+
         public override void OnStart(StartState state)
         {
-            if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
+            if (HighLogic.LoadedSceneIsFlight && WorkshopSettings.IsKISAvailable)
             {
                 GameEvents.onVesselChange.Add(OnVesselChange);
             }
@@ -493,7 +512,7 @@
                 if (GUI.Button(new Rect(520, 620, 50, 50), _pauseTexture))
                 {
                     recyclingPaused = true;
-                }   
+                }
             }
 
             if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))

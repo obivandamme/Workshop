@@ -11,6 +11,7 @@
 
 	using Recipes;
     using System.Reflection;
+    using System.Text;
 
     public class OseModuleWorkshop : PartModule
 	{
@@ -75,7 +76,7 @@
 		[KSPField]
 		public float SpecialistEfficiencyFactor = 0.02f;
 		
-		[KSPField(guiName = "Workshop Status", guiActive = true)]
+		[KSPField(guiName = "Workshop Status", guiActive = true, guiActiveEditor = false)]
 		public string Status = "Online";
 
         [KSPField]
@@ -87,7 +88,7 @@
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
 
-        [KSPEvent(guiName = "Open Workbench", guiActive = true)]
+        [KSPEvent(guiName = "Open Workbench", guiActive = true, guiActiveEditor = false)]
 		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
@@ -121,9 +122,25 @@
 			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
 		}
 
-		public override void OnStart(StartState state)
+        public override string GetInfo()
+        {
+            var sb = new StringBuilder("<color=#8dffec>KIS Part Printing Workshop</color>");
+
+            sb.Append($"\nMinimum Crew: {MinimumCrew}");
+            sb.Append($"\nBase productivity factor: {ProductivityFactor:P0}");
+            sb.Append($"\nUse specialist bonus: ");
+            sb.Append(RUIutils.GetYesNoUIString(UseSpecializationBonus));
+            if (UseSpecializationBonus)
+            {
+                sb.Append($"\nSpecialist skill: {ExperienceEffect}");
+                sb.Append($"\nSpecialist bonus: {SpecialistEfficiencyFactor:P0} per level");
+            }
+            return sb.ToString();
+        }
+
+        public override void OnStart(StartState state)
 		{
-			if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
+			if (HighLogic.LoadedSceneIsFlight && WorkshopSettings.IsKISAvailable)
 			{
                 WorkshopUtils.Log("KIS is available - Initialize Workshop");
 				SetupAnimations();
@@ -131,11 +148,7 @@
 				LoadFilters();
 				GameEvents.onVesselChange.Add(OnVesselChange);
 			}
-			else
-			{
-				Fields["Status"].guiActive = false;
-				Events["ContextMenuOnOpenWorkbench"].guiActive = false;
-			}
+
 			base.OnStart(state);
 		}
 

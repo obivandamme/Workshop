@@ -35,16 +35,13 @@ OSE Workshop is licensed under a Creative Commons Attribution-NonCommercial-Shar
 
 Credits and Thanks
 
-Portions of this codebase include source by taniwha, used under GNU general public license.
-
-KIS is the original Work of KospY and Winn75 - Thank you for creating this awesome mod.
+	Portions of this codebase include source by taniwha, used under GNU general public license.
+	KIS is the original Work of KospY and Winn75 - Thank you for creating this awesome mod.
+	Alshain: category icons
+	Enceos: 3D models and textures 
 
 Authors
 
-ObiVanDamme: mod idea and C# programming
-
-Enceos: 3D models and textures 
-
-Angel-125: KSP 1.2 update, pause and cancel functionality
-
-Aelfhe1m: maintenance, feature development and additional C# programming from Workshop version 1.2.0
+	ObiVanDamme: mod idea and C# programming
+	Angel-125: KSP 1.2 update, pause and cancel functionality
+	Aelfhe1m: maintenance, feature development and additional C# programming from Workshop version 1.2.0

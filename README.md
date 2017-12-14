@@ -15,7 +15,7 @@ The Ose Workshop mods adds a Workshop Part to the game, that allows the creation
 * [KIS](http://forum.kerbalspaceprogram.com/index.php?/topic/101928-105-kerbal-inventory-system-kis-123/)
 * [Module Manager](http://forum.kerbalspaceprogram.com/threads/55219)
 * [CommunityResourcePack](http://forum.kerbalspaceprogram.com/index.php?/topic/83007-11)
-* [Firespitter](http://forum.kerbalspaceprogram.com/index.php?/topic/22583-firespitter-propeller-plane-and-helicopter-parts-v71-may-5th-for-ksp-10/)
+* [Firespitter Core](http://forum.kerbalspaceprogram.com/index.php?/topic/22583-firespitter-propeller-plane-and-helicopter-parts-v71-may-5th-for-ksp-10/)
 
 ### Installation Instructions
 * Download and install [Module Manager](http://forum.kerbalspaceprogram.com/threads/55219)

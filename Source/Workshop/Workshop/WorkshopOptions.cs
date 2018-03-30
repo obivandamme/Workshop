@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
-using KSP.IO;
-
-namespace Workshop
+﻿namespace Workshop
 {
     public class WorkshopOptions : GameParameters.CustomParameterNode
     {
@@ -14,6 +7,8 @@ namespace Workshop
 
         [GameParameters.CustomParameterUI("Stupidity affects efficiency", toolTip = "If enabled, stupidity affects efficiency; the lower the better.", autoPersistance = true)]
         public bool stupidityAffectsEfficiency = false;
+
+        public override string DisplaySection => Section;
 
         public static bool EfficiencyEnabled
         {
@@ -34,50 +29,20 @@ namespace Workshop
         }
 
         #region CustomParameterNode
-        public override string Section
-        {
-            get
-            {
-                return "Workshop";
-            }
-        }
+        public override string Section =>"Workshop";
 
-        public override string Title
-        {
-            get
-            {
-                return "Efficiency";
-            }
-        }
+        public override string Title => "Efficiency";
 
-        public override int SectionOrder
-        {
-            get
-            {
-                return 0;
-            }
-        }
+        public override int SectionOrder => 0;
 
         public override void SetDifficultyPreset(GameParameters.Preset preset)
         {
             base.SetDifficultyPreset(preset);
         }
 
-        public override GameParameters.GameMode GameMode
-        {
-            get
-            {
-                return GameParameters.GameMode.ANY;
-            }
-        }
+        public override GameParameters.GameMode GameMode => GameParameters.GameMode.ANY;
 
-        public override bool HasPresets
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool HasPresets => false;
 
         public override bool Enabled(System.Reflection.MemberInfo member, GameParameters parameters)
         {

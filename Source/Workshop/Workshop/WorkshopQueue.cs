@@ -16,6 +16,16 @@ namespace Workshop
             return item;
         }
 
+        public void MoveUp(int index)
+        {
+
+        }
+
+        public void MoveDown(int index)
+        {
+
+        }
+
         public void Load(ConfigNode node)
         {
             var nodes = node.GetNodes("QueuedPart");

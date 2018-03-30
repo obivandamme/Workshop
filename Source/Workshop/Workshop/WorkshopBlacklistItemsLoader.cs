@@ -16,7 +16,7 @@
             foreach (var configNode in nodes)
             {
                 var items = configNode.GetValue("parts").Split(';');
-                Debug.Log("[OSE] found blacklist items: " + String.Join(" - ", items));
+                WorkshopUtils.LogVerbose("found blacklist items: " + String.Join(" - ", items));
                 WorkshopBlacklistItemsDatabase.Blacklist.AddRange(items.Select(i => i.Replace('_', '.')));
                 yield return null;
             }

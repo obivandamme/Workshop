@@ -10,10 +10,14 @@
 	using UnityEngine;
 
 	using Recipes;
+    using System.Reflection;
+    using System.Text;
 
-	public class OseModuleWorkshop : PartModule
+    public class OseModuleWorkshop : PartModule
 	{
-		private WorkshopItem[] _availableItems;
+        private static Version modVersion = Assembly.GetExecutingAssembly().GetName().Version;
+
+        private WorkshopItem[] _availableItems;
 		private FilterResult _filteredItems;
 
 		private Blueprint _processedBlueprint;
@@ -29,6 +33,7 @@
 
 		// GUI Properties
 		private FilterBase[] _filters;
+        private FilterSearch _searchFilter  = new FilterSearch();
 		private Texture[] _filterTextures;
 
 		private int _activeFilterId;
@@ -36,6 +41,8 @@
 
 		private int _activePage;
 		private int _selectedPage;
+
+        private string _oldSsearchText = "";
 
 		private Rect _windowPos = new Rect(50, 50, 640, 680);
 		private bool _showGui;
@@ -69,8 +76,11 @@
 		[KSPField]
 		public float SpecialistEfficiencyFactor = 0.02f;
 		
-		[KSPField(guiName = "Workshop Status", guiActive = true)]
+		[KSPField(guiName = "Workshop Status", guiActive = true, guiActiveEditor = false)]
 		public string Status = "Online";
+
+        [KSPField]
+        public string WorkAnimationName = "work";
 
 		protected float adjustedProductivity = 1.0f;
 
@@ -78,7 +88,7 @@
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
 
-		[KSPEvent(guiName = "Open Workbench", guiActive = true)]
+        [KSPEvent(guiName = "Open OSE Workbench", guiActive = true, guiActiveEditor = false)]
 		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
@@ -107,26 +117,38 @@
 		public OseModuleWorkshop()
 		{
 			_queue = new WorkshopQueue();
-			_pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_pause");
-			_playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_play");
-			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/icon_bin");
+			_pauseTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_pause");
+			_playTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_play");
+			_binTexture = WorkshopUtils.LoadTexture("Workshop/Assets/Icons/icon_bin");
 		}
 
-		public override void OnStart(StartState state)
+        public override string GetInfo()
+        {
+            var sb = new StringBuilder("<color=#8dffec>KIS Part Printing Workshop</color>");
+
+            sb.Append($"\nMinimum Crew: {MinimumCrew}");
+            sb.Append($"\nBase productivity factor: {ProductivityFactor:P0}");
+            sb.Append($"\nUse specialist bonus: ");
+            sb.Append(RUIutils.GetYesNoUIString(UseSpecializationBonus));
+            if (UseSpecializationBonus)
+            {
+                sb.Append($"\nSpecialist skill: {ExperienceEffect}");
+                sb.Append($"\nSpecialist bonus: {SpecialistEfficiencyFactor:P0} per level");
+            }
+            return sb.ToString();
+        }
+
+        public override void OnStart(StartState state)
 		{
-			if (WorkshopSettings.IsKISAvailable && HighLogic.LoadedSceneIsFlight)
+			if (HighLogic.LoadedSceneIsFlight && WorkshopSettings.IsKISAvailable)
 			{
-				Debug.Log("[OSE] - KIS is available - Initialize Workshop");
+                WorkshopUtils.Log("KIS is available - Initialize Workshop");
 				SetupAnimations();
 				LoadMaxVolume();
 				LoadFilters();
 				GameEvents.onVesselChange.Add(OnVesselChange);
 			}
-			else
-			{
-				Fields["Status"].guiActive = false;
-				Events["ContextMenuOnOpenWorkbench"].guiActive = false;
-			}
+
 			base.OnStart(state);
 		}
 
@@ -154,20 +176,20 @@
 						animator.Blend("workshop_emissive");
 						break;
 					}
-					Debug.LogError("[OSE] - Unable to load workshop_emissive animation");
+                    WorkshopUtils.LogError("Unable to load workshop_emissive animation");
 				}
-				foreach (var animator in part.FindModelAnimators("work"))
+				foreach (var animator in part.FindModelAnimators(WorkAnimationName))
 				{
-					_workAnimation = animator["work"];
+					_workAnimation = animator[WorkAnimationName];
 					if (_workAnimation != null)
 					{
 						_workAnimation.speed = 0;
 						_workAnimation.enabled = true;
 						_workAnimation.wrapMode = WrapMode.ClampForever;
-						animator.Blend("work");
+						animator.Blend(WorkAnimationName);
 						break;
 					}
-					Debug.LogError("[OSE] - Unable to load work animation");
+                    WorkshopUtils.LogError("Unable to load work animation");
 				}
 			}
 		}
@@ -182,7 +204,7 @@
 			{
 				foreach (var addon in categoryFilterAddOns.Distinct(new OseModuleCategoryAddonEqualityComparer()).ToArray())
 				{
-					Debug.Log("[OSE] - Found addon for category: " + addon.Category);
+                    WorkshopUtils.LogVerbose($"Found addon for category: {addon.Category}");
 					filters.Add(new FilterCategory(addon.Category));
 					filterTextures.Add(WorkshopUtils.LoadTexture(addon.IconPath));
 				}
@@ -191,6 +213,7 @@
 
 			_filters = filters.ToArray();
 			_filterTextures = filterTextures.ToArray();
+            _searchFilter = new FilterSearch();
 		}
 
 		private void LoadModuleState(ConfigNode node)
@@ -216,11 +239,11 @@
 
 		private void LoadAvailableParts()
 		{
-			Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count + " loaded parts");
-			Debug.Log("[OSE] - " + PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
+            WorkshopUtils.LogVerbose(PartLoader.LoadedPartsList.Count + " loaded parts");
+            WorkshopUtils.LogVerbose(PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
 
 			var items = new List<WorkshopItem>();
-			foreach (var loadedPart in PartLoader.LoadedPartsList.Where(p => p.name != "flag" && p.name != "kerbalEVA" && p.name != "kerbalEVAfemale"))
+			foreach (var loadedPart in PartLoader.LoadedPartsList.Where(p => p.name != "flag" && !p.name.StartsWith("kerbalEVA")))
 			{
 				try
 				{
@@ -229,18 +252,21 @@
 						items.Add(new WorkshopItem(loadedPart));
 					}
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
-					Debug.Log("[OSE] - Part " + loadedPart.name + " could not be added to available parts list");
+                    WorkshopUtils.LogError("Part " + loadedPart.name + " could not be added to available parts list", ex);
 				}
 			}
 			_availableItems = items.OrderBy(i => i.Part.title).ToArray();
-			_filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
+            if (string.IsNullOrEmpty(_searchFilter.FilterText))
+                _filteredItems = _filters[_activeFilterId].Filter(_availableItems, 0);
+            else
+                _filteredItems = _searchFilter.Filter(_availableItems, 0);
 		}
 
 		private bool IsValid(AvailablePart loadedPart)
 		{
-			return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name) == false;
+			return WorkshopUtils.PartResearched(loadedPart) && WorkshopUtils.GetPackedPartVolume(loadedPart) <= _maxVolume && !WorkshopBlacklistItemsDatabase.Blacklist.Contains(loadedPart.name);
 		}
 
 		private void LoadMaxVolume()
@@ -250,23 +276,21 @@
 				var inventories = KISWrapper.GetInventories(vessel);
 				if (inventories.Count == 0)
 				{
-					Debug.Log("[OSE] - No Inventories found on this vessel!");
+                    WorkshopUtils.LogError("No Inventories found on this vessel!");
 
 				}
 				else
 				{
 
-					Debug.Log("[OSE] - " + inventories.Count + " inventories found on this vessel!");
+                    WorkshopUtils.Log(inventories.Count + " inventories found on this vessel!");
 					_maxVolume = inventories.Max(i => i.maxVolume);
 				}
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("[OSE] - Error while determing maximum volume of available inventories!");
-				Debug.LogError("[OSE] - " + ex.Message);
-				Debug.LogError("[OSE] - " + ex.StackTrace);
+                WorkshopUtils.LogError("Error while determing maximum volume of available inventories!", ex);
 			}
-			Debug.Log("[OSE] - Max volume is: " + _maxVolume + " liters");
+            WorkshopUtils.Log($"Max volume is: {_maxVolume} liters");
 		}
 
 		public override void OnSave(ConfigNode node)
@@ -292,13 +316,11 @@
 			{
 				UpdateProductivity();
 				ApplyFilter();
-				ApplyPaging();
 				ProcessItem();
 			}
 			catch (Exception ex)
 			{
-				Debug.LogError("[OSE] - OseModuleWorkshop_OnUpdate");
-				Debug.LogException(ex);
+                WorkshopUtils.LogError("OseModuleWorkshop_OnUpdate", ex);
 			}
 			base.OnUpdate();
 		}
@@ -335,34 +357,27 @@
 
 		private void ApplyFilter()
 		{
-			if (_activeFilterId != _selectedFilterId)
+			if (_activeFilterId != _selectedFilterId || _activePage != _selectedPage || _oldSsearchText != _searchFilter.FilterText)
 			{
 				foreach (var item in _filteredItems.Items)
 				{
 					item.DisableIcon();
 				}
+
+                if (_activeFilterId != _selectedFilterId)
+                {
+                    _activePage = 0;
+                    _selectedPage = 0;
+                }
 
 				var selectedFilter = _filters[_selectedFilterId];
-				_activePage = 0;
-				_selectedPage = 0;
-				_filteredItems = selectedFilter.Filter(_availableItems, _activePage * 30);
-				_activeFilterId = _selectedFilterId;
-			}
-		}
-
-		private void ApplyPaging()
-		{
-			if (_activePage != _selectedPage)
-			{
-				foreach (var item in _filteredItems.Items)
-				{
-					item.DisableIcon();
-				}
-
-				var selectedFilter = _filters[_activeFilterId];
-				_filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
-				_activePage = _selectedPage;
-			}
+                if (string.IsNullOrEmpty(_searchFilter.FilterText))
+                    _filteredItems = selectedFilter.Filter(_availableItems, _selectedPage * 30);
+                else
+                    _filteredItems = _searchFilter.Filter(_availableItems, _selectedPage * 30);
+                _activeFilterId = _selectedFilterId;
+                _activePage = _selectedPage;
+            }
 		}
 
 		private void StartManufacturing()
@@ -509,7 +524,8 @@
 			{
 				ContextMenuOpenWorkbench();
 			}
-		}
+            LoadMaxVolume();
+        }
 
 		private ModuleKISInventory AddToContainer(WorkshopItem item)
 		{
@@ -591,187 +607,200 @@
 
 		private void DrawWindow()
 		{
-			GUI.skin = HighLogic.Skin;
-			GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-			GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+            GUI.skin = HighLogic.Skin;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ")");
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
 		}
 
 		private void DrawWindowContents(int windowId)
-		{
-			WorkshopItem mouseOverItem = null;
+        {
+            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
-			// styles 
-			var statsStyle = new GUIStyle(GUI.skin.box);
-			statsStyle.fontSize = 11;
-			statsStyle.alignment = TextAnchor.UpperLeft;
-			statsStyle.padding.left = statsStyle.padding.top = 5;
+            WorkshopItem mouseOverItem = null;
 
-			var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
-			tooltipDescriptionStyle.fontSize = 11;
-			tooltipDescriptionStyle.alignment = TextAnchor.UpperCenter;
-			tooltipDescriptionStyle.padding.top = 5;
+            mouseOverItem = DrawAvailableItems(mouseOverItem);
+            mouseOverItem = DrawQueue(mouseOverItem);
+            DrawMouseOverItem(mouseOverItem);
 
-			var queueSkin = new GUIStyle(GUI.skin.box);
-			queueSkin.alignment = TextAnchor.UpperCenter;
-			queueSkin.padding.top = 5;
+            DrawPrintProgress();
 
-			// Filters
-			_selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
+            {
+                ContextMenuOpenWorkbench();
+            }
+            GUI.DragWindow();
+        }
 
-			// Available Items
-			const int itemRows = 10;
-			const int itemColumns = 3;
-			for (var y = 0; y < itemRows; y++)
-			{
-				for (var x = 0; x < itemColumns; x++)
-				{
-					var left = 15 + x * 55;
-					var top = 70 + y * 55;
-					var itemIndex = y * itemColumns + x;
-					if (_filteredItems.Items.Length > itemIndex)
-					{
-						var item = _filteredItems.Items[itemIndex];
-						if (item.Icon == null)
-						{
-							item.EnableIcon(64);
-						}
-						if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
-						{
-							_queue.Add(new WorkshopItem(item.Part));
-						}
-						if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
-						{
-							mouseOverItem = item;
-						}
-					}
-				}
-			}
+        private void DrawPrintProgress()
+        {
+            // Currently build item
+            if (_processedItem != null)
+            {
+                if (_processedItem.Icon == null)
+                {
+                    _processedItem.EnableIcon(64);
+                }
+                GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
+            }
+            else
+            {
+                GUI.Box(new Rect(190, 620, 50, 50), "");
+            }
 
-			if (_activePage > 0)
-			{
-				if (GUI.Button(new Rect(15, 645, 75, 25), "Prev"))
-				{
-					_selectedPage = _activePage - 1;
-				}
-			}
+            // Progressbar
+            GUI.Box(new Rect(250, 620, 280, 50), "");
+            if (progress >= 1)
+            {
+                var color = GUI.color;
+                GUI.color = new Color(0, 1, 0, 1);
+                GUI.Box(new Rect(250, 620, 280 * progress / 100, 50), "");
+                GUI.color = color;
+            }
+            GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
 
-			if (_activePage < _filteredItems.MaxPages)
-			{
-				if (GUI.Button(new Rect(100, 645, 75, 25), "Next"))
-				{
-					_selectedPage = _activePage + 1;
-				}
-			}
+            //Pause/resume production
+            Texture2D buttonTexture = _pauseTexture;
+            if (manufacturingPaused || _processedItem == null)
+                buttonTexture = _playTexture;
+            if (GUI.Button(new Rect(530, 620, 50, 50), buttonTexture) && _processedItem != null)
+            {
+                manufacturingPaused = !manufacturingPaused;
+            }
 
-			// Queued Items
-			const int queueRows = 4;
-			const int queueColumns = 7;
-			GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
-			for (var y = 0; y < queueRows; y++)
-			{
-				for (var x = 0; x < queueColumns; x++)
-				{
-					var left = 205 + x * 60;
-					var top = 370 + y * 60;
-					var itemIndex = y * queueColumns + x;
-					if (_queue.Count > itemIndex)
-					{
-						var item = _queue[itemIndex];
-						if (item.Icon == null)
-						{
-							item.EnableIcon(64);
-						}
-						if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
-						{
-							_queue.Remove(item);
-						}
-						if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
-						{
-							mouseOverItem = item;
-						}
-					}
-				}
-			}
+            //Cancel production
+            if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
+            {
+                if (_confirmDelete)
+                {
+                    _processedItem.DisableIcon();
+                    _processedItem = null;
+                    _processedBlueprint = null;
+                    progress = 0;
+                    manufacturingPaused = false;
+                    Status = "Online";
 
-			// Tooltip
-			GUI.Box(new Rect(190, 70, 440, 270), "");
-			if (mouseOverItem != null)
-			{
-				var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
-				GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
-				GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
-				GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
-				GUI.Box(new Rect(200, 190, 420, 140), WorkshopUtils.GetDescription(mouseOverItem.Part), tooltipDescriptionStyle);
-			}
+                    if (Animate && _heatAnimation != null && _workAnimation != null)
+                    {
+                        StartCoroutine(StopAnimations());
+                    }
+                    _confirmDelete = false;
+                }
 
-			// Currently build item
-			if (_processedItem != null)
-			{
-				if (_processedItem.Icon == null)
-				{
-					_processedItem.EnableIcon(64);
-				}
-				GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
-			}
-			else
-			{
-				GUI.Box(new Rect(190, 620, 50, 50), "");
-			}
+                else
+                {
+                    _confirmDelete = true;
+                    ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                }
+            }
+        }
 
-			// Progressbar
-			GUI.Box(new Rect(250, 620, 280, 50), "");
-			if (progress >= 1)
-			{
-				var color = GUI.color;
-				GUI.color = new Color(0, 1, 0, 1);
-				GUI.Box(new Rect(250, 620, 280 * progress / 100, 50), "");
-				GUI.color = color;
-			}
-			GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
+        private WorkshopItem DrawAvailableItems(WorkshopItem mouseOverItem)
+        {
+             
 
-			//Pause/resume production
-			Texture2D buttonTexture = _pauseTexture;
-			if (manufacturingPaused || _processedItem == null)
-				buttonTexture = _playTexture;
-			if (GUI.Button(new Rect(530, 620, 50, 50), buttonTexture) && _processedItem != null)
-			{
-				manufacturingPaused = !manufacturingPaused;
-			}
+            // Available Items
+            const int itemRows = 10;
+            const int itemColumns = 3;
+            for (var y = 0; y < itemRows; y++)
+            {
+                for (var x = 0; x < itemColumns; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    var itemIndex = y * itemColumns + x;
+                    if (_filteredItems.Items.Length > itemIndex)
+                    {
+                        var item = _filteredItems.Items[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _queue.Add(new WorkshopItem(item.Part));
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
 
-			//Cancel production
-			if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
-			{
-				if (_confirmDelete)
-				{
-					_processedItem.DisableIcon();
-					_processedItem = null;
-					_processedBlueprint = null;
-					progress = 0;
-					manufacturingPaused = false;
-					Status = "Online";
+            if (_activePage > 0)
+            {
+                if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
+                {
+                    _selectedPage = _activePage - 1;
+                }
+            }
 
-					if (Animate && _heatAnimation != null && _workAnimation != null)
-					{
-						StartCoroutine(StopAnimations());
-					}
-					_confirmDelete = false;
-				}
+            if (_activePage < _filteredItems.MaxPages)
+            {
+                if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
+                {
+                    _selectedPage = _activePage + 1;
+                }
+            }
 
-				else
-				{
-					_confirmDelete = true;
-					ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-				}
-			}
+            // search box
+            _oldSsearchText = _searchFilter.FilterText;
+            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", UI.UIStyles.StatsStyle);
+            _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
 
-			if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
-			{
-				ContextMenuOpenWorkbench();
-			}
+            return mouseOverItem;
+        }
 
-			GUI.DragWindow();
-		}
-	}
+        private WorkshopItem DrawQueue(WorkshopItem mouseOverItem)
+        {
+            const int queueRows = 4;
+            const int queueColumns = 7;
+
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue", UI.UIStyles.QueueSkin);
+            for (var y = 0; y < queueRows; y++)
+            {
+                for (var x = 0; x < queueColumns; x++)
+                {
+                    var left = 205 + x * 60;
+                    var top = 370 + y * 60;
+                    var itemIndex = y * queueColumns + x;
+                    if (_queue.Count > itemIndex)
+                    {
+                        var item = _queue[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _queue.Remove(item);
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+
+            return mouseOverItem;
+            // Tooltip
+        }
+
+        private void DrawMouseOverItem(WorkshopItem mouseOverItem)
+        {
+            GUI.Box(new Rect(190, 70, 440, 270), "");
+            if (mouseOverItem != null)
+            {
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
+                GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
+                GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), UI.UIStyles.StatsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), UI.UIStyles.StatsStyle);
+                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, UI.UIStyles.TitleDescriptionStyle);
+                GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, UI.UIStyles.TooltipDescriptionStyle);
+            }
+        }
+    }
 }

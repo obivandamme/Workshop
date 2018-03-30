@@ -33,18 +33,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\KSP\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>..\..\..\..\KSP\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\KSP\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\..\..\..\..\..\..\..\..\Privat\Kerbal Space Program\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>..\..\..\..\KSP\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +52,7 @@
     <Compile Include="FilterCategory.cs" />
     <Compile Include="FilterBase.cs" />
     <Compile Include="FilterResult.cs" />
+    <Compile Include="FilterSearch.cs" />
     <Compile Include="KIS\KISWrapper.cs" />
     <Compile Include="Limit.cs" />
     <Compile Include="Clock.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />
     <Compile Include="Recipes\WorkshopRecipeLoader.cs" />
     <Compile Include="Recipes\WorkshopResource.cs" />
+    <Compile Include="UI\UIStyles.cs" />
     <Compile Include="WorkshopBlacklistItemsDatabase.cs" />
     <Compile Include="WorkshopBlacklistItemsLoader.cs" />
     <Compile Include="WorkshopOptions.cs" />
@@ -80,8 +82,21 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>IF EXIST  "C:\Users\MartinP\Documents\Visual Studio 2015\Projects\Workshop\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Users\MartinP\Documents\Visual Studio 2015\Projects\Workshop\GameData\Workshop\Plugins" /Y
-IF EXIST "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" xcopy "$(TargetPath)" "C:\Privat\Kerbal Space Program\GameData\Workshop\Plugins" /Y</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetDir)Workshop.dll"  "$(SolutionDir)\..\..\GameData\Workshop\Plugins" /Y
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP\GameData\Workshop"   /E /V) 
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP en\GameData\Workshop"   /E /V) 
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP es\GameData\Workshop"   /E /V) 
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP ru\GameData\Workshop"   /E /V) 
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP jp\GameData\Workshop"   /E /V) 
+(robocopy "$(SolutionDir)\..\..\GameData\Workshop" "$(SolutionDir)\..\..\..\KSP zh\GameData\Workshop"   /E /V) ^&amp;amp;amp; exit 0</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>rd /s /q "$(SolutionDir)\..\..\..\KSP\GameData\Workshop"
+rd /s /q "$(SolutionDir)\..\..\..\KSP en\GameData\Workshop"
+rd /s /q "$(SolutionDir)\..\..\..\KSP es\GameData\Workshop"
+rd /s /q "$(SolutionDir)\..\..\..\KSP ja\GameData\Workshop"
+rd /s /q "$(SolutionDir)\..\..\..\KSP zh\GameData\Workshop"
+rd /s /q "$(SolutionDir)\..\..\..\KSP ru\GameData\Workshop"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

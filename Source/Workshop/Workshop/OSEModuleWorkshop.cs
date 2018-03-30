@@ -607,11 +607,11 @@
 
 		private void DrawWindow()
 		{
-			//GUI.skin = HighLogic.Skin;
-			//GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-			//GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+            GUI.skin = HighLogic.Skin;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
 		}
 
 		private void DrawWindowContents(int windowId)

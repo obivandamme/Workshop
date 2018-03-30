@@ -1,6 +1,6 @@
 {
      "NAME":"OSE Workshop",
-     "URL":"https://github.com/Aelfhe1m/Workshop/blob/master/GameData/Workshop/Workshop.version",
+     "URL":"https://raw.githubusercontent.com/Aelfhe1m/Workshop/master/GameData/Workshop/Workshop.version",
      "DOWNLOAD":"https://github.com/Aelfhe1m/Workshop/releases",
      "GITHUB":{
          "USERNAME":"Aelfhe1m",
@@ -10,11 +10,21 @@
      "VERSION":{
          "MAJOR":1,
          "MINOR":2,
-         "PATCH":3
+         "PATCH":4
      },
      "KSP_VERSION":{
          "MAJOR":1,
-         "MINOR":3,
-         "PATCH":1
+         "MINOR":4,
+         "PATCH":0
      },
+     "KSP_VERSION_MIN":{
+         "MAJOR":1,
+         "MINOR":4,
+         "PATCH":0
+     },
+     "KSP_VERSION_MAX":{
+         "MAJOR":1,
+         "MINOR":4,
+         "PATCH":2
+     }
  } 

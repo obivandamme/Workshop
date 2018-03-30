@@ -88,7 +88,7 @@
 		private readonly Texture2D _playTexture;
 		private readonly Texture2D _binTexture;
 
-        [KSPEvent(guiName = "Open Workbench", guiActive = true, guiActiveEditor = false)]
+        [KSPEvent(guiName = "Open OSE Workbench", guiActive = true, guiActiveEditor = false)]
 		public void ContextMenuOpenWorkbench()
 		{
 			if (_showGui)
@@ -243,7 +243,7 @@
             WorkshopUtils.LogVerbose(PartLoader.LoadedPartsList.Count(WorkshopUtils.PartResearched) + " unlocked parts");
 
 			var items = new List<WorkshopItem>();
-			foreach (var loadedPart in PartLoader.LoadedPartsList.Where(p => p.name != "flag" && p.name != "kerbalEVA" && p.name != "kerbalEVAfemale"))
+			foreach (var loadedPart in PartLoader.LoadedPartsList.Where(p => p.name != "flag" && !p.name.StartsWith("kerbalEVA")))
 			{
 				try
 				{
@@ -607,201 +607,200 @@
 
 		private void DrawWindow()
 		{
-			GUI.skin = HighLogic.Skin;
-			GUI.skin.label.alignment = TextAnchor.MiddleCenter;
-			GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+            GUI.skin = HighLogic.Skin;
+            GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+            GUI.skin.button.alignment = TextAnchor.MiddleCenter;
 
-			_windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
+            _windowPos = GUI.Window(GetInstanceID(), _windowPos, DrawWindowContents, "Workbench (" + _maxVolume + " litres - " + _filters[_activeFilterId] + ") v." + modVersion.ToString());
 		}
 
 		private void DrawWindowContents(int windowId)
-		{
-			WorkshopItem mouseOverItem = null;
+        {
+            _selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
 
-			// styles 
-			var statsStyle = new GUIStyle(GUI.skin.box);
-			statsStyle.fontSize = 11;
-			statsStyle.alignment = TextAnchor.UpperLeft;
-			statsStyle.padding.left = statsStyle.padding.top = 5;
+            WorkshopItem mouseOverItem = null;
 
-			var tooltipDescriptionStyle = new GUIStyle(GUI.skin.box);
-			tooltipDescriptionStyle.fontSize = 11;
-			tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
-			tooltipDescriptionStyle.padding.top = 5;
+            mouseOverItem = DrawAvailableItems(mouseOverItem);
+            mouseOverItem = DrawQueue(mouseOverItem);
+            DrawMouseOverItem(mouseOverItem);
 
-            var titleDescriptionStyle = new GUIStyle(GUI.skin.box);
-            tooltipDescriptionStyle.fontSize = 13;
-            tooltipDescriptionStyle.alignment = TextAnchor.UpperLeft;
-            tooltipDescriptionStyle.padding.top = 5;
+            DrawPrintProgress();
 
+            if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
+            {
+                ContextMenuOpenWorkbench();
+            }
+            GUI.DragWindow();
+        }
 
-            var queueSkin = new GUIStyle(GUI.skin.box);
-			queueSkin.alignment = TextAnchor.UpperCenter;
-			queueSkin.padding.top = 5;
+        private void DrawPrintProgress()
+        {
+            // Currently build item
+            if (_processedItem != null)
+            {
+                if (_processedItem.Icon == null)
+                {
+                    _processedItem.EnableIcon(64);
+                }
+                GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
+            }
+            else
+            {
+                GUI.Box(new Rect(190, 620, 50, 50), "");
+            }
 
-			// Filters
-			_selectedFilterId = GUI.Toolbar(new Rect(15, 35, 615, 30), _selectedFilterId, _filterTextures);
+            // Progressbar
+            GUI.Box(new Rect(250, 620, 280, 50), "");
+            if (progress >= 1)
+            {
+                var color = GUI.color;
+                GUI.color = new Color(0, 1, 0, 1);
+                GUI.Box(new Rect(250, 620, 280 * progress / 100, 50), "");
+                GUI.color = color;
+            }
+            GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
 
-			// Available Items
-			const int itemRows = 10;
-			const int itemColumns = 3;
-			for (var y = 0; y < itemRows; y++)
-			{
-				for (var x = 0; x < itemColumns; x++)
-				{
-					var left = 15 + x * 55;
-					var top = 70 + y * 55;
-					var itemIndex = y * itemColumns + x;
-					if (_filteredItems.Items.Length > itemIndex)
-					{
-						var item = _filteredItems.Items[itemIndex];
-						if (item.Icon == null)
-						{
-							item.EnableIcon(64);
-						}
-						if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
-						{
-							_queue.Add(new WorkshopItem(item.Part));
-						}
-						if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
-						{
-							mouseOverItem = item;
-						}
-					}
-				}
-			}
+            //Pause/resume production
+            Texture2D buttonTexture = _pauseTexture;
+            if (manufacturingPaused || _processedItem == null)
+                buttonTexture = _playTexture;
+            if (GUI.Button(new Rect(530, 620, 50, 50), buttonTexture) && _processedItem != null)
+            {
+                manufacturingPaused = !manufacturingPaused;
+            }
 
-			if (_activePage > 0)
-			{
-				if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
-				{
-					_selectedPage = _activePage - 1;
-				}
-			}
+            //Cancel production
+            if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
+            {
+                if (_confirmDelete)
+                {
+                    _processedItem.DisableIcon();
+                    _processedItem = null;
+                    _processedBlueprint = null;
+                    progress = 0;
+                    manufacturingPaused = false;
+                    Status = "Online";
 
-            // GUI.Label(new Rect(90, 615, 10, 25), _selectedPage.ToString());
+                    if (Animate && _heatAnimation != null && _workAnimation != null)
+                    {
+                        StartCoroutine(StopAnimations());
+                    }
+                    _confirmDelete = false;
+                }
 
-			if (_activePage < _filteredItems.MaxPages)
-			{
-				if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
-				{
-					_selectedPage = _activePage + 1;
-				}
-			}
+                else
+                {
+                    _confirmDelete = true;
+                    ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                }
+            }
+        }
+
+        private WorkshopItem DrawAvailableItems(WorkshopItem mouseOverItem)
+        {
+             
+
+            // Available Items
+            const int itemRows = 10;
+            const int itemColumns = 3;
+            for (var y = 0; y < itemRows; y++)
+            {
+                for (var x = 0; x < itemColumns; x++)
+                {
+                    var left = 15 + x * 55;
+                    var top = 70 + y * 55;
+                    var itemIndex = y * itemColumns + x;
+                    if (_filteredItems.Items.Length > itemIndex)
+                    {
+                        var item = _filteredItems.Items[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _queue.Add(new WorkshopItem(item.Part));
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
+
+            if (_activePage > 0)
+            {
+                if (GUI.Button(new Rect(15, 615, 75, 25), "Prev"))
+                {
+                    _selectedPage = _activePage - 1;
+                }
+            }
+
+            if (_activePage < _filteredItems.MaxPages)
+            {
+                if (GUI.Button(new Rect(100, 615, 75, 25), "Next"))
+                {
+                    _selectedPage = _activePage + 1;
+                }
+            }
 
             // search box
             _oldSsearchText = _searchFilter.FilterText;
-            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", statsStyle);
+            GUI.Label(new Rect(15, 645, 65, 25), "Find: ", UI.UIStyles.StatsStyle);
             _searchFilter.FilterText = GUI.TextField(new Rect(75, 645, 100, 25), _searchFilter.FilterText);
 
-            // Queued Items
+            return mouseOverItem;
+        }
+
+        private WorkshopItem DrawQueue(WorkshopItem mouseOverItem)
+        {
             const int queueRows = 4;
-			const int queueColumns = 7;
-			GUI.Box(new Rect(190, 345, 440, 270), "Queue", queueSkin);
-			for (var y = 0; y < queueRows; y++)
-			{
-				for (var x = 0; x < queueColumns; x++)
-				{
-					var left = 205 + x * 60;
-					var top = 370 + y * 60;
-					var itemIndex = y * queueColumns + x;
-					if (_queue.Count > itemIndex)
-					{
-						var item = _queue[itemIndex];
-						if (item.Icon == null)
-						{
-							item.EnableIcon(64);
-						}
-						if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
-						{
-							_queue.Remove(item);
-						}
-						if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
-						{
-							mouseOverItem = item;
-						}
-					}
-				}
-			}
+            const int queueColumns = 7;
 
-			// Tooltip
-			GUI.Box(new Rect(190, 70, 440, 270), "");
-			if (mouseOverItem != null)
-			{
-				var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
-				GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
-				GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), statsStyle);
-				GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), statsStyle);
-                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, titleDescriptionStyle);
-				GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, tooltipDescriptionStyle);
-			}
+            GUI.Box(new Rect(190, 345, 440, 270), "Queue", UI.UIStyles.QueueSkin);
+            for (var y = 0; y < queueRows; y++)
+            {
+                for (var x = 0; x < queueColumns; x++)
+                {
+                    var left = 205 + x * 60;
+                    var top = 370 + y * 60;
+                    var itemIndex = y * queueColumns + x;
+                    if (_queue.Count > itemIndex)
+                    {
+                        var item = _queue[itemIndex];
+                        if (item.Icon == null)
+                        {
+                            item.EnableIcon(64);
+                        }
+                        if (GUI.Button(new Rect(left, top, 50, 50), item.Icon.texture))
+                        {
+                            _queue.Remove(item);
+                        }
+                        if (Event.current.type == EventType.Repaint && new Rect(left, top, 50, 50).Contains(Event.current.mousePosition))
+                        {
+                            mouseOverItem = item;
+                        }
+                    }
+                }
+            }
 
-			// Currently build item
-			if (_processedItem != null)
-			{
-				if (_processedItem.Icon == null)
-				{
-					_processedItem.EnableIcon(64);
-				}
-				GUI.Box(new Rect(190, 620, 50, 50), _processedItem.Icon.texture);
-			}
-			else
-			{
-				GUI.Box(new Rect(190, 620, 50, 50), "");
-			}
+            return mouseOverItem;
+            // Tooltip
+        }
 
-			// Progressbar
-			GUI.Box(new Rect(250, 620, 280, 50), "");
-			if (progress >= 1)
-			{
-				var color = GUI.color;
-				GUI.color = new Color(0, 1, 0, 1);
-				GUI.Box(new Rect(250, 620, 280 * progress / 100, 50), "");
-				GUI.color = color;
-			}
-			GUI.Label(new Rect(250, 620, 280, 50), " " + progress.ToString("0.0") + " / 100");
-
-			//Pause/resume production
-			Texture2D buttonTexture = _pauseTexture;
-			if (manufacturingPaused || _processedItem == null)
-				buttonTexture = _playTexture;
-			if (GUI.Button(new Rect(530, 620, 50, 50), buttonTexture) && _processedItem != null)
-			{
-				manufacturingPaused = !manufacturingPaused;
-			}
-
-			//Cancel production
-			if (GUI.Button(new Rect(580, 620, 50, 50), _binTexture))
-			{
-				if (_confirmDelete)
-				{
-					_processedItem.DisableIcon();
-					_processedItem = null;
-					_processedBlueprint = null;
-					progress = 0;
-					manufacturingPaused = false;
-					Status = "Online";
-
-					if (Animate && _heatAnimation != null && _workAnimation != null)
-					{
-						StartCoroutine(StopAnimations());
-					}
-					_confirmDelete = false;
-				}
-
-				else
-				{
-					_confirmDelete = true;
-					ScreenMessages.PostScreenMessage("Click the cancel button again to confirm cancelling current production", 5.0f, ScreenMessageStyle.UPPER_CENTER);
-				}
-			}
-
-			if (GUI.Button(new Rect(_windowPos.width - 25, 5, 20, 20), "X"))
-			{
-				ContextMenuOpenWorkbench();
-			}
-
-			GUI.DragWindow();
-		}
-	}
+        private void DrawMouseOverItem(WorkshopItem mouseOverItem)
+        {
+            GUI.Box(new Rect(190, 70, 440, 270), "");
+            if (mouseOverItem != null)
+            {
+                var blueprint = WorkshopRecipeDatabase.ProcessPart(mouseOverItem.Part);
+                GUI.Box(new Rect(200, 80, 100, 100), mouseOverItem.Icon.texture);
+                GUI.Box(new Rect(310, 80, 150, 100), WorkshopUtils.GetKisStats(mouseOverItem.Part), UI.UIStyles.StatsStyle);
+                GUI.Box(new Rect(470, 80, 150, 100), blueprint.Print(adjustedProductivity), UI.UIStyles.StatsStyle);
+                GUI.Box(new Rect(200, 190, 420, 25), mouseOverItem.Part.title, UI.UIStyles.TitleDescriptionStyle);
+                GUI.Box(new Rect(200, 220, 420, 110), mouseOverItem.Part.description, UI.UIStyles.TooltipDescriptionStyle);
+            }
+        }
+    }
 }

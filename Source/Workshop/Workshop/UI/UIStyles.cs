@@ -31,5 +31,16 @@ namespace Workshop.UI
             padding = new RectOffset(0, 0, 5, 0)
         };
 
+        public static GUIStyle lowerRightStyle = new GUIStyle(GUI.skin.label)
+        {
+            alignment = TextAnchor.LowerRight,
+            fontSize = 10,
+            padding = new RectOffset(4, 4, 4, 4),
+            normal = new GUIStyleState()
+            {
+                textColor = Color.white
+            }
+        };
+
     }
 }

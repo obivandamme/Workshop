@@ -3,10 +3,12 @@
 	using KIS;
 
 	using UnityEngine;
-	
-	public class WorkshopItem : IConfigNode
+    using Workshop.Recipes;
+
+    public class WorkshopItem : IConfigNode
 	{
 		public AvailablePart Part;
+        public Blueprint PartBlueprint;
 
 		public KIS_IconViewer Icon { get; set; }
 
@@ -18,7 +20,8 @@
 		public WorkshopItem(AvailablePart part)
 		{
 			Part = part;
-		}
+            PartBlueprint = WorkshopRecipeDatabase.ProcessPart(part);
+        }
 
 		public void EnableIcon(int resultion)
 		{
@@ -37,7 +40,8 @@
 			}
 		}
 
-		public void Load(ConfigNode node)
+
+        public void Load(ConfigNode node)
 		{
 			if (node.HasValue("Name"))
 			{

@@ -66,6 +66,7 @@
     <Compile Include="Recipes\WorkshopRecipeDatabase.cs" />
     <Compile Include="Recipes\WorkshopRecipeLoader.cs" />
     <Compile Include="Recipes\WorkshopResource.cs" />
+    <Compile Include="UI\UIStyles.cs" />
     <Compile Include="WorkshopBlacklistItemsDatabase.cs" />
     <Compile Include="WorkshopBlacklistItemsLoader.cs" />
     <Compile Include="WorkshopOptions.cs" />
